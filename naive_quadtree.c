@@ -67,6 +67,7 @@ n_qtree* new_qtree(unsigned int);
 link_node* new_link_node(void*, unsigned int, unsigned int);
 void insert_coord(n_qtree*, void*, unsigned int, unsigned int, int);
 void* query_coord(n_qtree*, unsigned int, unsigned int);
+void* get_morton_lowest(n_qtree* tree);
 void print_qtree_integerwise(n_qtree*, int);
 
 
@@ -74,6 +75,7 @@ void* query_coord_rec(n_qnode*, unsigned int, unsigned int,
         unsigned int, unsigned int);
 void insert_coord_rec(n_qnode*, void*, unsigned int, unsigned int,
         unsigned int, unsigned int, int);
+void* get_morton_lowest_rec(n_qnode* node);
 
 n_qtree*
 new_qtree(unsigned int depth)
@@ -218,6 +220,41 @@ query_coord_rec(n_qnode* n, unsigned int d, unsigned int tree_depth,
     }
 }
 
+void* get_morton_lowest(n_qtree* tree)
+{
+    if (tree == NULL || tree->root == NULL)
+    {
+        return NULL;
+    }
+    else
+    {
+        return get_morton_lowest_rec(tree->root);
+    }
+}
+
+void* get_morton_lowest_rec(n_qnode* n)
+{
+    int i;
+    void* p = NULL;
+
+    if (n->data != NULL)
+    {
+        return n->data;
+    }
+    for (i = 0; i < 4; i++)
+    {
+        if (n->child[i] != NULL)
+        {
+            p = get_morton_lowest_rec(n->child[i]);
+            if (p != NULL)
+            {
+                return p;
+            }
+        }
+    }
+    return NULL;
+}
+
 /* Counts the number of points in the rectangle defined by the pair
  * of co-ordinates (x1, y1) and (x2, y2). The search range is inclusive
  * of the boundaries those co-ordinates form.
@@ -294,6 +331,7 @@ main()
 {
     n_qtree* tree;
     int dummy = 1;
+    link_node* n;
 
     tree = new_qtree(5);
     insert_coord(tree, &dummy, 1, 1, 1);
@@ -302,5 +340,10 @@ main()
     print_qtree_integerwise(tree, 1);
 
     printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
+
+    n = (link_node*) get_morton_lowest(tree);
+    assert(n != NULL);
+    printf("x: %d, y: %d\n", n->x, n->y);
+
     return 0;
 }
