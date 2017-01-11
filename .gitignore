@@ -14,7 +14,7 @@
 *.dylib
 
 # Executables
-zstd
+qtree_testbench
 *.exe
 *.out
 *.app
@@ -22,6 +22,7 @@ zstd
 # Test artefacts
 tmp*
 dictionary*
+vcore.*
 
 # Other files
 .directory
