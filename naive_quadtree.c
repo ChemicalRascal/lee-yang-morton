@@ -54,17 +54,26 @@ typedef struct n_qtree_s
     n_qnode*        root;
 } n_qtree;
 
+typedef struct link_node_s
+{
+    unsigned int            x;
+    unsigned int            y;
+    struct link_node_s*     n;
+    void*                   data;
+} link_node;
+
 n_qnode* new_qnode(void*);
 n_qtree* new_qtree(unsigned int);
-void insert_coord(n_qtree*, void*, unsigned int, unsigned int);
+link_node* new_link_node(void*, unsigned int, unsigned int);
+void insert_coord(n_qtree*, void*, unsigned int, unsigned int, int);
 void* query_coord(n_qtree*, unsigned int, unsigned int);
-void print_qtree_integerwise(n_qtree*);
+void print_qtree_integerwise(n_qtree*, int);
 
 
 void* query_coord_rec(n_qnode*, unsigned int, unsigned int,
         unsigned int, unsigned int);
 void insert_coord_rec(n_qnode*, void*, unsigned int, unsigned int,
-        unsigned int, unsigned int);
+        unsigned int, unsigned int, int);
 
 n_qtree*
 new_qtree(unsigned int depth)
@@ -103,6 +112,21 @@ new_qnode(void* data)
     return node;
 }
 
+link_node*
+new_link_node(void* data, unsigned int x, unsigned int y)
+{
+    link_node* node;
+    node = malloc(sizeof(link_node));
+    assert(node != NULL);
+
+    node->data  = data;
+    node->x     = x;
+    node->y     = y;
+    node->n     = NULL; /* Leave the link initially as NULL. */
+
+    return node;
+}
+
 /*TODO: Expand this to use a linked list at each leaf node. Or even
  *      an arbitary insert function that folks can pass in. Will need
  *      to also have a way to have folks pass in a deletion function
@@ -111,20 +135,22 @@ new_qnode(void* data)
  *NOTE: Currently, data just overrides existing data on a node.
  */
 void
-insert_coord(n_qtree* tree, void* data, unsigned int x, unsigned int y)
+insert_coord(n_qtree* tree, void* data, unsigned int x, unsigned int y,
+        int linkednodes)
 {
     if (tree->root == NULL)
     {
         tree->root = new_qnode(NULL);
     }
-    insert_coord_rec(tree->root, data, 0, tree->depth, x, y);
+    insert_coord_rec(tree->root, data, 0, tree->depth, x, y, linkednodes);
 }
 
 /* Recursive worker for insert_coord().
  */
 void
 insert_coord_rec(n_qnode* n, void* data, unsigned int d,
-                unsigned int tree_depth, unsigned int x, unsigned int y)
+                unsigned int tree_depth, unsigned int x, unsigned int y,
+                int linkednodes)
 {
     unsigned int xbit, ybit, dir;
     xbit    = 1 & (x >> (tree_depth - d - 1));
@@ -133,7 +159,14 @@ insert_coord_rec(n_qnode* n, void* data, unsigned int d,
 
     if (d == tree_depth)
     {
-        n->data = data;
+        if (linkednodes)
+        {
+            n->data = new_link_node(data, x, y);
+        }
+        else
+        {
+            n->data = data;
+        }
     }
     else
     {
@@ -141,7 +174,8 @@ insert_coord_rec(n_qnode* n, void* data, unsigned int d,
         {
             n->child[dir] = new_qnode(NULL);
         }
-        insert_coord_rec(n->child[dir], data, d+1, tree_depth, x, y);
+        insert_coord_rec(n->child[dir], data, d+1, tree_depth, x, y,
+                linkednodes);
     }
 }
 
@@ -216,17 +250,32 @@ range_query_coord(n_qtree* tree, unsigned int x1, unsigned int y1,
 }
 
 void
-print_qtree_integerwise(n_qtree* tree)
+print_qtree_integerwise(n_qtree* tree, int linkednodes)
 {
     int i, j;
     unsigned int* point;
+    void* data;
 
     for (i = ((1 << tree->depth) - 1); i >= 0; i--)
     {
         for (j = 0; j < (1 << tree->depth); j++)
         {
-            //printf("i: %d, j: %d", i, j);
-            point = (unsigned int*) query_coord(tree, i, j);
+            if (linkednodes)
+            {
+                data = query_coord(tree, i, j);
+                if (data != NULL)
+                {
+                    point = (unsigned int*) ((link_node*)data)->data;
+                }
+                else
+                {
+                    point = NULL;
+                }
+            }
+            else
+            {
+                point = (unsigned int*) query_coord(tree, i, j);
+            }
             if (point == NULL)
             {
                 printf("%d ", 0);
@@ -247,10 +296,10 @@ main()
     int dummy = 1;
 
     tree = new_qtree(5);
-    insert_coord(tree, &dummy, 1, 1);
-    insert_coord(tree, &dummy, 15, 3);
-    insert_coord(tree, &dummy, 30, 30);
-    print_qtree_integerwise(tree);
+    insert_coord(tree, &dummy, 1, 1, 1);
+    insert_coord(tree, &dummy, 15, 3, 1);
+    insert_coord(tree, &dummy, 30, 30, 1);
+    print_qtree_integerwise(tree, 1);
 
     printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
     return 0;
