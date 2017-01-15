@@ -1,31 +1,41 @@
-MAKE	= gcc
-MKFLAGS = -Wall
+CC  	= gcc
+CFLAGS	= -Wall
 RM	= rm
-NAIVE	= naive_quadtree.c
+RMFLAGS	= -f
+
 PROG	= qtree_testbench
+DEPS	= src/bitseq.h
+OBJ	= bin/bitseq.o bin/qtree_testbench.o
+CFILES	= src/bitseq.c src/qtree_testbench.c
+
 VGRIND	= valgrind
 VGFLAG	= --leak-check=yes
 VGCFLAG = -g -O0
 
 .PHONY: default
-default: all
+default: $(PROG)
 
 .PHONY: all
-all:
-	$(MAKE) $(MKFLAGS) -C $(NAIVE) -o $(PROG)
+all: clean $(PROG)
+
+bin/%.o: src/%.c $(DEPS)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+.PHONY: val_set
+val_set:
+	$(eval CFLAGS += $(VGCFLAG))
 
 .PHONY: val_build
-val_build:
-	$(MAKE) $(MKFLAGS) $(VGCFLAG) -C $(NAIVE) -o $(PROG)
+val_build: clean val_set $(PROG)
 
 .PHONY: val
 val:	val_build
 	$(VGRIND) $(VGFLAG) ./$(PROG)
 
-.PHONY: naive
-naive:
-	$(MAKE) $(MKFLAGS) -C $(NAIVE) -o $(PROG)
+.PHONY: $(PROG)
+$(PROG): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:
-	$(RM) $(PROG) vgcore.*
+	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.*
