@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "bitseq.h"
+
 typedef struct n_qnode_s
 {
     /* Base 4 'index' based on Lee-Young notation:
@@ -329,6 +331,7 @@ print_qtree_integerwise(n_qtree* tree, int linkednodes)
 int
 main()
 {
+/*
     n_qtree* tree;
     int dummy = 1;
     link_node* n;
@@ -344,6 +347,33 @@ main()
     n = (link_node*) get_morton_lowest(tree);
     assert(n != NULL);
     printf("x: %d, y: %d\n", n->x, n->y);
+*/
+
+    bitseq* seq = new_bitseq();
+
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+
+    append_bit(seq, 0);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+
+    append_bit(seq, 1);
+    append_bit(seq, 0);
+    append_bit(seq, 1);
+
+    pprint_bitseq(seq);
 
     return 0;
 }
