@@ -26,6 +26,28 @@ new_bitseq()
     return b;
 }
 
+/* Library worker function.
+ */
+void
+realloc_bitseq(bitseq* seq, unsigned int newsize)
+{
+    if (seq->alloc_size < newsize)
+    {
+        seq->seq = realloc(seq->seq, newsize);
+        assert(seq->seq != NULL);
+
+        /* Set all the bytes out to the new size out to 0.
+         */
+        for (i = seq->alloc_size; i < newsize; i++)
+        {
+            seq->seq[i] = 0;
+        }
+        seq->alloc_size = newsize;
+    }
+
+    return;
+}
+
 void
 insert_bit(bitseq* seq, unsigned int index, unsigned char bit)
 {
@@ -49,16 +71,8 @@ insert_bit(bitseq* seq, unsigned int index, unsigned char bit)
         {
             newsize = ((index/CHAR_BIT)+1)*2;
         }
-        seq->seq = realloc(seq->seq, newsize * sizeof(char));
-        assert(seq->seq != NULL);
 
-        /* Set all the bytes out to the new size out to 0.
-         */
-        for (i = seq->alloc_size; i < newsize; i++)
-        {
-            seq->seq[i] = 0;
-        }
-        seq->alloc_size = newsize;
+        realloc_bitseq(seq, newsize * sizeof(char));
     }
 
     // Get a pointer to the exact byte we want.
