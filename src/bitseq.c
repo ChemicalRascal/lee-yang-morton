@@ -31,6 +31,8 @@ new_bitseq()
 void
 realloc_bitseq(bitseq* seq, unsigned int newsize)
 {
+    unsigned int i;
+
     if (seq->alloc_size < newsize)
     {
         seq->seq = realloc(seq->seq, newsize);
@@ -52,7 +54,7 @@ void
 insert_bit(bitseq* seq, unsigned int index, unsigned char bit)
 {
     unsigned int    newsize = 0;
-    unsigned int    i, offset;
+    unsigned int    offset;
     unsigned char*  byte;
 
     /* Mask the input: We only want the least significant bit.
