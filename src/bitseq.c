@@ -14,6 +14,8 @@
 #include <limits.h>
 #include <assert.h>
 
+unsigned char get_bit_void_ptr(void*, unsigned int);
+
 bitseq*
 new_bitseq()
 {
@@ -128,17 +130,26 @@ append_bit(bitseq* seq, unsigned char bit)
 unsigned char
 get_bit(bitseq* seq, unsigned int index)
 {
-    unsigned char byte;
-
     if (seq == NULL || seq->seq == NULL || seq->length <= index)
     {
         return 2;
     }
 
-    byte = seq->seq[index/CHAR_BIT];
+    return get_bit_void_ptr((void*) seq->seq, index);
+}
+
+/* Library worker. Assumes everything has been checked.
+ */
+unsigned char
+get_bit_void_ptr(void* ptr, unsigned int index)
+{
+    unsigned char   bit;
+    unsigned char*  data = (unsigned char*) ptr;
+
+    bit = data[index/CHAR_BIT];
     index = index % CHAR_BIT;
-    byte = (byte >> (CHAR_BIT - index - 1)) & 1;
-    return byte;
+    bit = (bit >> (CHAR_BIT - index - 1)) & 1;
+    return bit;
 }
 
 void
