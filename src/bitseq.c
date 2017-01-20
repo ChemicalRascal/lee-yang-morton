@@ -303,8 +303,13 @@ weave_bits(void* a, void* b, unsigned int len)
 bitseq*
 weave_ints(int a, int b)
 {
-    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
-    htobe((void*) &b, sizeof(unsigned int) * CHAR_BIT);
+    /* While htob and such mutate what they're pointed at (as opposed to the
+     * endian.h functions, which return values), these integers are on the
+     * weave_ints stack so htobe and such won't mutate whatever is on the
+     * caller's stack (or elsewhere).
+     */
+    htobe((void*) &a, sizeof(int) * CHAR_BIT);
+    htobe((void*) &b, sizeof(int) * CHAR_BIT);
     return weave_bits((void*) &a, (void*) &b, sizeof(int) * CHAR_BIT);
 }
 
