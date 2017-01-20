@@ -14,6 +14,8 @@
 
 #include "bitseq.h"
 
+#include <limits.h>
+
 typedef struct n_qnode_s
 {
     /* Base 4 'index' based on Lee-Young notation:
@@ -374,6 +376,43 @@ main()
     append_bit(seq, 1);
 
     pprint_bitseq(seq);
+
+
+    unsigned int a = 1;
+    unsigned int i;
+
+    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+
+    for (i = 0; i < (sizeof(unsigned int)*CHAR_BIT); i++)
+    {
+        printf("%u", get_bit_void_ptr((void*) &a, i));
+        if (i % CHAR_BIT == CHAR_BIT - 1)
+        {
+            printf(" ");
+        }
+    }
+    printf("\n");
+
+    a = 4;
+    bitseq* seq2 = weave_uints(a, a);
+    pprint_bitseq(seq2);
+
+    printf("%lu\n", get_as_luint_ljust(seq2));
+    printf("%lu\n", get_as_luint_rjust(seq2));
+    printf("%u\n", get_as_uint_ljust(seq2));
+    printf("%u\n", get_as_uint_rjust(seq2));
+
+    bitseq* seq3 = weave_uints(4859,    0);
+    bitseq* seq4 = weave_uints(4859,    74);
+
+    pprint_bitseq(seq3);
+    pprint_bitseq(seq4);
+
+    bitseq* seq5 = weave_uints(INT_MAX  -1, 74);
+    bitseq* seq6 = weave_uints(UINT_MAX -1, 74);
+
+    pprint_bitseq(seq5);
+    pprint_bitseq(seq6);
 
     return 0;
 }

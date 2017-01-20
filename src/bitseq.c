@@ -14,6 +14,108 @@
 #include <limits.h>
 #include <assert.h>
 
+#include <stdint.h>
+#include <endian.h>
+
+/* It physically pains me to do this
+ *
+ * Endian conversion function abstraction. For handling nonsense and whatever,
+ * because I guess I pass around too many void pointers. But, well, we've come
+ * this far.
+ */
+
+void
+htobe(void* p, unsigned int len)
+{
+    if (len == 16)
+    {
+        uint16_t* work = (uint16_t*) p;
+        *work = htobe16(*work);
+        return;
+    }
+    else if (len == 32)
+    {
+        uint32_t* work = (uint32_t*) p;
+        *work = htobe32(*work);
+        return;
+    }
+    else if (len == 64)
+    {
+        uint64_t* work = (uint64_t*) p;
+        *work = htobe64(*work);
+        return;
+    }
+}
+
+void
+htole(void* p, unsigned int len)
+{
+    if (len == 16)
+    {
+        uint16_t* work = (uint16_t*) p;
+        *work = htole16(*work);
+        return;
+    }
+    else if (len == 32)
+    {
+        uint32_t* work = (uint32_t*) p;
+        *work = htole32(*work);
+        return;
+    }
+    else if (len == 64)
+    {
+        uint64_t* work = (uint64_t*) p;
+        *work = htole64(*work);
+        return;
+    }
+}
+
+void
+betoh(void *p, unsigned int len)
+{
+    if (len == 16)
+    {
+        uint16_t* work = (uint16_t*) p;
+        *work = be16toh(*work);
+        return;
+    }
+    else if (len == 32)
+    {
+        uint32_t* work = (uint32_t*) p;
+        *work = be32toh(*work);
+        return;
+    }
+    else if (len == 64)
+    {
+        uint64_t* work = (uint64_t*) p;
+        *work = be64toh(*work);
+        return;
+    }
+}
+
+void
+letoh(void *p, unsigned int len)
+{
+    if (len == 16)
+    {
+        uint16_t* work = (uint16_t*) p;
+        *work = le16toh(*work);
+        return;
+    }
+    else if (len == 32)
+    {
+        uint32_t* work = (uint32_t*) p;
+        *work = le32toh(*work);
+        return;
+    }
+    else if (len == 64)
+    {
+        uint64_t* work = (uint64_t*) p;
+        *work = le64toh(*work);
+        return;
+    }
+}
+
 unsigned char get_bit_void_ptr(void*, unsigned int);
 
 bitseq*
@@ -150,6 +252,156 @@ get_bit_void_ptr(void* ptr, unsigned int index)
     index = index % CHAR_BIT;
     bit = (bit >> (CHAR_BIT - index - 1)) & 1;
     return bit;
+}
+
+/* Treating a and b as existing sequences, "weaves" the bits together:
+ * The most significant of a, then the most significant of b, and then so on.
+ * 'len' is the number of bits from each to weave.
+ */
+bitseq*
+weave_bits(void* a, void* b, unsigned int len)
+{
+    unsigned int    i;
+    unsigned char   bit;
+
+    bitseq* seq;
+
+    seq = new_bitseq();
+    realloc_bitseq(seq, len * 2);
+
+    for (i = 0; i < len; i++)
+    {
+        bit = get_bit_void_ptr(a, i);
+        if (bit)
+        {
+            append_bit(seq, bit);
+        }
+        else
+        {
+            /* We can cheat when bit = 0, as we know realloc_bitseq()
+             * initialises everything to 0. And we won't overrun the sequence,
+             * because we've already set the length appropriately.
+             */
+            seq->length += 1;
+        }
+        bit = get_bit_void_ptr(b, i);
+        if (bit)
+        {
+            append_bit(seq, bit);
+        }
+        else
+        {
+            seq->length += 1;
+        }
+    }
+
+    return seq;
+}
+
+/* Helper function.
+ */
+bitseq*
+weave_ints(int a, int b)
+{
+    return weave_bits((void*) &a, (void*) &b, sizeof(int) * CHAR_BIT);
+}
+
+/* Helper function. Causes the unsigned ints to be weaved together, in
+ * big endian order.
+ */
+bitseq*
+weave_uints(unsigned int a, unsigned int b)
+{
+    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+    htobe((void*) &b, sizeof(unsigned int) * CHAR_BIT);
+    return weave_bits((void*) &a, (void*) &b, sizeof(unsigned int) * CHAR_BIT);
+}
+
+/* TODO: Make these not effectively error-out in the case of the sequence not
+ * being long enough.
+*/
+long unsigned int
+get_as_luint_ljust(bitseq* seq)
+{
+    long unsigned int a;
+
+    if (seq == NULL || seq->seq == NULL
+            || seq->length < sizeof(long unsigned int) * CHAR_BIT)
+    {
+        // TODO: Replace with making a new sequence and such
+        return 0;
+    }
+
+    a = *(long unsigned int*) (seq->seq);
+    betoh((void*) &a, sizeof(long unsigned int) * CHAR_BIT);
+    return a;
+}
+
+long unsigned int
+get_as_luint_rjust(bitseq* seq)
+{
+    long unsigned int a;
+
+    if (seq == NULL || seq->seq == NULL
+            || seq->length < sizeof(long unsigned int) * CHAR_BIT)
+    {
+        // TODO: Replace with making a new sequence and such
+        return 0;
+    }
+    if (seq->length % CHAR_BIT == 0)
+    {
+        a = *(long unsigned int*) ((seq->seq) + ((seq->length/CHAR_BIT -
+                    sizeof(long unsigned int))));
+        betoh((void*) &a, sizeof(long unsigned int) * CHAR_BIT);
+        return a;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+unsigned int
+get_as_uint_ljust(bitseq* seq)
+{
+    unsigned int a;
+
+    if (seq == NULL || seq->seq == NULL
+            || seq->length < sizeof(unsigned int) * CHAR_BIT)
+    {
+        // TODO: Replace with making a new sequence and such
+        return 0;
+    }
+
+    a = *(unsigned int*) (seq->seq);
+    betoh((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+    return a;
+}
+
+unsigned int
+get_as_uint_rjust(bitseq* seq)
+{
+    unsigned int a;
+
+    if (seq == NULL || seq->seq == NULL
+            || seq->length < sizeof(unsigned int) * CHAR_BIT)
+    {
+        // TODO: Replace with making a new sequence and such
+        return 0;
+    }
+    if (seq->length % CHAR_BIT == 0)
+    {
+        a = *(unsigned int*) ((seq->seq) + ((seq->length/CHAR_BIT -
+                    sizeof(unsigned int))));
+        betoh((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+        return a;
+    }
+    else
+    {
+        // TODO: Replace with copying and bitshifting the array? This is overly
+        // painful.
+        return 0;
+    }
 }
 
 void
