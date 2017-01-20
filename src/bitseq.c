@@ -303,6 +303,8 @@ weave_bits(void* a, void* b, unsigned int len)
 bitseq*
 weave_ints(int a, int b)
 {
+    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+    htobe((void*) &b, sizeof(unsigned int) * CHAR_BIT);
     return weave_bits((void*) &a, (void*) &b, sizeof(int) * CHAR_BIT);
 }
 
