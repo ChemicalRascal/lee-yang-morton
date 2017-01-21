@@ -414,5 +414,8 @@ main()
     pprint_bitseq(seq5);
     pprint_bitseq(seq6);
 
+    bitseq* seq7 = new_bitseq_from_uint(555);
+    printf("%u\n", get_as_uint_rjust(seq7));
+    pprint_bitseq(seq7);
     return 0;
 }

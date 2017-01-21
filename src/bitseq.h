@@ -21,6 +21,10 @@ void append_bit(bitseq*, unsigned char);
 
 unsigned char get_bit(bitseq*, unsigned int);
 
+bitseq* new_bitseq_from_ptr(void*, unsigned int);
+bitseq* new_bitseq_from_int(int);
+bitseq* new_bitseq_from_uint(unsigned int);
+
 bitseq* weave_bits(void*, void*, unsigned int);
 bitseq* weave_ints(int, int);
 bitseq* weave_uints(unsigned int, unsigned int);

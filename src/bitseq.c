@@ -254,6 +254,53 @@ get_bit_void_ptr(void* ptr, unsigned int index)
     return bit;
 }
 
+/* Treats a as a char array. len is the length to be copied in, in bits.
+ */
+bitseq*
+new_bitseq_from_ptr(void* a, unsigned int len)
+{
+    bitseq* seq;
+    unsigned int i;
+    unsigned char* a_array = a;
+    unsigned char c = 0;
+
+    seq = new_bitseq();
+    realloc_bitseq(seq, len);
+
+    for (i = 0; i + CHAR_BIT <= len; i++)
+    {
+        seq->seq[i] = a_array[i];
+    }
+    if (len % CHAR_BIT != 0)
+    {
+        /* Handle the remaining partial byte. */
+        c = a_array[len/CHAR_BIT];
+        c >>= len % CHAR_BIT;
+        c <<= len % CHAR_BIT;
+        /* And by the magic of bitshifts, the final len % CHAR_BIT bits
+         * of c are all 0.
+         */
+        seq->seq[len/CHAR_BIT] = c;
+    }
+    seq->length = len;
+
+    return seq;
+}
+
+bitseq*
+new_bitseq_from_int(int a)
+{
+    htobe((void*) &a, sizeof(int) * CHAR_BIT);
+    return new_bitseq_from_ptr((void*) &a, sizeof(int) * CHAR_BIT);
+}
+
+bitseq*
+new_bitseq_from_uint(unsigned int a)
+{
+    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+    return new_bitseq_from_ptr((void*) &a, sizeof(unsigned int) * CHAR_BIT);
+}
+
 /* Treating a and b as existing sequences, "weaves" the bits together:
  * The most significant of a, then the most significant of b, and then so on.
  * 'len' is the number of bits from each to weave.
