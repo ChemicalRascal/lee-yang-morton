@@ -74,6 +74,8 @@ void* query_coord(n_qtree*, unsigned int, unsigned int);
 void* get_morton_lowest(n_qtree* tree);
 void print_qtree_integerwise(n_qtree*, int);
 
+void link_nodes_morton(n_qtree*);
+void link_nodes_morton_rec(n_qnode*, link_node**);
 
 void* query_coord_rec(n_qnode*, unsigned int, unsigned int,
         unsigned int, unsigned int);
@@ -330,10 +332,68 @@ print_qtree_integerwise(n_qtree* tree, int linkednodes)
     }
 }
 
+void
+link_nodes_morton(n_qtree* tree)
+{
+    link_node** p;
+    if (tree != NULL || tree->root != NULL)
+    {
+        p = malloc(sizeof(link_node*));
+        assert(p != NULL);
+        *p = NULL;
+        link_nodes_morton_rec(tree->root, p);
+        free(p);
+    }
+    return;
+}
+
+void
+link_nodes_morton_rec(n_qnode* node, link_node** p)
+{
+    if (node != NULL)
+    {
+        if ((node->child[0] == NULL) && (node->child[1] == NULL) &&
+                (node->child[2] == NULL) && (node->child[3] == NULL))
+        {
+            /* We're on a leaf node. That, or the tree is empty. */
+            if (node->data != NULL)
+            {
+                ((link_node*)node->data)->n = *p;
+                *p = node->data;
+                printf("Found %p, linked it to %p\n", *p,
+                        ((link_node*)node->data)->n);
+            }
+            else
+            {
+                /* DEBUG */
+                printf("Empty tree?\n");
+            }
+        }
+
+        else
+        {
+            /* Node has at least one child. We don't need to check for the
+             * children being NULL, as the function simply does nothing if
+             * it is passed NULL.
+             */
+            link_nodes_morton_rec(node->child[3], p);
+            link_nodes_morton_rec(node->child[2], p);
+            link_nodes_morton_rec(node->child[1], p);
+            link_nodes_morton_rec(node->child[0], p);
+            /* Recursive call in 3-2-1-0 order will mean that *p will now
+             * be "lowest" (by Morton order) data point accessible from this
+             * node.
+             */
+            node->data = *p;
+            printf("Linked a branch to %p\n", node->data);
+        }
+    }
+    return;
+}
+
 int
 main()
 {
-/*
     n_qtree* tree;
     int dummy = 1;
     link_node* n;
@@ -349,8 +409,9 @@ main()
     n = (link_node*) get_morton_lowest(tree);
     assert(n != NULL);
     printf("x: %d, y: %d\n", n->x, n->y);
-*/
+    link_nodes_morton(tree);
 
+    /*
     bitseq* seq = new_bitseq();
 
     append_bit(seq, 1);
@@ -417,5 +478,7 @@ main()
     bitseq* seq7 = new_bitseq_from_uint(555);
     printf("%u\n", get_as_uint_rjust(seq7));
     pprint_bitseq(seq7);
+    */
+
     return 0;
 }
