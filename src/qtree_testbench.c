@@ -295,17 +295,17 @@ range_query_coord(n_qtree* tree, unsigned int x1, unsigned int y1,
 void
 print_qtree_integerwise(n_qtree* tree, int linkednodes)
 {
-    int i, j;
+    int x, y;
     unsigned int* point;
     void* data;
 
-    for (i = ((1 << tree->depth) - 1); i >= 0; i--)
+    for (y = ((1 << tree->depth) - 1); y >= 0; y--)
     {
-        for (j = 0; j < (1 << tree->depth); j++)
+        for (x = 0; x < (1 << tree->depth); x++)
         {
             if (linkednodes)
             {
-                data = query_coord(tree, i, j);
+                data = query_coord(tree, x, y);
                 if (data != NULL)
                 {
                     point = (unsigned int*) ((link_node*)data)->data;
@@ -317,7 +317,7 @@ print_qtree_integerwise(n_qtree* tree, int linkednodes)
             }
             else
             {
-                point = (unsigned int*) query_coord(tree, i, j);
+                point = (unsigned int*) query_coord(tree, x, y);
             }
             if (point == NULL)
             {
@@ -401,7 +401,7 @@ main()
     tree = new_qtree(5);
     insert_coord(tree, &dummy, 1, 1, 1);
     insert_coord(tree, &dummy, 15, 3, 1);
-    insert_coord(tree, &dummy, 30, 30, 1);
+    insert_coord(tree, &dummy, 28, 0, 1);
     print_qtree_integerwise(tree, 1);
 
     printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
