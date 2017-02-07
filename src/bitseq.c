@@ -130,6 +130,16 @@ new_bitseq()
     return b;
 }
 
+void
+free_bitseq(bitseq* seq)
+{
+    if (seq != NULL)
+    {
+        free(seq->seq);
+    }
+    free(seq);
+}
+
 /* Library worker function.
  */
 void
@@ -411,8 +421,19 @@ get_as_luint_rjust(bitseq* seq)
     }
     else
     {
+        // TODO: Replace with, somehow, bitshifting the array, or
+        // something.
         return 0;
     }
+}
+
+long unsigned int
+weave_units_to_luint(unsigned int a, unsigned int b)
+{
+    bitseq* seq = weave_uints(a, b);
+    long unsigned int r = get_as_luint_rjust(seq);
+    free_bitseq(seq);
+    return r;
 }
 
 unsigned int

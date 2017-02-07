@@ -15,6 +15,7 @@ typedef struct bitseq_s
 } bitseq;
 
 bitseq* new_bitseq();
+void free_bitseq(bitseq*);
 
 void insert_bit(bitseq*, unsigned int, unsigned char);
 void append_bit(bitseq*, unsigned char);
@@ -33,6 +34,8 @@ long unsigned int get_as_luint_ljust(bitseq*);
 long unsigned int get_as_luint_rjust(bitseq*);
 unsigned int get_as_uint_ljust(bitseq*);
 unsigned int get_as_uint_rjust(bitseq*);
+
+unsigned int weave_uints_to_luint(unsigned int, unsigned int);
 
 void pprint_bitseq(bitseq*);
 
