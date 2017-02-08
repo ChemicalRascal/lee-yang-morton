@@ -74,6 +74,10 @@ void* query_coord(n_qtree*, unsigned int, unsigned int);
 void* get_morton_lowest(n_qtree* tree);
 void print_qtree_integerwise(n_qtree*, int);
 
+link_node* get_le(n_qtree*, unsigned int, unsigned int);
+link_node* get_le_rec(n_qnode*, long unsigned int, unsigned int, unsigned int);
+link_node* get_morton_highest(n_qnode*);
+
 void link_nodes_morton(n_qtree*);
 void link_nodes_morton_rec(n_qnode*, link_node**);
 
@@ -391,6 +395,51 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
     return;
 }
 
+link_node*
+get_le(n_qtree* tree, unsigned int x, unsigned int y)
+{
+    long unsigned int m = weave_uints_to_luint(y, x);
+    return NULL;
+}
+
+link_node*
+get_le_rec(n_qnode* n, long unsigned int m, unsigned int depth,
+        unsigned int current_depth)
+{
+    return NULL;
+}
+
+link_node*
+get_morton_highest(n_qnode* n)
+{
+    link_node* next;
+    int i;
+
+    if (n == NULL)
+    {
+        /* Terminating case. */
+        return NULL;
+    }
+
+    if (n->child[0] == NULL && n->child[1] == NULL &&
+            n->child[2] == NULL && n->child[3] == NULL)
+    {
+        /* Leaf. */
+        return n->data;
+    }
+
+    for (i = 3; i >= 0; i--)
+    {
+        next = get_morton_highest(n->child[i]);
+        if (next != NULL)
+        {
+            return next;
+        }
+    }
+
+    return NULL;
+}
+
 int
 main()
 {
@@ -410,6 +459,10 @@ main()
     assert(n != NULL);
     printf("x: %d, y: %d\n", n->x, n->y);
     link_nodes_morton(tree);
+
+    n = get_morton_highest(tree->root);
+    assert(n != NULL);
+    printf("x: %d, y: %d, n: %p\n", n->x, n->y, n->n);
 
     /*
     bitseq* seq = new_bitseq();

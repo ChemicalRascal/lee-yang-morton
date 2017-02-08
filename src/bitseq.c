@@ -428,7 +428,7 @@ get_as_luint_rjust(bitseq* seq)
 }
 
 long unsigned int
-weave_units_to_luint(unsigned int a, unsigned int b)
+weave_uints_to_luint(unsigned int a, unsigned int b)
 {
     bitseq* seq = weave_uints(a, b);
     long unsigned int r = get_as_luint_rjust(seq);
