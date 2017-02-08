@@ -16,6 +16,11 @@
 
 #include <limits.h>
 
+#define get_child_from_mcode(m, d, cd) ((m>>((cd-d-1)*2))&3)
+
+#define node_is_leaf(n) ((n)->child[0] == NULL && n->child[1] == NULL && \
+        (n)->child[2] == NULL && n->child[3] == NULL)
+
 typedef struct n_qnode_s
 {
     /* Base 4 'index' based on Lee-Young notation:
@@ -356,8 +361,7 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
 {
     if (node != NULL)
     {
-        if ((node->child[0] == NULL) && (node->child[1] == NULL) &&
-                (node->child[2] == NULL) && (node->child[3] == NULL))
+        if (node_is_leaf(node))
         {
             /* We're on a leaf node. That, or the tree is empty. */
             if (node->data != NULL)
@@ -398,14 +402,73 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
 link_node*
 get_le(n_qtree* tree, unsigned int x, unsigned int y)
 {
-    long unsigned int m = weave_uints_to_luint(y, x);
-    return NULL;
+    long unsigned int m;
+    link_node* n;
+   
+    if (tree == NULL || tree->root == NULL)
+    {
+        return NULL;
+    }
+    m = weave_uints_to_luint(y, x);
+    n = get_le_rec(tree->root, m, tree->depth, 0);
+
+    if (n == NULL)
+    {
+        return NULL;
+    }
+
+    if (weave_uints_to_luint(n->y, n->x) < m)
+    {
+        /* No dp at (x, y) */
+        n = n->n;
+    }
+    else
+    {
+        /* TODO: Remove, DEBUG */
+        assert(weave_uints_to_luint(n->y, n->x) == m);
+    }
+    return n;
 }
 
 link_node*
-get_le_rec(n_qnode* n, long unsigned int m, unsigned int depth,
+get_le_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
         unsigned int current_depth)
 {
+    int i, child;
+    link_node* r = NULL;
+    
+    if (n == NULL)
+    {
+        return NULL;
+    }
+    if (node_is_leaf(n))
+    {
+        return n->data;
+    }
+
+    child = get_child_from_mcode(m, current_depth, canon_depth);
+
+    if (n->child[child] != NULL)
+    {
+        r = get_le_rec(n->child[child], m, canon_depth, current_depth + 1);
+        if (r != NULL)
+        {
+            return r;
+        }
+    }
+
+    if (r == NULL || n->child[child] == NULL)
+    {
+        for (i = child - 1; i >= 0; i--)
+        {
+            r = get_morton_highest(n->child[i]);
+            if (r != NULL)
+            {
+                return r;
+            }
+        }
+    }
+
     return NULL;
 }
 
@@ -420,11 +483,8 @@ get_morton_highest(n_qnode* n)
         /* Terminating case. */
         return NULL;
     }
-
-    if (n->child[0] == NULL && n->child[1] == NULL &&
-            n->child[2] == NULL && n->child[3] == NULL)
+    if (node_is_leaf(n))
     {
-        /* Leaf. */
         return n->data;
     }
 
@@ -451,6 +511,8 @@ main()
     insert_coord(tree, &dummy, 1, 1, 1);
     insert_coord(tree, &dummy, 15, 3, 1);
     insert_coord(tree, &dummy, 28, 0, 1);
+    insert_coord(tree, &dummy, 16, 16, 1);
+    insert_coord(tree, &dummy, 15, 15, 1);
     print_qtree_integerwise(tree, 1);
 
     printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
@@ -463,6 +525,15 @@ main()
     n = get_morton_highest(tree->root);
     assert(n != NULL);
     printf("x: %d, y: %d, n: %p\n", n->x, n->y, n->n);
+
+    n = get_le(tree, 17, 18);
+    printf("node: %p", n);
+    if (n != NULL)
+    {
+        printf(", x: %d, y: %d, n: %p", n->x, n->y, n->n);
+    }
+    printf("\n");
+
 
     /*
     bitseq* seq = new_bitseq();
