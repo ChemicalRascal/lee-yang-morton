@@ -9,8 +9,11 @@ OBJ	= bin/bitseq.o bin/qtree_testbench.o
 CFILES	= src/bitseq.c src/qtree_testbench.c
 
 VGRIND	= valgrind
-VGFLAG	= --leak-check=yes
+VGFLAG	= --leak-check=full -v
 VGCFLAG = -g -O0
+
+GDB	= gdb
+DBFLAG	= 
 
 .PHONY: default
 default: $(PROG)
@@ -31,6 +34,10 @@ val_build: clean val_set $(PROG)
 .PHONY: val
 val:	val_build
 	$(VGRIND) $(VGFLAG) ./$(PROG)
+
+.PHONY: gdb
+gdb:	val_build
+	$(GDB) $(DBFLAG) ./$(PROG)
 
 .PHONY: $(PROG)
 $(PROG): $(OBJ)
