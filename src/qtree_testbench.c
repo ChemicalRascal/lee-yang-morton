@@ -97,6 +97,9 @@ long unsigned int get_e_from_dp(unsigned int*, unsigned int*, unsigned int,
 long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
         unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int);
 
+long unsigned int get_fp_from_dp_e(long unsigned int, long unsigned int,
+        unsigned int);
+
 n_qtree*
 new_qtree(unsigned int depth)
 {
@@ -681,7 +684,6 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
         }
     }
 
-    printf("eh? ");
     return 0L;
 }
 
@@ -745,6 +747,47 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
     }
 }
 
+long unsigned int
+get_fp_from_dp_e(long unsigned int dp_mcode, long unsigned int e_mcode,
+        unsigned int tree_depth)
+{
+    long unsigned int fp_mcode = 0;
+    unsigned int dp_digit, e_digit, i;
+
+    for (i = 0; i < tree_depth; i++)
+    {
+        dp_digit = (dp_mcode >> ((tree_depth-i-1)*2) & 3);
+        e_digit = (e_mcode >> ((tree_depth-i-1)*2) & 3);
+        if (e_digit == dp_digit)
+        {
+            fp_mcode += e_digit;
+            fp_mcode <<= 2;
+        }
+        else
+        {
+            if ((e_digit - dp_digit) != 1)
+            {
+                fp_mcode += (e_digit - 1);
+                fp_mcode <<= 2;
+                i++;
+            }
+            else 
+            {
+                assert((e_digit - dp_digit) == 1);
+                fp_mcode += e_digit;
+                fp_mcode <<= 2;
+                i++;
+            }
+            break;
+        }
+    }
+    if ((tree_depth - i - 1) > 0)
+    {
+        fp_mcode <<= (tree_depth - i - 1)*2;
+    }
+    return fp_mcode;
+}
+
 int
 main()
 {
@@ -781,14 +824,22 @@ main()
     print_qtree_integerwise(tree, 1);
 
     unsigned int i, j;
+    long unsigned int dp, e, fp;
     for (i = 0; i <= 7; i++)
     {
         for (j = 0; j <= 7; j++)
         {
             if ((2 > i) || (i > 5) || (2 > j) || (j > 5))
             {
-                printf("%u, %u: %lu -> ", j, i, weave_uints_to_luint(i, j));
-                printf("%lu\n", get_e_from_dp(NULL, NULL, j, i, 2, 2, 5, 5));
+                dp = weave_uints_to_luint(i, j);
+                e = get_e_from_dp(NULL, NULL, j, i, 2, 2, 5, 5);
+                fp = get_fp_from_dp_e(dp, e, tree->depth);
+                if (e != 0)
+                {
+                printf("%u, %u: %lu -> ", j, i, dp);
+                printf("%lu -> ", e);
+                printf("%lu\n", fp);
+                }
             }
         }
     }
