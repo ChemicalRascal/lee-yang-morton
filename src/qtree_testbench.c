@@ -92,6 +92,11 @@ void insert_coord_rec(n_qnode*, void*, unsigned int, unsigned int,
         unsigned int, unsigned int, int);
 void* get_morton_lowest_rec(n_qnode* node);
 
+long unsigned int get_e_from_dp(unsigned int*, unsigned int*, unsigned int,
+        unsigned int, unsigned int, unsigned int, unsigned int, unsigned int);
+long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
+        unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int);
+
 n_qtree*
 new_qtree(unsigned int depth)
 {
@@ -500,21 +505,294 @@ get_morton_highest(n_qnode* n)
     return NULL;
 }
 
+
+/*
+ */
+long unsigned int
+get_e_from_dp(unsigned int* outx, unsigned int* outy,
+        unsigned int dpx, unsigned int dpy,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy)
+{
+    long unsigned int sw_mcode, se_mcode, nw_mcode, ne_mcode, dp_mcode;
+    unsigned int dp_region;
+
+    unsigned int closex, closey, farx, fary;
+    long unsigned int close_edge, far_edge;
+
+    sw_mcode = weave_uints_to_luint(loy, lox);
+    se_mcode = weave_uints_to_luint(loy, hix);
+    nw_mcode = weave_uints_to_luint(hiy, lox);
+    ne_mcode = weave_uints_to_luint(hiy, hix);
+    dp_mcode = weave_uints_to_luint(dpy, dpx);
+
+    if ((dp_mcode < sw_mcode) || (dp_mcode > ne_mcode))
+    {
+        /* e is undefined for dps that are fundamentally outside the mcode-low
+         * and mcode-high of the query window
+         *
+         * Which is to say the code doesn't work for those values, but
+         * Lee-Yang also doesn't need to find e for these values, so I'm just
+         * treating this as undefined rather than work out what the desired
+         * behaviour should be.
+         */
+        dp_region = 0;
+    }
+    else
+    {
+        /* Optimized search (Lee-Yang 5.4) */
+        dp_region = (dpx>=lox) + 2*(dpx>hix) + 4*(dpy>=loy) + 8*(dpy>hiy);
+    }
+    if (dp_region == 1)
+    {
+        /* S */
+
+        return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, loy);
+    }
+    else if (dp_region == 3)
+    {
+        /* SE */
+
+        if (dp_mcode < se_mcode)
+        {
+            return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, loy);
+        }
+        else
+        {
+            close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                    hix, loy, hix, hiy);
+            far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                    lox, loy, lox, hiy);
+            if (far_edge < close_edge)
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = farx;
+                    *outy = fary;
+                }
+                return far_edge;
+            }
+            else
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = closex;
+                    *outy = closey;
+                }
+                return close_edge;
+            }
+        }
+    }
+    else if (dp_region == 5)
+    {
+        /* W */
+
+        return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, lox, hiy);
+    }
+    else if (dp_region == 7)
+    {
+        /* E */
+
+        close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                hix, loy, hix, hiy);
+        far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                lox, loy, lox, hiy);
+        if (far_edge < close_edge)
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return far_edge;
+        }
+        else
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return close_edge;
+        }
+    }
+    else if (dp_region == 12)
+    {
+        /* NW */
+
+        if (dp_mcode < nw_mcode)
+        {
+            return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, lox, hiy);
+        }
+        else
+        {
+            // t
+            close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                    lox, hiy, hix, hiy);
+            // b
+            far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                    lox, loy, hix, loy);
+            if ((far_edge < close_edge) && (dp_mcode < far_edge))
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = farx;
+                    *outy = fary;
+                }
+                return far_edge;
+            }
+            else
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = closex;
+                    *outy = closey;
+                }
+                return close_edge;
+            }
+        }
+    }
+    else if (dp_region == 13)
+    {
+        /* N */
+
+        // t
+        close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                lox, hiy, hix, hiy);
+        // b
+        far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                lox, loy, hix, loy);
+        if ((far_edge < close_edge) && (dp_mcode < far_edge))
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return far_edge;
+        }
+        else {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return close_edge;
+        }
+    }
+
+    printf("eh? ");
+    return 0L;
+}
+
+/* Should return e_mcode. Return ULONG_MAX if dp is beyond the edge.
+ */
+long unsigned int
+get_e_from_dp_rec(long unsigned int dp_mcode,
+        unsigned int* outx, unsigned int* outy,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy)
+{
+    unsigned int mid, unmv, lo, hi;
+    long unsigned int mid_mcode;
+    int horiz = (loy == hiy);
+
+    if ((loy == hiy) && (lox == hix))
+    {
+        if (outx != NULL && outy != NULL)
+        {
+            *outx = lox;
+            *outy = loy;
+        }
+        return weave_uints_to_luint(loy, lox);
+    }
+
+    if (horiz) { unmv = loy; lo = lox; hi = hix; }
+    else { unmv = lox; lo = loy; hi = hiy; }
+
+    /* But wait! Without *this* check, the search fails on crossing bridges.
+     *
+     * In this case, as dp_mcode falls between the two, e is the *higher*
+     * edgepoint.
+     */
+    if (hi == lo+1)
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, hix, loy, hix, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, hiy, hix, hiy); }
+    }
+
+    mid = (lo+hi)/2;
+    if (horiz) { mid_mcode = weave_uints_to_luint(unmv, mid); }
+    else { mid_mcode = weave_uints_to_luint(mid, unmv); }
+
+    if (dp_mcode < mid_mcode)
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, mid, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, mid); }
+    }
+    else
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, mid, loy, hix, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, mid, hix, hiy); }
+    }
+}
+
 int
 main()
 {
     n_qtree* tree;
     int dummy = 1;
-    link_node* n;
+    //link_node* n;
 
-    tree = new_qtree(5);
+    tree = new_qtree(3);
+    insert_coord(tree, &dummy, 1, 0, 1);
+    insert_coord(tree, &dummy, 6, 0, 1);
     insert_coord(tree, &dummy, 1, 1, 1);
-    insert_coord(tree, &dummy, 15, 3, 1);
-    insert_coord(tree, &dummy, 28, 0, 1);
-    insert_coord(tree, &dummy, 16, 16, 1);
-    insert_coord(tree, &dummy, 15, 15, 1);
+    insert_coord(tree, &dummy, 2, 1, 1);
+    insert_coord(tree, &dummy, 4, 1, 1);
+    insert_coord(tree, &dummy, 7, 1, 1);
+    insert_coord(tree, &dummy, 0, 2, 1);
+    insert_coord(tree, &dummy, 3, 2, 1);
+    insert_coord(tree, &dummy, 6, 2, 1);
+    insert_coord(tree, &dummy, 1, 3, 1);
+    insert_coord(tree, &dummy, 3, 3, 1);
+    insert_coord(tree, &dummy, 5, 3, 1);
+    insert_coord(tree, &dummy, 7, 3, 1);
+    insert_coord(tree, &dummy, 1, 4, 1);
+    insert_coord(tree, &dummy, 4, 4, 1);
+    insert_coord(tree, &dummy, 6, 4, 1);
+    insert_coord(tree, &dummy, 0, 5, 1);
+    insert_coord(tree, &dummy, 1, 5, 1);
+    insert_coord(tree, &dummy, 4, 5, 1);
+    insert_coord(tree, &dummy, 2, 6, 1);
+    insert_coord(tree, &dummy, 5, 6, 1);
+    insert_coord(tree, &dummy, 0, 7, 1);
+    insert_coord(tree, &dummy, 3, 7, 1);
+    insert_coord(tree, &dummy, 7, 7, 1);
+
     print_qtree_integerwise(tree, 1);
 
+    unsigned int i, j;
+    for (i = 0; i <= 7; i++)
+    {
+        for (j = 0; j <= 7; j++)
+        {
+            if ((2 > i) || (i > 5) || (2 > j) || (j > 5))
+            {
+                printf("%u, %u: %lu -> ", j, i, weave_uints_to_luint(i, j));
+                printf("%lu\n", get_e_from_dp(NULL, NULL, j, i, 2, 2, 5, 5));
+            }
+        }
+    }
+
+
+    /*
     printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
 
     n = (link_node*) get_morton_lowest(tree);
@@ -534,8 +812,6 @@ main()
     }
     printf("\n");
 
-
-    /*
     bitseq* seq = new_bitseq();
 
     append_bit(seq, 1);
