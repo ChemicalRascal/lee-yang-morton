@@ -686,6 +686,8 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
 }
 
 /* Should return e_mcode. Return ULONG_MAX if dp is beyond the edge.
+ *
+ * TODO: Actually make it return ULONG_MAX if dp is beyond the edge. Or 0? IDK.
  */
 long unsigned int
 get_e_from_dp_rec(long unsigned int dp_mcode,
