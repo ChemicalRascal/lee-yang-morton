@@ -36,6 +36,7 @@ unsigned int get_as_uint_ljust(bitseq*);
 unsigned int get_as_uint_rjust(bitseq*);
 
 long unsigned int weave_uints_to_luint(unsigned int, unsigned int);
+void unweave_luint_to_uints(long unsigned int, unsigned int*, unsigned int*);
 
 void pprint_bitseq(bitseq*);
 

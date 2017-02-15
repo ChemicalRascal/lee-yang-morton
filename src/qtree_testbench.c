@@ -823,12 +823,17 @@ main()
 
     print_qtree_integerwise(tree, 1);
 
-    unsigned int i, j;
+    unsigned int i, j, x, y;
     long unsigned int dp, e, fp;
     for (i = 0; i <= 7; i++)
     {
         for (j = 0; j <= 7; j++)
         {
+            dp = weave_uints_to_luint(i, j);
+            printf("%u, %u: %lu -> ", j, i, dp);
+            unweave_luint_to_uints(dp, &y, &x);
+            printf("%u, %u\n", x, y);
+            /*
             if ((2 > i) || (i > 5) || (2 > j) || (j > 5))
             {
                 dp = weave_uints_to_luint(i, j);
@@ -841,6 +846,7 @@ main()
                 printf("%lu\n", fp);
                 }
             }
+            */
         }
     }
 

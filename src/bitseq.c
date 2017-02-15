@@ -436,6 +436,28 @@ weave_uints_to_luint(unsigned int a, unsigned int b)
     return r;
 }
 
+void
+unweave_luint_to_uints(long unsigned int x, unsigned int* a, unsigned int* b)
+{
+    unsigned int i;
+    *a = 0;
+    *b = 0;
+
+    for (i = 0; i < (CHAR_BIT * sizeof(long unsigned int)); i++)
+    {
+        if (i%2 == 0)
+        {
+            *a <<= 1;
+            *a += (x >> ((CHAR_BIT * sizeof(long unsigned int)) - i - 1))&1;
+        }
+        else
+        {
+            *b <<= 1;
+            *b += (x >> ((CHAR_BIT * sizeof(long unsigned int)) - i - 1))&1;
+        }
+    }
+}
+
 unsigned int
 get_as_uint_ljust(bitseq* seq)
 {
