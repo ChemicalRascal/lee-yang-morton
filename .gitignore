@@ -23,6 +23,7 @@ qtree_testbench
 tmp*
 dictionary*
 vcore.*
+vgcore.*
 
 # Other files
 .directory
