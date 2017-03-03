@@ -436,6 +436,9 @@ weave_uints_to_luint(unsigned int a, unsigned int b)
     return r;
 }
 
+/* TODO: Given that we can do this, it'd probably be... smarter to use a similar
+ * method for weaving.
+ */
 void
 unweave_luint_to_uints(long unsigned int x, unsigned int* a, unsigned int* b)
 {

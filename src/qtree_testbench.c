@@ -97,8 +97,10 @@ long unsigned int get_e_from_dp(unsigned int*, unsigned int*, unsigned int,
 long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
         unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int);
 
-long unsigned int get_fp_from_dp_e(long unsigned int, long unsigned int,
-        unsigned int);
+long unsigned int get_fp_from_dp_e( unsigned int*, unsigned int*,
+        long unsigned int, long unsigned int, unsigned int, unsigned int,
+        unsigned int, unsigned int, unsigned int, unsigned int, unsigned int,
+        unsigned int, unsigned int);
 
 n_qtree*
 new_qtree(unsigned int depth)
@@ -508,8 +510,10 @@ get_morton_highest(n_qnode* n)
     return NULL;
 }
 
-
-/*
+/* Returns the mcode of e.
+ *
+ * outx: Pointer to where the x-coord of e should be stored.
+ * outy: Pointer to where the y-coord of e should be stored.
  */
 long unsigned int
 get_e_from_dp(unsigned int* outx, unsigned int* outy,
@@ -684,6 +688,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
         }
     }
 
+    /* Something is horribly wrong. */
     return 0L;
 }
 
@@ -747,12 +752,38 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
     }
 }
 
+/* Warning: Here be excessive function parameters.
+ */
 long unsigned int
-get_fp_from_dp_e(long unsigned int dp_mcode, long unsigned int e_mcode,
+get_fp_from_dp_e(
+        unsigned int* outx, unsigned int* outy,
+        long unsigned int dp_mcode, long unsigned int e_mcode,
+        unsigned int dpx, unsigned int dpy,
+        unsigned int e_x, unsigned int e_y,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy,
         unsigned int tree_depth)
 {
     long unsigned int fp_mcode = 0;
-    unsigned int dp_digit, e_digit, i;
+    unsigned int dp_digit, e_digit, i, e_minor_y, e_minor_x;
+
+    /* Check to see if e_mcode-1, "e minor", is within the query window. If it
+     * is *not*, walking back would give the wrong result.
+     */
+    unweave_luint_to_uints(e_mcode-1, &e_minor_y, &e_minor_x);
+    if (!((lox <= e_minor_x) && (e_minor_x <= hix) && (loy <= e_minor_y)
+            && (e_minor_y <= hiy)))
+    {
+        /* e_mcode - 1 is outside the query window, so e is not after a
+         * "crossing bridge. So, fp = e.
+         */
+        if ((outx != NULL) && (outy != NULL))
+        {
+            *outx = e_x;
+            *outy = e_y;
+        }
+        return e_mcode;
+    }
 
     for (i = 0; i < tree_depth; i++)
     {
@@ -829,115 +860,29 @@ main()
     {
         for (j = 0; j <= 7; j++)
         {
+            /*
             dp = weave_uints_to_luint(i, j);
             printf("%u, %u: %lu -> ", j, i, dp);
             unweave_luint_to_uints(dp, &y, &x);
             printf("%u, %u\n", x, y);
-            /*
+            */
             if ((2 > i) || (i > 5) || (2 > j) || (j > 5))
             {
+                unsigned int e_x, e_y;
                 dp = weave_uints_to_luint(i, j);
-                e = get_e_from_dp(NULL, NULL, j, i, 2, 2, 5, 5);
-                fp = get_fp_from_dp_e(dp, e, tree->depth);
+                e = get_e_from_dp(&e_x, &e_y, j, i, 2, 2, 5, 5);
+                fp = get_fp_from_dp_e(NULL, NULL, dp, e, j, i, e_x, e_y, 2, 2,
+                        5, 5, tree->depth);
+
                 if (e != 0)
                 {
-                printf("%u, %u: %lu -> ", j, i, dp);
-                printf("%lu -> ", e);
-                printf("%lu\n", fp);
+                    printf("%u, %u: %lu -> ", j, i, dp);
+                    printf("%lu -> ", e);
+                    printf("%lu\n", fp);
                 }
             }
-            */
         }
     }
-
-
-    /*
-    printf("0,20 to 20,0: %d\n", range_query_coord(tree, 0, 20, 20, 0));
-
-    n = (link_node*) get_morton_lowest(tree);
-    assert(n != NULL);
-    printf("x: %d, y: %d\n", n->x, n->y);
-    link_nodes_morton(tree);
-
-    n = get_morton_highest(tree->root);
-    assert(n != NULL);
-    printf("x: %d, y: %d, n: %p\n", n->x, n->y, n->n);
-
-    n = get_le(tree, 17, 18);
-    printf("node: %p", n);
-    if (n != NULL)
-    {
-        printf(", x: %d, y: %d, n: %p", n->x, n->y, n->n);
-    }
-    printf("\n");
-
-    bitseq* seq = new_bitseq();
-
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-
-    append_bit(seq, 0);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-
-    append_bit(seq, 1);
-    append_bit(seq, 0);
-    append_bit(seq, 1);
-
-    pprint_bitseq(seq);
-
-
-    unsigned int a = 1;
-    unsigned int i;
-
-    htobe((void*) &a, sizeof(unsigned int) * CHAR_BIT);
-
-    for (i = 0; i < (sizeof(unsigned int)*CHAR_BIT); i++)
-    {
-        printf("%u", get_bit_void_ptr((void*) &a, i));
-        if (i % CHAR_BIT == CHAR_BIT - 1)
-        {
-            printf(" ");
-        }
-    }
-    printf("\n");
-
-    a = 4;
-    bitseq* seq2 = weave_uints(a, a);
-    pprint_bitseq(seq2);
-
-    printf("%lu\n", get_as_luint_ljust(seq2));
-    printf("%lu\n", get_as_luint_rjust(seq2));
-    printf("%u\n", get_as_uint_ljust(seq2));
-    printf("%u\n", get_as_uint_rjust(seq2));
-
-    bitseq* seq3 = weave_uints(4859,    0);
-    bitseq* seq4 = weave_uints(4859,    74);
-
-    pprint_bitseq(seq3);
-    pprint_bitseq(seq4);
-
-    bitseq* seq5 = weave_uints(INT_MAX  -1, 74);
-    bitseq* seq6 = weave_uints(UINT_MAX -1, 74);
-
-    pprint_bitseq(seq5);
-    pprint_bitseq(seq6);
-
-    bitseq* seq7 = new_bitseq_from_uint(555);
-    printf("%u\n", get_as_uint_rjust(seq7));
-    pprint_bitseq(seq7);
-    */
 
     return 0;
 }
