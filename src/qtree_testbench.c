@@ -380,8 +380,6 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
             {
                 ((link_node*)node->data)->n = *p;
                 *p = node->data;
-                printf("Found %p, linked it to %p\n", *p,
-                        ((link_node*)node->data)->n);
             }
             else
             {
@@ -404,8 +402,9 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
              * be "lowest" (by Morton order) data point accessible from this
              * node.
              */
+            /* TODO: Remove this. It isn't used. */
             node->data = *p;
-            printf("Linked a branch to %p\n", node->data);
+            //printf("Linked a branch to %p\n", node->data);
         }
     }
     return;
@@ -877,14 +876,11 @@ lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
 
     le_mcode = weave_uints_to_luint(loy, lox);
     ge_mcode = weave_uints_to_luint(hiy, hix);
-    printf("%lu -> %lu\n", le_mcode, ge_mcode);
 
     n = get_dp_mcode(tree, le_mcode);
-    printf("%p\n", n);
 
     while ((n != NULL) && (weave_uints_to_luint(n->y, n->x) <= ge_mcode))
     {
-        printf("flag1\n");
         if ((lox <= n->x) && (n->x <= hix) && (loy <= n->y) && (n->y <= hiy))
         {
             /* We're in an internal run. */
