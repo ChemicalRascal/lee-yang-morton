@@ -96,10 +96,12 @@ long unsigned int get_e_from_dp(unsigned int*, unsigned int*, unsigned int,
         unsigned int, unsigned int, unsigned int, unsigned int, unsigned int);
 long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
         unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int);
-
 long unsigned int get_fp_from_dp_e(unsigned int*, unsigned int*,
         long unsigned int, long unsigned int, unsigned int, unsigned int,
         unsigned int, unsigned int, unsigned int);
+/* Hint: This is the one that matters. */
+long unsigned int get_fp_from_dp(unsigned int, unsigned int, unsigned int,
+        unsigned int, unsigned int, unsigned int, unsigned int);
 
 n_qtree*
 new_qtree(unsigned int depth)
@@ -691,7 +693,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
     return 0L;
 }
 
-/* Should return e_mcode. Return ULONG_MAX if dp is beyond the edge.
+/* Returns e_mcode. Returns ULONG_MAX if dp is beyond the edge.
  *
  * TODO: Actually make it return ULONG_MAX if dp is beyond the edge. Or 0? IDK.
  */
@@ -819,6 +821,30 @@ get_fp_from_dp_e(
     return fp_mcode;
 }
 
+/* Returns the mcode of fp.
+ *
+ * dpx, dpy:    Co-ords of dp.
+ * lox, loy:    Co-ords of query SW corner.
+ * hix, hiy:    Co-ords of query NE corner.
+ * tree_depth:  Canonical depth of qtree.
+ */
+long unsigned int
+get_fp_from_dp(unsigned int dpx, unsigned int dpy,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy,
+        unsigned int tree_depth)
+{
+    long unsigned int mcode, dp_mcode;
+
+    dp_mcode = weave_uints_to_luint(dpy, dpx);
+
+    mcode = get_e_from_dp(NULL, NULL, dpx, dpy, lox, loy, hix, hiy);
+    mcode = get_fp_from_dp_e(NULL, NULL, dp_mcode, mcode, lox, loy, hix, hiy,
+            tree_depth);
+
+    return mcode;
+}
+
 int
 main()
 {
@@ -854,7 +880,7 @@ main()
 
     print_qtree_integerwise(tree, 1);
 
-    unsigned int i, j, x, y;
+    unsigned int i, j;
     long unsigned int dp, e, fp;
     for (i = 0; i <= 7; i++)
     {
@@ -873,6 +899,7 @@ main()
                 e = get_e_from_dp(&e_x, &e_y, j, i, 2, 2, 5, 5);
                 fp = get_fp_from_dp_e(NULL, NULL, dp, e, 2, 2, 5, 5,
                         tree->depth);
+                assert(fp == get_fp_from_dp(j, i, 2, 2, 5, 5, tree->depth));
 
                 if (e != 0)
                 {
