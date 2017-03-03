@@ -97,10 +97,9 @@ long unsigned int get_e_from_dp(unsigned int*, unsigned int*, unsigned int,
 long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
         unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int);
 
-long unsigned int get_fp_from_dp_e( unsigned int*, unsigned int*,
+long unsigned int get_fp_from_dp_e(unsigned int*, unsigned int*,
         long unsigned int, long unsigned int, unsigned int, unsigned int,
-        unsigned int, unsigned int, unsigned int, unsigned int, unsigned int,
-        unsigned int, unsigned int);
+        unsigned int, unsigned int, unsigned int);
 
 n_qtree*
 new_qtree(unsigned int depth)
@@ -758,15 +757,16 @@ long unsigned int
 get_fp_from_dp_e(
         unsigned int* outx, unsigned int* outy,
         long unsigned int dp_mcode, long unsigned int e_mcode,
-        unsigned int dpx, unsigned int dpy,
-        unsigned int e_x, unsigned int e_y,
         unsigned int lox, unsigned int loy,
         unsigned int hix, unsigned int hiy,
         unsigned int tree_depth)
 {
     long unsigned int fp_mcode = 0;
-    unsigned int dp_digit, e_digit, i, e_minor_y, e_minor_x;
+    unsigned int dp_digit, e_digit, i, e_minor_y, e_minor_x,
+                 e_x, e_y, dpx, dpy;
 
+    unweave_luint_to_uints(e_mcode, &e_y, &e_x);
+    unweave_luint_to_uints(dp_mcode, &dpy, &dpx);
     /* Check to see if e_mcode-1, "e minor", is within the query window. If it
      * is *not*, walking back would give the wrong result.
      */
@@ -871,8 +871,8 @@ main()
                 unsigned int e_x, e_y;
                 dp = weave_uints_to_luint(i, j);
                 e = get_e_from_dp(&e_x, &e_y, j, i, 2, 2, 5, 5);
-                fp = get_fp_from_dp_e(NULL, NULL, dp, e, j, i, e_x, e_y, 2, 2,
-                        5, 5, tree->depth);
+                fp = get_fp_from_dp_e(NULL, NULL, dp, e, 2, 2, 5, 5,
+                        tree->depth);
 
                 if (e != 0)
                 {
