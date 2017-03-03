@@ -79,8 +79,9 @@ void* query_coord(n_qtree*, unsigned int, unsigned int);
 void* get_morton_lowest(n_qtree* tree);
 void print_qtree_integerwise(n_qtree*, int);
 
-link_node* get_le(n_qtree*, unsigned int, unsigned int);
-link_node* get_le_rec(n_qnode*, long unsigned int, unsigned int, unsigned int);
+link_node* get_dp(n_qtree*, unsigned int, unsigned int);
+link_node* get_dp_mcode(n_qtree*, long unsigned int);
+link_node* get_dp_rec(n_qnode*, long unsigned int, unsigned int, unsigned int);
 link_node* get_morton_highest(n_qnode*);
 
 void link_nodes_morton(n_qtree*);
@@ -410,18 +411,24 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
     return;
 }
 
+/* Returns the data point at a given co-ordinate. If no such data point exists,
+ * returns the next highest datapoint.
+ */
 link_node*
-get_le(n_qtree* tree, unsigned int x, unsigned int y)
+get_dp(n_qtree* tree, unsigned int x, unsigned int y)
 {
-    long unsigned int m;
+    return get_dp_mcode(tree, weave_uints_to_luint(y, x));
+}
+
+/* Returns the data point for a given morton code. If no such data point
+ * exists, returns the next highest datapoint.
+ */
+link_node*
+get_dp_mcode(n_qtree* tree, long unsigned int m)
+{
     link_node* n;
-   
-    if (tree == NULL || tree->root == NULL)
-    {
-        return NULL;
-    }
-    m = weave_uints_to_luint(y, x);
-    n = get_le_rec(tree->root, m, tree->depth, 0);
+
+    n = get_dp_rec(tree->root, m, tree->depth, 0);
 
     if (n == NULL)
     {
@@ -430,7 +437,7 @@ get_le(n_qtree* tree, unsigned int x, unsigned int y)
 
     if (weave_uints_to_luint(n->y, n->x) < m)
     {
-        /* No dp at (x, y) */
+        /* No dp at that mcode */
         n = n->n;
     }
     else
@@ -442,7 +449,7 @@ get_le(n_qtree* tree, unsigned int x, unsigned int y)
 }
 
 link_node*
-get_le_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
+get_dp_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
         unsigned int current_depth)
 {
     int i, child;
@@ -461,7 +468,7 @@ get_le_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
 
     if (n->child[child] != NULL)
     {
-        r = get_le_rec(n->child[child], m, canon_depth, current_depth + 1);
+        r = get_dp_rec(n->child[child], m, canon_depth, current_depth + 1);
         if (r != NULL)
         {
             return r;
