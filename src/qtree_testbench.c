@@ -852,6 +852,60 @@ get_fp_from_dp(unsigned int dpx, unsigned int dpy,
     return mcode;
 }
 
+/* Performs a Lee-Yang, Morton-path based range query on the window defined
+ * by (lox, loy) and (hix, hiy). Returns the number of data points in the
+ * window.
+ *
+ * tree:    Pointer to n_qtree to perform the range query upon. Must have been
+ *          initialised properly, and must use link_nodes.
+ * lox:     x-coord of SW corner of query window
+ * loy:     y-coord of SW corner of query window
+ * hix:     x-coord of NE corner of query window
+ * hiy:     y-coord of NE corner of query window
+ */
+long unsigned int
+lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
+        unsigned int hiy)
+{
+    long unsigned int le_mcode, ge_mcode, count = 0L;
+    link_node* n;
+
+    if ((tree == NULL) || (tree->root == NULL))
+    {
+        return 0L;
+    }
+
+    le_mcode = weave_uints_to_luint(loy, lox);
+    ge_mcode = weave_uints_to_luint(hiy, hix);
+    printf("%lu -> %lu\n", le_mcode, ge_mcode);
+
+    n = get_dp_mcode(tree, le_mcode);
+    printf("%p\n", n);
+
+    while ((n != NULL) && (weave_uints_to_luint(n->y, n->x) <= ge_mcode))
+    {
+        printf("flag1\n");
+        if ((lox <= n->x) && (n->x <= hix) && (loy <= n->y) && (n->y <= hiy))
+        {
+            /* We're in an internal run. */
+            count += 1;
+            n = n->n;
+            continue;
+        }
+        else
+        {
+            /* We're in an external run. Skip it -- not nessecarily *to* an
+             * internal run, mind, but at a minimum we can go to the next dp
+             * that is after *this* external run.
+             */
+            n = get_dp_mcode(tree, get_fp_from_dp(n->x, n->y, lox, loy, hix,
+                        hiy, tree->depth));
+        }
+    }
+
+    return count;
+}
+
 int
 main()
 {
@@ -885,7 +939,11 @@ main()
     insert_coord(tree, &dummy, 3, 7, 1);
     insert_coord(tree, &dummy, 7, 7, 1);
 
+    link_nodes_morton(tree);
+
     print_qtree_integerwise(tree, 1);
+
+    printf("(2,2)->(5,5): %lu\n", lee_yang(tree, 2, 2, 5, 5));
 
     unsigned int i, j;
     long unsigned int dp, e, fp;
