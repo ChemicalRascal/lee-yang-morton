@@ -24,8 +24,13 @@ qsiseq* new_qsiseq();
 
 void qsi_set_u(qsiseq*, long unsigned int);
 void qsi_set_n(qsiseq*, long unsigned int);
+unsigned int qsi_lowbit_length(qsiseq*);
 
 long unsigned int qsi_get_upper(qsiseq*, long unsigned int);
 long unsigned int qsi_get_final_upper(qsiseq*);
+
+void qsi_append(qsiseq*, long unsigned int);
+
+void pprint_qsiseq(qsiseq*);
 
 #endif /* QSI_H */

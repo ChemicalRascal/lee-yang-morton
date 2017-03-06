@@ -44,6 +44,36 @@ qsi_set_n(qsiseq* seq, long unsigned int n)
     seq->n = n;
 }
 
+/* max(0, floor(log(u/n)))
+ */
+unsigned int
+qsi_lowbit_length(qsiseq* seq)
+{
+    unsigned int count = 0;
+    long unsigned int q;
+
+    if (seq->n == 0)
+    {
+        return 0;
+    }
+    q = seq->u/seq->n;
+
+    /* This, admittedly, assumes that the log function specified in Vigna's
+     * paper for this calculation is base 2, not a natural log.
+     */
+    while (q != 0)
+    {
+        q >>= 1;
+        count += 1;
+    }
+    if (count != 0)
+    {
+        count -= 1;
+    }
+
+    return count;
+}
+
 /* Where n is zero-indexed.
  */
 long unsigned int
@@ -77,4 +107,30 @@ qsi_get_final_upper(qsiseq* seq)
      * now, it does! Never not explot integer overflow.
      */
     return qsi_get_upper(seq, ULONG_MAX);
+}
+
+void
+qsi_append(qsiseq* seq, long unsigned int a)
+{
+    unsigned int l = qsi_lowbit_length(seq);
+
+    /* Low bits */
+    if (l > 0)
+    {
+        append_luint_bits_low(seq->lo, a, qsi_lowbit_length(seq));
+    }
+
+    /* High bits */
+    a >>= l;
+    a -= qsi_get_final_upper(seq);
+    append_uint_in_unary(seq->hi, a);
+}
+
+void
+pprint_qsiseq(qsiseq* seq)
+{
+    printf("hi: ");
+    pprint_bitseq(seq->hi);
+    printf("lo: ");
+    pprint_bitseq(seq->lo);
 }

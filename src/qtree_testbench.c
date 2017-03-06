@@ -975,28 +975,17 @@ main()
 
     printf("---\n");
 
-    
-    bitseq* s1 = new_bitseq();
-
-    append_uint_in_unary(s1, 15);
-    append_uint_in_unary(s1, 5);
-    append_uint_in_unary(s1, 2);
-    append_uint_in_unary(s1, 3);
-
-    pprint_bitseq(s1);
-
     qsiseq* qsiseq = new_qsiseq();
-    qsiseq->hi = s1;
+    qsi_set_u(qsiseq, 36);
+    qsi_set_n(qsiseq, 5);
 
-    unsigned int index = 0;
-    for (int i = 0; i < 20; i++)
-    {
-        printf("%u: %lu, ", read_unary_as_uint(s1, &index),
-                qsi_get_upper(qsiseq, i));
-    }
-    printf("\n");
+    qsi_append(qsiseq, 5);
+    qsi_append(qsiseq, 8);
+    qsi_append(qsiseq, 8);
+    qsi_append(qsiseq, 15);
+    qsi_append(qsiseq, 32);
 
-    printf("%lu\n", qsi_get_final_upper(qsiseq));
+    pprint_qsiseq(qsiseq);
 
     return 0;
 }
