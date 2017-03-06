@@ -239,6 +239,9 @@ append_bit(bitseq* seq, unsigned char bit)
     return;
 }
 
+/* Returns 2 if seq is null, has nothing in it, or if index is beyond the end
+ * of the sequence.
+ */
 unsigned char
 get_bit(bitseq* seq, unsigned int index)
 {
@@ -557,4 +560,42 @@ append_uint_in_unary(bitseq* seq, unsigned int a)
         a--;
     }
     append_bit(seq, 1);
+}
+
+/* Reads the unary code starting at position *index as an unsigned int.
+ *
+ * Also increments *index, thus it will index to the bit after the read unary
+ * code, making successive reads (theoretically) easier.
+ *
+ * If index is NULL, the read starts at the start of the sequence.
+ *
+ * Returns UINT_MAX if *index is beyond the length of seq (in which case it
+ * doesn't get incremented), or the read runs over the end of the sequence (in
+ * which case it does).
+ */
+unsigned int
+read_unary_as_uint(bitseq* seq, unsigned int* index)
+{
+    unsigned int count = 0;
+    unsigned char r;
+
+    if (index == NULL)
+    {
+        return read_unary_as_uint(seq, &count);
+    }
+
+    r = get_bit(seq, *index);
+    while(r == 0)
+    {
+        *index = *index + 1;
+        count++;
+        r = get_bit(seq, *index);
+    }
+    if (r == 2)
+    {
+        return UINT_MAX;
+    }
+
+    *index = *index + 1;
+    return count;
 }

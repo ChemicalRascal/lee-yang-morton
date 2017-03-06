@@ -976,15 +976,20 @@ main()
 
     
     bitseq* s1 = new_bitseq();
-    bitseq* s2 = new_bitseq();
 
-    append_luint_bits_low(s1, 103, 3);
-    append_luint_bits_low(s2, 103, 16);
+    append_uint_in_unary(s1, 15);
+    append_uint_in_unary(s1, 5);
+    append_uint_in_unary(s1, 2);
+    append_uint_in_unary(s1, 3);
 
     pprint_bitseq(s1);
-    pprint_bitseq(s2);
-    append_luint_bits_low(s1, 100, 3);
-    pprint_bitseq(s1);
+
+    unsigned int index = 0;
+    for (int i = 0; i < 20; i++)
+    {
+        printf("%u ", read_unary_as_uint(s1, &index));
+    }
+    printf("\n");
 
     return 0;
 }

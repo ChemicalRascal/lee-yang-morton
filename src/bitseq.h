@@ -26,6 +26,8 @@ void append_uint_in_unary(bitseq*, unsigned int);
 
 unsigned char get_bit(bitseq*, unsigned int);
 
+unsigned int read_unary_as_uint(bitseq*, unsigned int*);
+
 bitseq* new_bitseq_from_ptr(void*, unsigned int);
 bitseq* new_bitseq_from_int(int);
 bitseq* new_bitseq_from_uint(unsigned int);
