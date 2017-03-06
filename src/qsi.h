@@ -14,10 +14,18 @@
 
 typedef struct qsiseq_s
 {
-    bitseq* hi; // High-bits sequence
-    bitseq* lo; // Low-bits sequence
+    bitseq*             hi; // High-bits sequence
+    bitseq*             lo; // Low-bits sequence
+    long unsigned int   u;  // Upper bound
+    long unsigned int   n;  // (Expected) number of elements
 } qsiseq;
 
 qsiseq* new_qsiseq();
+
+void qsi_set_u(qsiseq*, long unsigned int);
+void qsi_set_n(qsiseq*, long unsigned int);
+
+long unsigned int qsi_get_upper(qsiseq*, long unsigned int);
+long unsigned int qsi_get_final_upper(qsiseq*);
 
 #endif /* QSI_H */

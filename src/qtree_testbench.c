@@ -985,13 +985,18 @@ main()
 
     pprint_bitseq(s1);
 
+    qsiseq* qsiseq = new_qsiseq();
+    qsiseq->hi = s1;
+
     unsigned int index = 0;
     for (int i = 0; i < 20; i++)
     {
-        printf("%u ", read_unary_as_uint(s1, &index));
+        printf("%u: %lu, ", read_unary_as_uint(s1, &index),
+                qsi_get_upper(qsiseq, i));
     }
     printf("\n");
 
-    return 0;
+    printf("%lu\n", qsi_get_final_upper(qsiseq));
 
+    return 0;
 }
