@@ -4,9 +4,9 @@ RM	= rm
 RMFLAGS	= -f
 
 PROG	= qtree_testbench
-DEPS	= src/bitseq.h
-OBJ	= bin/bitseq.o bin/qtree_testbench.o
-CFILES	= src/bitseq.c src/qtree_testbench.c
+DEPS	= src/bitseq.h src/qsi.h
+OBJ	= bin/bitseq.o bin/qsi.o bin/qtree_testbench.o
+CFILES	= src/bitseq.c src/qsi.c src/qtree_testbench.c
 
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
