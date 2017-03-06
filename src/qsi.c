@@ -10,10 +10,9 @@
 #include "qsi.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <assert.h>
-
-#include "bitseq.h"
 
 qsiseq*
 new_qsiseq()

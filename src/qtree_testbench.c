@@ -13,6 +13,7 @@
 #include <stdarg.h>
 
 #include "bitseq.h"
+#include "qsi.h"
 
 #include <limits.h>
 
@@ -992,4 +993,5 @@ main()
     printf("\n");
 
     return 0;
+
 }

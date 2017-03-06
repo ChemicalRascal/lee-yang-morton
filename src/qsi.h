@@ -7,6 +7,11 @@
  *
  *******************************************/
 
+#ifndef QSI_H
+#define QSI_H
+
+#include "bitseq.h"
+
 typedef struct qsiseq_s
 {
     bitseq* hi; // High-bits sequence
@@ -14,3 +19,5 @@ typedef struct qsiseq_s
 } qsiseq;
 
 qsiseq* new_qsiseq();
+
+#endif /* QSI_H */

@@ -7,6 +7,9 @@
  *
  *******************************************/
 
+#ifndef BITSEQ_H
+#define BITSEQ_H
+
 typedef struct bitseq_s
 {
     unsigned int    length;     // In bits
@@ -49,3 +52,5 @@ void pprint_bitseq(bitseq*);
 
 unsigned char get_bit_void_ptr(void*, unsigned int);
 void htobe(void*, unsigned int);
+
+#endif /* BITSEQ_H */
