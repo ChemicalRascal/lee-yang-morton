@@ -972,5 +972,19 @@ main()
         }
     }
 
+    printf("---\n");
+
+    
+    bitseq* s1 = new_bitseq();
+    bitseq* s2 = new_bitseq();
+
+    append_luint_bits_low(s1, 103, 3);
+    append_luint_bits_low(s2, 103, 16);
+
+    pprint_bitseq(s1);
+    pprint_bitseq(s2);
+    append_luint_bits_low(s1, 100, 3);
+    pprint_bitseq(s1);
+
     return 0;
 }

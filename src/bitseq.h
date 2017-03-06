@@ -20,6 +20,10 @@ void free_bitseq(bitseq*);
 void insert_bit(bitseq*, unsigned int, unsigned char);
 void append_bit(bitseq*, unsigned char);
 
+void append_luint_bits_low(bitseq*, long unsigned int, unsigned int);
+
+void append_uint_in_unary(bitseq*, unsigned int);
+
 unsigned char get_bit(bitseq*, unsigned int);
 
 bitseq* new_bitseq_from_ptr(void*, unsigned int);

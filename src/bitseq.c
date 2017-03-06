@@ -531,3 +531,30 @@ pprint_bitseq(bitseq* seq)
     printf("\n");
     return;
 }
+
+/* Appends the lowest n bits of a to seq.
+ */
+void
+append_luint_bits_low(bitseq* seq, long unsigned int a, unsigned int n)
+{
+    long int i;
+    for (i = n - 1; i >= 0; i--)
+    {
+        append_bit(seq, (unsigned char)((a>>i)&1));
+    }
+}
+
+/* Appends a as a unary-encoded integer to seq.
+ *
+ * NB: Unary encoding is defined as 0^a1.
+ */
+void
+append_uint_in_unary(bitseq* seq, unsigned int a)
+{
+    while (a > 0)
+    {
+        append_bit(seq, 0);
+        a--;
+    }
+    append_bit(seq, 1);
+}
