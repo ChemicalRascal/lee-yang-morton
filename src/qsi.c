@@ -37,6 +37,7 @@ new_qsiseq()
     q->hi = new_bitseq();
     q->lo = new_bitseq();
     q->hi_psums = new_qsipsums();
+    q->len = 0;
     return q;
 }
 
@@ -160,6 +161,8 @@ qsi_append(qsiseq* seq, long unsigned int a)
     a >>= l;
     a -= qsi_get_final_upper(seq);
     append_uint_in_unary(seq->hi, a);
+
+    seq->len += 1;
 }
 
 void

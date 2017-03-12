@@ -44,6 +44,7 @@ typedef struct qsiseq_s
     bitseq*             lo; // Low-bits sequence
     long unsigned int   u;  // Upper bound
     long unsigned int   n;  // (Expected) number of elements
+    long unsigned int   len;// Current number of elements
 
     qsipsums*           hi_psums;   // Partial sums array for high-bit seq.
 } qsiseq;
