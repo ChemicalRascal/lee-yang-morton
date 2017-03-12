@@ -14,14 +14,50 @@
 #include <limits.h>
 #include <assert.h>
 
+#define QSI_INIT_PSUMS_LEN  10
+
+qsipsums*
+new_qsipsums()
+{
+    qsipsums* s;
+    s = malloc(sizeof(qsipsums));
+    assert(s != NULL);
+    s->psums = calloc(QSI_INIT_PSUMS_LEN, sizeof(qsipsum));
+    s->len  = 0;
+    s->size = QSI_INIT_PSUMS_LEN;
+    return s;
+}
+
 qsiseq*
 new_qsiseq()
 {
     qsiseq* q;
     q = malloc(sizeof(qsiseq));
+    assert(q != NULL);
     q->hi = new_bitseq();
     q->lo = new_bitseq();
+    q->hi_psums = new_qsipsums();
     return q;
+}
+
+void
+qsi_append_psum(qsiseq* seq, long unsigned int index, long unsigned int sum)
+{
+    qsipsums* sums = seq->hi_psums;
+    if (sums->len >= sums->size)
+    {
+        if (sums->size == 0)
+        {
+            /* This shouldn't be possible, but whatever */
+            sums->size = 1;
+        }
+        sums->psums = realloc(sums->psums, sizeof(qsipsum)*(sums->size)*2);
+        assert(sums->psums != NULL);
+        sums->size *= 2;
+    }
+    sums->psums[sums->len].index = index;
+    sums->psums[sums->len].sum = sum;
+    sums->len += 1;
 }
 
 void
@@ -127,10 +163,23 @@ qsi_append(qsiseq* seq, long unsigned int a)
 }
 
 void
+pprint_qsipsums(qsipsums* sums)
+{
+    long unsigned int i;
+    for (i = 0; i < sums->len; i++)
+    {
+        printf("%lu:%lu, ", sums->psums[i].index, sums->psums[i].sum);
+    }
+    printf("\n");
+}
+
+void
 pprint_qsiseq(qsiseq* seq)
 {
     printf("hi: ");
     pprint_bitseq(seq->hi);
     printf("lo: ");
     pprint_bitseq(seq->lo);
+    printf("hi_psums: ");
+    pprint_qsipsums(seq->hi_psums);
 }

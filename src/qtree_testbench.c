@@ -985,6 +985,11 @@ main()
     qsi_append(qsiseq, 15);
     qsi_append(qsiseq, 32);
 
+    qsi_append_psum(qsiseq, 1, 1);
+    qsi_append_psum(qsiseq, 2, 4);
+    qsi_append_psum(qsiseq, 3, 6);
+    qsi_append_psum(qsiseq, 4, 8);
+
     pprint_qsiseq(qsiseq);
 
     return 0;

@@ -12,12 +12,40 @@
 
 #include "bitseq.h"
 
+/* psum: Partial sum. Which is, fundamentally, what this structure
+ * is used for: Partial sums of the unary-encoded array.
+ */
+typedef struct qsipsum_s
+{
+    /* I think luint sum is justified due to it being used in the Lee-Yang
+     * implementation, which uses luints for the Morton codes (ergo, sum needs
+     * to potentially go up to luint max).
+     *
+     * luint index is there for consistency and because I think bitseq->length
+     * might need to move from uint to luint lengths at some point anyway.
+     */
+    long unsigned int   index;
+    long unsigned int   sum;
+} qsipsum;
+
+/* By having a list of partial sums, we can use partial sums as a skip-ahead
+ * method.
+ */
+typedef struct qsipsums_s
+{
+    long unsigned int   len;
+    long unsigned int   size;
+    qsipsum*            psums;
+} qsipsums;
+
 typedef struct qsiseq_s
 {
     bitseq*             hi; // High-bits sequence
     bitseq*             lo; // Low-bits sequence
     long unsigned int   u;  // Upper bound
     long unsigned int   n;  // (Expected) number of elements
+
+    qsipsums*           hi_psums;   // Partial sums array for high-bit seq.
 } qsiseq;
 
 qsiseq* new_qsiseq();
@@ -30,6 +58,7 @@ long unsigned int qsi_get_upper(qsiseq*, long unsigned int);
 long unsigned int qsi_get_final_upper(qsiseq*);
 
 void qsi_append(qsiseq*, long unsigned int);
+void qsi_append_psum(qsiseq*, long unsigned int, long unsigned int);
 
 void pprint_qsiseq(qsiseq*);
 
