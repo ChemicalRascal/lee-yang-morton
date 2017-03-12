@@ -2,11 +2,14 @@ CC  	= gcc
 CFLAGS	= -Wall
 RM	= rm
 RMFLAGS	= -f
+MKDIR	= mkdir
+MDFLAGS	= -p
 
 PROG	= qtree_testbench
 DEPS	= src/bitseq.h src/qsi.h
 OBJ	= bin/bitseq.o bin/qsi.o bin/qtree_testbench.o
 CFILES	= src/bitseq.c src/qsi.c src/qtree_testbench.c
+BINDIR	= bin/
 
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
@@ -21,7 +24,10 @@ default: $(PROG)
 .PHONY: all
 all: clean $(PROG)
 
-bin/%.o: src/%.c $(DEPS)
+$(BINDIR):
+	$(MKDIR) $(MDFLAGS) $(BINDIR)
+
+bin/%.o: src/%.c $(DEPS) $(BINDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: val_set
