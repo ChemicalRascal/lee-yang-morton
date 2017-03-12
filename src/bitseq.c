@@ -574,9 +574,9 @@ append_uint_in_unary(bitseq* seq, unsigned int a)
  * which case it does).
  */
 unsigned int
-read_unary_as_uint(bitseq* seq, unsigned int* index)
+read_unary_as_uint(bitseq* seq, long unsigned int* index)
 {
-    unsigned int count = 0;
+    long unsigned int count = 0;
     unsigned char r;
 
     if (index == NULL)

@@ -116,8 +116,7 @@ qsi_lowbit_length(qsiseq* seq)
 long unsigned int
 qsi_get_upper(qsiseq* seq, long unsigned int i)
 {
-    long unsigned int sum, ret, j;
-    unsigned int hi_seq_index;
+    long unsigned int sum, ret, j, hi_seq_index;
     hi_seq_index = 0;
     sum = 0;
 
