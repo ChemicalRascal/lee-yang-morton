@@ -24,7 +24,8 @@ typedef struct qsipsum_s
      * luint index is there for consistency and because I think bitseq->length
      * might need to move from uint to luint lengths at some point anyway.
      */
-    long unsigned int   index;
+    long unsigned int   index;  // Index of the bit from which to read *from*.
+                                // Ergo, works with read_unary_as_uint()
     long unsigned int   sum;
 } qsipsum;
 
@@ -46,6 +47,7 @@ typedef struct qsiseq_s
     long unsigned int   n;  // (Expected) number of elements
     long unsigned int   len;// Current number of elements
 
+    unsigned int        q;  // "Quantum" for hi_psums
     qsipsums*           hi_psums;   // Partial sums array for high-bit seq.
 } qsiseq;
 
@@ -60,6 +62,8 @@ long unsigned int qsi_get_final_upper(qsiseq*);
 
 void qsi_append(qsiseq*, long unsigned int);
 void qsi_append_psum(qsiseq*, long unsigned int, long unsigned int);
+
+void qsi_update_psums(qsiseq*);
 
 void pprint_qsiseq(qsiseq*);
 

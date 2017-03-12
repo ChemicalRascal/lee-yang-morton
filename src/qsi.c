@@ -15,6 +15,7 @@
 #include <assert.h>
 
 #define QSI_INIT_PSUMS_LEN  10
+#define QSI_DEFAULT_Q       8
 
 qsipsums*
 new_qsipsums()
@@ -38,6 +39,7 @@ new_qsiseq()
     q->lo = new_bitseq();
     q->hi_psums = new_qsipsums();
     q->len = 0;
+    q->q = QSI_DEFAULT_Q;
     return q;
 }
 
@@ -59,6 +61,38 @@ qsi_append_psum(qsiseq* seq, long unsigned int index, long unsigned int sum)
     sums->psums[sums->len].index = index;
     sums->psums[sums->len].sum = sum;
     sums->len += 1;
+}
+
+/* Assumes that seq->hi_psums are kosher.
+ */
+void
+qsi_update_psums(qsiseq* seq)
+{
+    long unsigned int current_sum, current_index, i;
+
+    if (seq->len/seq->q > seq->hi_psums->len)
+    {
+        if (seq->hi_psums->len == 0)
+        {
+            current_sum = 0;
+            current_index = 0;
+        }
+        else
+        {
+            current_sum = seq->hi_psums->psums[seq->hi_psums->len-1].sum;
+            current_index = seq->hi_psums->psums[seq->hi_psums->len-1].index;
+        }
+    }
+
+    while (seq->len/seq->q > seq->hi_psums->len)
+    {
+        /* */
+        for (i = 0; i < seq->q; i++)
+        {
+            current_sum += read_unary_as_uint(seq->hi, &current_index);
+        }
+        qsi_append_psum(seq, current_index, current_sum);
+    }
 }
 
 void
