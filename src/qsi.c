@@ -110,17 +110,17 @@ qsi_lowbit_length(qsiseq* seq)
     return count;
 }
 
-/* Where n is zero-indexed.
+/* Where i is zero-indexed.
  */
 long unsigned int
-qsi_get_upper(qsiseq* seq, long unsigned int n)
+qsi_get_upper(qsiseq* seq, long unsigned int i)
 {
-    long unsigned int sum, ret, i;
+    long unsigned int sum, ret, j;
     unsigned int hi_seq_index;
     hi_seq_index = 0;
     sum = 0;
 
-    for (i = 0; i <= n; i++)
+    for (j = 0; j <= i; j++)
     {
         ret = read_unary_as_uint(seq->hi, &hi_seq_index);
         if (ret == UINT_MAX)
