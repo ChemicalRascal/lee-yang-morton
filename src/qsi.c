@@ -86,7 +86,6 @@ qsi_update_psums(qsiseq* seq)
 
     while (seq->len/seq->q > seq->hi_psums->len)
     {
-        /* */
         for (i = 0; i < seq->q; i++)
         {
             current_sum += read_unary_as_uint(seq->hi, &current_index);
