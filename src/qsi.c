@@ -186,7 +186,7 @@ qsi_append(qsiseq* seq, long unsigned int a)
     /* Low bits */
     if (l > 0)
     {
-        append_luint_bits_low(seq->lo, a, qsi_lowbit_length(seq));
+        append_luint_bits_low(seq->lo, a, l);
     }
 
     /* High bits */
