@@ -17,6 +17,9 @@
 #define QSI_INIT_PSUMS_LEN  10
 #define QSI_DEFAULT_Q       8
 
+
+unsigned int qsi_set_lowbit_length(qsiseq*);
+
 qsipsums*
 new_qsipsums()
 {
@@ -102,6 +105,7 @@ qsi_set_u(qsiseq* seq, long unsigned int u)
      * after changing u).
      */
     seq->u = u;
+    qsi_set_lowbit_length(seq);
 }
 
 void
@@ -112,12 +116,15 @@ qsi_set_n(qsiseq* seq, long unsigned int n)
      * after changing n).
      */
     seq->n = n;
+    qsi_set_lowbit_length(seq);
 }
 
 /* max(0, floor(log(u/n)))
+ *
+ * Sanely handles situations where u and n are zero.
  */
 unsigned int
-qsi_lowbit_length(qsiseq* seq)
+qsi_set_lowbit_length(qsiseq* seq)
 {
     unsigned int count = 0;
     long unsigned int q;
@@ -141,6 +148,7 @@ qsi_lowbit_length(qsiseq* seq)
         count -= 1;
     }
 
+    seq->l = count;
     return count;
 }
 
@@ -181,16 +189,14 @@ qsi_get_final_upper(qsiseq* seq)
 void
 qsi_append(qsiseq* seq, long unsigned int a)
 {
-    unsigned int l = qsi_lowbit_length(seq);
-
     /* Low bits */
-    if (l > 0)
+    if (seq->l > 0)
     {
-        append_luint_bits_low(seq->lo, a, l);
+        append_luint_bits_low(seq->lo, a, seq->l);
     }
 
     /* High bits */
-    a >>= l;
+    a >>= seq->l;
     a -= qsi_get_final_upper(seq);
     append_uint_in_unary(seq->hi, a);
 

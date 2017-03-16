@@ -1003,8 +1003,8 @@ main()
     printf("---\n");
 
     qsiseq* qsiseq = new_qsiseq();
-    qsi_set_u(qsiseq, 36);
-    qsi_set_n(qsiseq, 5);
+    qsi_set_u(qsiseq, 32+32+32+32);
+    qsi_set_n(qsiseq, 20);
 
     qsi_append(qsiseq, 5);
     qsi_append(qsiseq, 8);
