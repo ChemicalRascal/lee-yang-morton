@@ -48,6 +48,8 @@ typedef struct qsiseq_s
     long unsigned int   len;// Current number of elements
 
     unsigned int        l;  // Lowbit length
+    long unsigned int   final_upper;
+                            // Current "sum" of all upper terms
 
     unsigned int        q;  // "Quantum" for hi_psums
     qsipsums*           hi_psums;   // Partial sums array for high-bit seq.

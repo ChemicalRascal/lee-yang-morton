@@ -197,8 +197,9 @@ qsi_append(qsiseq* seq, long unsigned int a)
 
     /* High bits */
     a >>= seq->l;
-    a -= qsi_get_final_upper(seq);
+    a -= seq->final_upper;
     append_uint_in_unary(seq->hi, a);
+    seq->final_upper += a;
 
     seq->len += 1;
 }
