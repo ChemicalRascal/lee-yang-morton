@@ -556,7 +556,34 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
     else
     {
         /* Optimized search (Lee-Yang 5.4) */
+        /* First, construct an integer from comparisons, and then map that
+         * integer to the Lee-Yang region numbers.
+         */
         dp_region = (dpx>=lox) + 2*(dpx>hix) + 4*(dpy>=loy) + 8*(dpy>hiy);
+        switch(dp_region)
+        {
+            case 1:     /* 0001 - S  */
+                dp_region = 1;
+                break;
+            case 3:     /* 0011 - SE */
+                dp_region = 2;
+                break;
+            case 4:     /* 0100 - W  */
+                dp_region = 6;
+                break;
+            case 7:     /* 0111 - E  */
+                dp_region = 3;
+                break;
+            case 12:    /* 1100 - NW */
+                dp_region = 5;
+                break;
+            case 13:    /* 1101 - N  */
+                dp_region = 5;
+                break;
+            default:
+                dp_region = 0;
+                break;
+        }
     }
     if (dp_region == 1)
     {
@@ -564,7 +591,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
 
         return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, loy);
     }
-    else if (dp_region == 3)
+    else if (dp_region == 2)
     {
         /* SE */
 
@@ -598,13 +625,13 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
             }
         }
     }
-    else if (dp_region == 5)
+    else if (dp_region == 6)
     {
         /* W */
 
         return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, lox, hiy);
     }
-    else if (dp_region == 7)
+    else if (dp_region == 3)
     {
         /* E */
 
@@ -631,7 +658,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
             return close_edge;
         }
     }
-    else if (dp_region == 12)
+    else if (dp_region == 5)
     {
         /* NW */
 
@@ -667,7 +694,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
             }
         }
     }
-    else if (dp_region == 13)
+    else if (dp_region == 4)
     {
         /* N */
 
