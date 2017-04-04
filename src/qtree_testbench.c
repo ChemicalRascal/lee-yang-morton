@@ -1040,5 +1040,10 @@ main()
 
     pprint_qsiseq(qsiseq);
 
+    for (i = 0; i < 128; i++)
+    {
+        printf("%u: %lu\n", i, qsi_psum_bsearch(qsiseq->hi_psums, i));
+    }
+
     return 0;
 }

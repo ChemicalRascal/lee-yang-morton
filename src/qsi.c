@@ -204,6 +204,68 @@ qsi_append(qsiseq* seq, long unsigned int a)
     seq->len += 1;
 }
 
+/* Can't use glib's bsearch(), because we want a match or immediate lower
+ * bound, not just a match.
+ */
+long unsigned int
+qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
+{
+    long unsigned int lo, hi, mid;
+    int comp;
+
+    lo = 0;
+    hi = psums->len;
+
+    while (lo < hi)
+    {
+        if (hi == lo + 1)
+        {
+            if (target < psums->psums[lo].sum)
+            {
+                fprintf(stderr, "qsi_psum_bsearch: Err 01\n");
+            }
+            if (target > psums->psums[hi].sum)
+            {
+                fprintf(stderr, "qsi_psum_bsearch: Err 02\n");
+            }
+            break;
+        }
+        /* Excessively complex calculation to avoid integer overflow.
+         */
+        mid = (lo/2) + (hi/2) + ((lo%2 + hi%2)/2);
+        comp = target - psums->psums[mid].sum;
+        if (comp < 0)
+        {
+             hi = mid;
+             continue;
+        }
+        else if (comp > 0)
+        {
+             lo = mid;
+             continue;
+        }
+        else if (comp == 0)
+        {
+            lo = mid;
+            hi = mid;
+            break;
+        }
+    }
+
+    /* Rewind -- psums is strictly non-decreasing, but may not be strictly
+     * monotonically increasing. We want the very lowest psum, if target is
+     * equal to that psum.
+     */
+    if (target == psums->psums[lo].sum)
+    {
+        while (lo != 0 && (psums->psums[lo].sum == psums->psums[lo-1].sum))
+        {
+            lo--;
+        }
+    }
+    return lo;
+}
+
 void
 pprint_qsipsums(qsipsums* sums)
 {

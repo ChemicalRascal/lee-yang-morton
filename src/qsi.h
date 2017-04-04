@@ -71,4 +71,6 @@ void qsi_update_psums(qsiseq*);
 
 void pprint_qsiseq(qsiseq*);
 
+long unsigned int qsi_psum_bsearch(qsipsums*, long unsigned int);
+
 #endif /* QSI_H */
