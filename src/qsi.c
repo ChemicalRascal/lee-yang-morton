@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #define QSI_INIT_PSUMS_LEN  10
-#define QSI_DEFAULT_Q       8
+#define QSI_DEFAULT_Q       2
 
 
 unsigned int qsi_set_lowbit_length(qsiseq*);
@@ -206,6 +206,8 @@ qsi_append(qsiseq* seq, long unsigned int a)
 
 /* Can't use glib's bsearch(), because we want a match or immediate lower
  * bound, not just a match.
+ *
+ * Returns ULONG_MAX if something goes wrong.
  */
 long unsigned int
 qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
@@ -216,17 +218,25 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
     lo = 0;
     hi = psums->len;
 
+    if (target < psums->psums[lo].sum || target > psums->psums[hi].sum)
+    {
+        fprintf(stdout, "qsi_psum_bsearch: Err 00\n");
+        return ULONG_MAX;
+    }
+
     while (lo < hi)
     {
         if (hi == lo + 1)
         {
             if (target < psums->psums[lo].sum)
             {
-                fprintf(stderr, "qsi_psum_bsearch: Err 01\n");
+                fprintf(stdout, "qsi_psum_bsearch: Err 01\n");
+                return ULONG_MAX;
             }
             if (target > psums->psums[hi].sum)
             {
-                fprintf(stderr, "qsi_psum_bsearch: Err 02\n");
+                fprintf(stdout, "qsi_psum_bsearch: Err 02\n");
+                return ULONG_MAX;
             }
             break;
         }
