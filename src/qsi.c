@@ -287,6 +287,47 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
     return lo;
 }
 
+/* For a given next_state, "increments" the state and returns the luint that the
+ * state pointed *to* (not what it points to after incrementing).
+ *
+ * Returns ULONG_MAX if something goes wrong.
+ */
+long unsigned int
+qsi_get_next(qsiseq* seq, qsi_next_state* state)
+{
+    long unsigned int read_lo, read_hi, i;
+    unsigned char bit;
+
+    if (state == NULL || seq == NULL)
+    {
+        return ULONG_MAX;
+    }
+
+    read_lo = 0;
+    for (i = 0; i < seq->l; i++)
+    {
+        bit = get_bit(seq->lo, state->lo + i);
+        if (bit == 2)
+        {
+            return ULONG_MAX;
+        }
+        read_lo = (read_lo << 1) | bit;
+    }
+
+    i = state->hi;
+    read_hi = read_unary_as_uint(seq->hi, &i);
+    if (read_hi == UINT_MAX)
+    {
+        return ULONG_MAX;
+    }
+    state->running_psum += read_hi;
+    read_hi = state->running_psum;
+    state->hi = i;
+    state->lo += seq->l;
+
+    return ((read_hi << seq->l) | read_lo);
+}
+
 void
 pprint_qsipsums(qsipsums* sums)
 {
@@ -301,6 +342,7 @@ pprint_qsipsums(qsipsums* sums)
 void
 pprint_qsiseq(qsiseq* seq)
 {
+    printf("l: %u\n", seq->l);
     printf("hi: ");
     pprint_bitseq(seq->hi);
     printf("lo: ");

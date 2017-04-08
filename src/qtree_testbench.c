@@ -1045,5 +1045,13 @@ main()
         printf("%u: %lu\n", i, qsi_psum_bsearch(qsiseq->hi_psums, i));
     }
 
+    qsi_next_state ns;
+    ns.lo = ns.hi = ns.running_psum = 0L;
+    while ((dp = qsi_get_next(qsiseq, &ns)) != ULONG_MAX)
+    {
+        printf("%lu, ", dp);
+    }
+    printf("\n");
+
     return 0;
 }

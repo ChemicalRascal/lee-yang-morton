@@ -55,6 +55,13 @@ typedef struct qsiseq_s
     qsipsums*           hi_psums;   // Partial sums array for high-bit seq.
 } qsiseq;
 
+typedef struct qsi_next_state_s
+{
+    long unsigned int   lo;
+    long unsigned int   hi;
+    long unsigned int   running_psum;
+} qsi_next_state;
+
 qsiseq* new_qsiseq();
 
 void qsi_set_u(qsiseq*, long unsigned int);
@@ -63,6 +70,8 @@ unsigned int qsi_lowbit_length(qsiseq*);
 
 long unsigned int qsi_get_upper(qsiseq*, long unsigned int);
 long unsigned int qsi_get_final_upper(qsiseq*);
+
+long unsigned int qsi_get_next(qsiseq*, qsi_next_state*);
 
 void qsi_append(qsiseq*, long unsigned int);
 void qsi_append_psum(qsiseq*, long unsigned int, long unsigned int);
