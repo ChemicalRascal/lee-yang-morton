@@ -207,6 +207,17 @@ qsi_append(qsiseq* seq, long unsigned int a)
 /* Can't use glib's bsearch(), because we want a match or immediate lower
  * bound, not just a match.
  *
+ * Returns the index of the highest lower bound on "target" in psums. Ergo:
+ *      target = 4
+ *      1 2 3 4 5 6 -> 3
+ *      1 2 3 5 6 9 -> 2
+ * Importantly, though, it returns the *lowest* index if there are multiple
+ * instances of the target in the sequence, otherwise, the highest index if the
+ * highest lower bound is not equal to the target:
+ *      target = 4
+ *      1 1 2 2 3 4 4 5 5 6 -> 5
+ *      1 1 2 2 3 3 3 5 5 6 -> 6
+ *
  * Returns ULONG_MAX if something goes wrong.
  */
 long unsigned int
