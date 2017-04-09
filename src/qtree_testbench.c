@@ -1040,18 +1040,25 @@ main()
 
     pprint_qsiseq(qsiseq);
 
-    for (i = 0; i < 128; i++)
-    {
-        printf("%u: %lu\n", i, qsi_psum_bsearch(qsiseq->hi_psums, i));
-    }
 
     qsi_next_state ns;
+    i = 0;
     ns.lo = ns.hi = ns.running_psum = 0L;
+    printf("%3lu, %3lu: ", ns.hi, ns.lo);
     while ((dp = qsi_get_next(qsiseq, &ns)) != ULONG_MAX)
     {
-        printf("%lu, ", dp);
+        printf("%3u: %3lu.\n", i++, dp);
+        printf("%3lu, %3lu: ", ns.hi, ns.lo);
     }
     printf("\n");
+
+    ns.lo = ns.hi = ns.running_psum = 0L;
+    for (i = 0; i < 128; i++)
+    {
+        printf("%3u: %3lu -- ", i, qsi_get(qsiseq, &ns, i));
+        printf("%3lu, %3lu\n", ns.hi, ns.lo);
+    }
+
 
     return 0;
 }

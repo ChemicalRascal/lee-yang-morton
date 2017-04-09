@@ -289,6 +289,74 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
     return lo;
 }
 
+/* Returns target if target is in seq, or the lowest upper-bound on target if
+ * target is not in seq.
+ *
+ * If state is not NULL, then it is set in order to facillitate the use of
+ * qsi_get_next.
+ *
+ * Returns ULONG_MAX if something went wrong.
+ *
+ * NOTE: Behaviour in sequences with duplicates, when that duplicate is the
+ * target, and especially when one of those duplicates falls on a "partial
+ * sum", is undefined in regards to the eventual location of "state" -- it
+ * may be positioned to read the second duplicate, it may not be.
+ */
+long unsigned int
+qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
+{
+    long unsigned int t_lo, t_hi, i, mask, psum_index, val;
+    qsi_next_state local_state;
+
+    if (seq == NULL)
+    {
+        return ULONG_MAX;
+    }
+
+    t_hi = target >> seq->l;
+    mask = 1 << seq->l;
+    mask -= 1;
+
+    t_lo = target & mask;
+    psum_index = qsi_psum_bsearch(seq->hi_psums, t_hi);
+
+    local_state.lo = psum_index * seq->q * seq->l;
+    local_state.hi = seq->hi_psums->psums[psum_index].index;
+    local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
+    val = qsi_get_next(seq, &local_state);
+
+    while (val > target)
+    {
+        /* qsi_psum_bsearch doesn't consider the low bits. When considering
+         * the low bits, we may find that we're actually one "psum bracket"
+         * too far forward.
+         */
+        if (psum_index == 0)
+        {
+            break;
+        }
+        psum_index -= 1;
+        local_state.lo = psum_index * seq->q * seq->l;
+        local_state.hi = seq->hi_psums->psums[psum_index].index;
+        local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
+        val = qsi_get_next(seq, &local_state);
+    }
+
+    while (val < target)
+    {
+        val = qsi_get_next(seq, &local_state);
+    }
+
+    if (state != NULL)
+    {
+        state->lo = local_state.lo;
+        state->hi = local_state.hi;
+        state->running_psum = local_state.running_psum;
+    }
+
+    return val;
+}
+
 /* For a given next_state, "increments" the state and returns the luint that the
  * state pointed *to* (not what it points to after incrementing).
  *
