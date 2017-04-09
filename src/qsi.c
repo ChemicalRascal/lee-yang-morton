@@ -79,6 +79,8 @@ qsi_update_psums(qsiseq* seq)
         {
             current_sum = 0;
             current_index = 0;
+            /* Handle initial psum. */
+            qsi_append_psum(seq, 0, 0);
         }
         else
         {
