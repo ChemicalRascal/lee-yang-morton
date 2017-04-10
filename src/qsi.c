@@ -41,7 +41,8 @@ new_qsiseq()
     q->hi = new_bitseq();
     q->lo = new_bitseq();
     q->hi_psums = new_qsipsums();
-    q->len = 0;
+    q->len = 0L;
+    q->max = 0L;
     q->q = QSI_DEFAULT_Q;
     return q;
 }
@@ -202,6 +203,11 @@ qsi_append(qsiseq* seq, long unsigned int a)
     a -= seq->final_upper;
     append_uint_in_unary(seq->hi, a);
     seq->final_upper += a;
+
+    if (a > seq->max)
+    {
+        seq->max = a;
+    }
 
     seq->len += 1;
 }

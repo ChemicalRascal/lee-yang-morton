@@ -46,6 +46,7 @@ typedef struct qsiseq_s
     long unsigned int   u;  // Upper bound
     long unsigned int   n;  // (Expected) number of elements
     long unsigned int   len;// Current number of elements
+    long unsigned int   max;// Current largest element
 
     unsigned int        l;  // Lowbit length
     long unsigned int   final_upper;
