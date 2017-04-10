@@ -305,7 +305,7 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
 long unsigned int
 qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
 {
-    long unsigned int t_lo, t_hi, i, mask, psum_index, val;
+    long unsigned int t_hi, psum_index, val;
     qsi_next_state local_state;
 
     if (seq == NULL)
@@ -314,10 +314,6 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
     }
 
     t_hi = target >> seq->l;
-    mask = 1 << seq->l;
-    mask -= 1;
-
-    t_lo = target & mask;
     psum_index = qsi_psum_bsearch(seq->hi_psums, t_hi);
 
     local_state.lo = psum_index * seq->q * seq->l;
@@ -330,6 +326,9 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
         /* qsi_psum_bsearch doesn't consider the low bits. When considering
          * the low bits, we may find that we're actually one "psum bracket"
          * too far forward.
+         *
+         * Of course, it's easier to just use qsi_get_next in the loop, instead
+         * of masking off the low bits from target and using that to compare.
          */
         if (psum_index == 0)
         {
