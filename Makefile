@@ -6,9 +6,9 @@ MKDIR	= mkdir
 MDFLAGS	= -p
 
 PROG	= qtree_testbench
-DEPS	= src/bitseq.h src/qsi.h
-OBJ	= bin/bitseq.o bin/qsi.o bin/qtree_testbench.o
-CFILES	= src/bitseq.c src/qsi.c src/qtree_testbench.c
+DEPS	= src/bitseq.h src/qsi.h src/leeyang.h
+OBJ	= bin/bitseq.o bin/qsi.o bin/leeyang.o bin/qtree_testbench.o
+CFILES	= src/bitseq.c src/qsi.c src/leeyang.c src/qtree_testbench.c
 BINDIR	= bin/
 
 VGRIND	= valgrind
