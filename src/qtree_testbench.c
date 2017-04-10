@@ -15,6 +15,7 @@
 #include "bitseq.h"
 #include "qsi.h"
 #include "leeyang.h"
+#include "read_csv.h"
 
 #include <limits.h>
 
@@ -136,6 +137,13 @@ main()
     {
         printf("%3u: %3lu -- ", i, qsi_get(qsiseq, &ns, i));
         printf("%3lu, %3lu\n", ns.hi, ns.lo);
+    }
+
+    printf("---\n");
+    long unsigned int read_val;
+    while (readcsv_get_luint(stdin, &read_val) != EOF)
+    {
+        printf("%lu was entered\n", read_val);
     }
 
     return 0;

@@ -53,7 +53,8 @@ typedef struct qsiseq_s
                             // Current "sum" of all upper terms
 
     unsigned int        q;  // "Quantum" for hi_psums
-    qsipsums*           hi_psums;   // Partial sums array for high-bit seq.
+    qsipsums*           hi_psums;
+                            // Partial sums array for high-bit seq.
 } qsiseq;
 
 typedef struct qsi_next_state_s
