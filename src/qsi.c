@@ -192,6 +192,11 @@ qsi_get_final_upper(qsiseq* seq)
 void
 qsi_append(qsiseq* seq, long unsigned int a)
 {
+    if (a > seq->max)
+    {
+        seq->max = a;
+    }
+
     /* Low bits */
     if (seq->l > 0)
     {
@@ -203,11 +208,6 @@ qsi_append(qsiseq* seq, long unsigned int a)
     a -= seq->final_upper;
     append_uint_in_unary(seq->hi, a);
     seq->final_upper += a;
-
-    if (a > seq->max)
-    {
-        seq->max = a;
-    }
 
     seq->len += 1;
 }
@@ -314,7 +314,7 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
     long unsigned int t_hi, psum_index, val;
     qsi_next_state local_state;
 
-    if (seq == NULL)
+    if ((seq == NULL) || (target > seq->max))
     {
         return ULONG_MAX;
     }
