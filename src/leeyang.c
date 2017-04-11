@@ -860,7 +860,7 @@ qsiseq_from_n_qtree(n_qtree* tree)
     n = get_morton_highest(tree->root);
     if (n == NULL)
     {
-        return;
+        return seq;
     }
     qsi_set_n(seq, weave_uints_to_luint(n->y, n->x));
 
