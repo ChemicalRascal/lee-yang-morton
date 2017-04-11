@@ -55,6 +55,10 @@ typedef struct qsiseq_s
     unsigned int        q;  // "Quantum" for hi_psums
     qsipsums*           hi_psums;
                             // Partial sums array for high-bit seq.
+
+    unsigned int        tree_depth;
+                            // Depth of theoretical tree, if this is being used
+                            // to replace a qtree.
 } qsiseq;
 
 typedef struct qsi_next_state_s

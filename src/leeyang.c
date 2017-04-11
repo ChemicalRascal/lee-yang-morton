@@ -856,6 +856,7 @@ qsiseq_from_n_qtree(n_qtree* tree)
     link_node* n;
     qsiseq* seq = new_qsiseq();
 
+    seq->tree_depth = tree->depth;
     qsi_set_u(seq, (1<<((tree->depth)*2)));
     n = get_morton_highest(tree->root);
     if (n == NULL)
@@ -873,4 +874,57 @@ qsiseq_from_n_qtree(n_qtree* tree)
     qsi_update_psums(seq);
 
     return seq;
+}
+
+/* Performs a Lee-Yang, Morton-path based range query on the window defined
+ * by (lox, loy) and (hix, hiy). Returns the number of data points in the
+ * window.
+ *
+ * seq:     Pointer to qsiseq to perform the range query upon. Generate via
+ *          qsiseq_from_n_qtree().
+ * lox:     x-coord of SW corner of query window
+ * loy:     y-coord of SW corner of query window
+ * hix:     x-coord of NE corner of query window
+ * hiy:     y-coord of NE corner of query window
+ */
+long unsigned int
+lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
+        unsigned int hiy)
+{
+    long unsigned int le_mcode, ge_mcode, n, count = 0L;
+    unsigned int w_x, w_y;
+    qsi_next_state seq_state;
+
+    if (seq == NULL)
+    {
+        return 0L;
+    }
+
+    le_mcode = weave_uints_to_luint(loy, lox);
+    ge_mcode = weave_uints_to_luint(hiy, hix);
+
+    n = qsi_get(seq, &seq_state, le_mcode);
+
+    while ((n != ULONG_MAX) && (n <= ge_mcode))
+    {
+        unweave_luint_to_uints(n, &w_y, &w_x);
+        if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
+        {
+            /* We're in an internal run. */
+            count += 1;
+            n = qsi_get_next(seq, &seq_state);
+            continue;
+        }
+        else
+        {
+            /* We're in an external run. Skip it -- not nessecarily *to* an
+             * internal run, mind, but at a minimum we can go to the next dp
+             * that is after *this* external run.
+             */
+            n = qsi_get(seq, &seq_state, get_fp_from_dp(w_x, w_y, lox, loy,
+                        hix, hiy, seq->tree_depth));
+        }
+    }
+
+    return count;
 }

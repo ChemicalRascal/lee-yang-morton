@@ -121,6 +121,8 @@ main()
     qsi_update_psums(qsiseq);
     pprint_qsiseq(qsiseq);
 
+    printf("max: %lu\n", qsiseq->max);
+
     qsi_next_state ns;
     i = 0;
     ns.lo = ns.hi = ns.running_psum = 0L;
