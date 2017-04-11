@@ -166,7 +166,8 @@ query_coord_rec(n_qnode* n, unsigned int d, unsigned int tree_depth,
     }
 }
 
-void* get_morton_lowest(n_qtree* tree)
+void*
+get_morton_lowest(n_qtree* tree)
 {
     if (tree == NULL || tree->root == NULL)
     {
@@ -178,7 +179,8 @@ void* get_morton_lowest(n_qtree* tree)
     }
 }
 
-void* get_morton_lowest_rec(n_qnode* n)
+void*
+get_morton_lowest_rec(n_qnode* n)
 {
     int i;
     void* p = NULL;
@@ -846,4 +848,29 @@ lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
     }
 
     return count;
+}
+
+qsiseq*
+qsiseq_from_n_qtree(n_qtree* tree)
+{
+    link_node* n;
+    qsiseq* seq = new_qsiseq();
+
+    qsi_set_u(seq, (1<<((tree->depth)*2)));
+    n = get_morton_highest(tree->root);
+    if (n == NULL)
+    {
+        return;
+    }
+    qsi_set_n(seq, weave_uints_to_luint(n->y, n->x));
+
+    n = get_morton_lowest(tree);
+    while (n != NULL)
+    {
+        qsi_append(seq, weave_uints_to_luint(n->y, n->x));
+        n = n->n;
+    }
+    qsi_update_psums(seq);
+
+    return seq;
 }

@@ -441,6 +441,8 @@ weave_uints_to_luint(unsigned int a, unsigned int b)
 
 /* TODO: Given that we can do this, it'd probably be... smarter to use a similar
  * method for weaving.
+ *
+ * TODO: Optimize. The shift-mask, b, shift-luint, a, loop method.
  */
 void
 unweave_luint_to_uints(long unsigned int x, unsigned int* a, unsigned int* b)
