@@ -32,6 +32,14 @@ new_qsipsums()
     return s;
 }
 
+void
+free_qsipsums(qsipsums* psums)
+{
+    free(psums->psums);
+    free(psums);
+    return;
+}
+
 qsiseq*
 new_qsiseq()
 {
