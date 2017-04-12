@@ -10,6 +10,8 @@
 #ifndef LEEYANG_H
 #define LEEYANG_H
 
+#include "qsi.h"
+
 typedef struct n_qnode_s
 {
     /* Base 4 'index' based on Lee-Young notation:
@@ -94,5 +96,9 @@ long unsigned int get_fp_from_dp_e(unsigned int*, unsigned int*,
         unsigned int, unsigned int, unsigned int);
 long unsigned int get_fp_from_dp(unsigned int, unsigned int, unsigned int,
         unsigned int, unsigned int, unsigned int, unsigned int);
+
+qsiseq* qsiseq_from_n_qtree(n_qtree*);
+long unsigned int lee_yang_qsi(qsiseq*, unsigned int, unsigned int,
+        unsigned int, unsigned int);
 
 #endif /* LEEYANG_H */

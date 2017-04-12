@@ -244,11 +244,11 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
     int comp;
 
     lo = 0;
-    hi = psums->len;
+    hi = psums->len - 1;
 
     if (target < psums->psums[lo].sum || target > psums->psums[hi].sum)
     {
-        fprintf(stdout, "qsi_psum_bsearch: Err 00\n");
+        fprintf(stderr, "qsi_psum_bsearch: Err 00\n");
         return ULONG_MAX;
     }
 
@@ -258,12 +258,12 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
         {
             if (target < psums->psums[lo].sum)
             {
-                fprintf(stdout, "qsi_psum_bsearch: Err 01\n");
+                fprintf(stderr, "qsi_psum_bsearch: Err 01\n");
                 return ULONG_MAX;
             }
             if (target > psums->psums[hi].sum)
             {
-                fprintf(stdout, "qsi_psum_bsearch: Err 02\n");
+                fprintf(stderr, "qsi_psum_bsearch: Err 02\n");
                 return ULONG_MAX;
             }
             break;
