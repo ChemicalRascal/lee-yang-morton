@@ -73,20 +73,40 @@ main()
     pprint_qsiseq(seq);
     printf("---\n");
     printf("(2,2)->(5,5): %lu\n", lee_yang_qsi(seq, 2, 2, 5, 5));
-    printf("---\n");
+    printf("---1\n");
 
     FILE* fp = fopen("psums.temp", "wb");
     write_qsipsums(seq->hi_psums, fp);
     assert(fclose(fp) == 0);
 
-    printf("---\n");
+    printf("---2\n");
 
     free_qsipsums(seq->hi_psums);
+    seq->hi_psums = NULL;
     pprint_qsiseq(seq);
+
+    printf("---3\n");
 
     fp = fopen("psums.temp", "rb");
     seq->hi_psums = read_qsipsums(fp);
     assert(seq->hi_psums != NULL);
+    assert(fclose(fp) == 0);
+    pprint_qsiseq(seq);
+
+    printf("---4\n");
+
+    fp = fopen("seq_hi.temp", "wb");
+    write_bitseq(seq->hi, fp);
+    assert(fclose(fp) == 0);
+    free_bitseq(seq->hi);
+    seq->hi = NULL;
+    pprint_qsiseq(seq);
+
+    printf("---5\n");
+    
+    fp = fopen("seq_hi.temp", "rb");
+    seq->hi = read_bitseq(fp);
+    assert(seq->hi != NULL);
     assert(fclose(fp) == 0);
     pprint_qsiseq(seq);
 

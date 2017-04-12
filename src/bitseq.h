@@ -10,6 +10,8 @@
 #ifndef BITSEQ_H
 #define BITSEQ_H
 
+#include <stdio.h>
+
 typedef struct bitseq_s
 {
     unsigned int    length;     // In bits
@@ -19,6 +21,9 @@ typedef struct bitseq_s
 
 bitseq* new_bitseq();
 void free_bitseq(bitseq*);
+
+void write_bitseq(bitseq*, FILE*);
+bitseq* read_bitseq(FILE*);
 
 void insert_bit(bitseq*, unsigned int, unsigned char);
 void append_bit(bitseq*, unsigned char);

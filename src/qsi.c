@@ -489,6 +489,13 @@ void
 pprint_qsipsums(qsipsums* sums)
 {
     long unsigned int i;
+
+    if (sums == NULL)
+    {
+        printf("NULL\n");
+        return;
+    }
+
     for (i = 0; i < sums->len; i++)
     {
         printf("%lu:%lu, ", sums->psums[i].index, sums->psums[i].sum);

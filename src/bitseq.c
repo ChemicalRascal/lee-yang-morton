@@ -17,6 +17,11 @@
 #include <stdint.h>
 #include <endian.h>
 
+/* Change these whenever formats or structs change. One might suggest
+ * something that looks like the current date/time.
+ */
+#define BITSEQ_SERIALIZE_MAGIC_NUMBER 201704130611L
+
 /* It physically pains me to do this
  *
  * Endian conversion function abstraction. For handling nonsense and whatever,
@@ -162,6 +167,74 @@ realloc_bitseq(bitseq* seq, unsigned int newsize)
     }
 
     return;
+}
+
+/* Writes a bitseq to a given file pointer, fp.
+ */
+void
+write_bitseq(bitseq* seq, FILE* fp)
+{
+    long unsigned int magic = BITSEQ_SERIALIZE_MAGIC_NUMBER;
+    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_bitseq: magic write failure.\n");
+        return;
+    }
+    if (fwrite((void*) seq, sizeof(bitseq), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_bitseq: seq write failure.\n");
+        return;
+    }
+    if (fwrite((void*) (seq->seq), sizeof(unsigned char), seq->alloc_size, fp)
+            != seq->alloc_size)
+    {
+        fprintf(stderr, "ERROR: write_bitseq: seq->seq write failure.\n");
+        return;
+    }
+    return;
+}
+
+/* Reads a bitseq from a given file pointer, fp.
+ */
+bitseq*
+read_bitseq(FILE* fp)
+{
+    long unsigned int magic;
+    bitseq* seq;
+
+    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_bitseq: magic read failure.\n");
+        return NULL;
+    }
+    if (magic != BITSEQ_SERIALIZE_MAGIC_NUMBER)
+    {
+        fprintf(stderr,
+                "ERROR: read_bitseq: magic num %lu expected, %lu found.\n",
+                BITSEQ_SERIALIZE_MAGIC_NUMBER, magic);
+        return NULL;
+    }
+
+    seq = malloc(sizeof(bitseq));
+    assert(seq != NULL);
+    if (fread((void*) seq, sizeof(bitseq), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_bitseq: psums read failure.\n");
+        free(seq);
+        return NULL;
+    }
+
+    seq->seq = calloc(seq->alloc_size, sizeof(unsigned char));
+    assert(seq->seq != NULL);
+    if (fread((void*) (seq->seq), sizeof(unsigned char), seq->alloc_size, fp)
+            != seq->alloc_size)
+    {
+        fprintf(stderr, "ERROR: read_bitseq: seq->seq read failure.\n");
+        free(seq->seq);
+        free(seq);
+    }
+
+    return seq;
 }
 
 void
@@ -514,6 +587,12 @@ pprint_bitseq(bitseq* seq)
 {
     unsigned int mask;
     unsigned int i;
+
+    if (seq == NULL)
+    {
+        printf("NULL\n");
+        return;
+    }
 
     for (i = 0; i < (seq->length/CHAR_BIT); i++)
     {
