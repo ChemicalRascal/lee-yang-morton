@@ -418,7 +418,13 @@ pprint_qsipsums(qsipsums* sums)
 void
 pprint_qsiseq(qsiseq* seq)
 {
-    printf("l: %u\n", seq->l);
+    printf("u: %lu, ", seq->u);
+    printf("n: %lu, ", seq->n);
+    printf("len: %lu, ", seq->len);
+    printf("max: %lu, ", seq->max);
+    printf("l: %u, ", seq->l);
+    printf("q: %u, ", seq->q);
+    printf("\n");
     printf("hi: ");
     pprint_bitseq(seq->hi);
     printf("lo: ");
