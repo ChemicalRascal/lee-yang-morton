@@ -60,6 +60,7 @@ main()
     //link_node* n;
 
     tree = read_qtree(stdin, &dummy);
+    printf("\n");
     link_nodes_morton(tree);
 
     print_qtree_integerwise(tree, 1);
@@ -67,6 +68,27 @@ main()
     printf("(2,2)->(5,5): %lu\n", lee_yang(tree, 2, 2, 5, 5));
 
     printf("---\n");
+
+    qsiseq* seq = qsiseq_from_n_qtree(tree);
+    pprint_qsiseq(seq);
+    printf("---\n");
+    printf("(2,2)->(5,5): %lu\n", lee_yang_qsi(seq, 2, 2, 5, 5));
+    printf("---\n");
+
+    FILE* fp = fopen("psums.temp", "wb");
+    write_qsipsums(seq->hi_psums, fp);
+    assert(fclose(fp) == 0);
+
+    printf("---\n");
+
+    free_qsipsums(seq->hi_psums);
+    pprint_qsiseq(seq);
+
+    fp = fopen("psums.temp", "rb");
+    seq->hi_psums = read_qsipsums(fp);
+    assert(seq->hi_psums != NULL);
+    assert(fclose(fp) == 0);
+    pprint_qsiseq(seq);
 
     return 0;
 }

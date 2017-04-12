@@ -11,6 +11,7 @@
 #define QSI_H
 
 #include "bitseq.h"
+#include <stdio.h>
 
 /* psum: Partial sum. Which is, fundamentally, what this structure
  * is used for: Partial sums of the unary-encoded array.
@@ -69,6 +70,11 @@ typedef struct qsi_next_state_s
 } qsi_next_state;
 
 qsiseq* new_qsiseq();
+
+qsipsums* new_qsipsums();
+void free_qsipsums(qsipsums*);
+void write_qsipsums(qsipsums*, FILE*);
+qsipsums* read_qsipsums(FILE*);
 
 void qsi_set_u(qsiseq*, long unsigned int);
 void qsi_set_n(qsiseq*, long unsigned int);

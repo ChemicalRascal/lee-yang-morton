@@ -17,6 +17,10 @@
 #define QSI_INIT_PSUMS_LEN  10
 #define QSI_DEFAULT_Q       2
 
+/* Change these whenever formats or structs change. One might suggest
+ * something that looks like the current date/time.
+ */
+#define QSIPSUMS_SERIALIZE_MAGIC_NUMBER 201704130419L
 
 unsigned int qsi_set_lowbit_length(qsiseq*);
 
@@ -54,6 +58,75 @@ new_qsiseq()
     q->tree_depth = 0L;
     q->q = QSI_DEFAULT_Q;
     return q;
+}
+
+/* Writes a qsipsums to a given file pointer, fp.
+ *
+ * This is pretty useless on its own. You're probably after write_sqiseq().
+ */
+void
+write_qsipsums(qsipsums* psums, FILE* fp)
+{
+    long unsigned int magic = QSIPSUMS_SERIALIZE_MAGIC_NUMBER;
+    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_qsipsums: magic write failure.\n");
+        return;
+    }
+    if (fwrite((void*) psums, sizeof(qsipsums), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_qsipsums: psums write failure.\n");
+        return;
+    }
+    if (fwrite((void*) (psums->psums), sizeof(qsipsum), psums->len, fp)
+            != psums->len)
+    {
+        fprintf(stderr,
+                "ERROR: write_qsipsums: psums->psums write failure.\n");
+        return;
+    }
+    return;
+}
+
+qsipsums*
+read_qsipsums(FILE* fp)
+{
+    long unsigned int magic;
+    qsipsums* psums;
+
+    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_qsipsums: magic read failure.\n");
+        return NULL;
+    }
+    if (magic != QSIPSUMS_SERIALIZE_MAGIC_NUMBER)
+    {
+        fprintf(stderr,
+                "ERROR: read_qsipsums: magic num %lu expected, %lu found.\n",
+                QSIPSUMS_SERIALIZE_MAGIC_NUMBER, magic);
+        return NULL;
+    }
+
+    psums = malloc(sizeof(qsipsums));
+    assert(psums != NULL);
+    if (fread((void*) psums, sizeof(qsipsums), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_qsipsums: psums read failure.\n");
+        free(psums);
+        return NULL;
+    }
+
+    psums->psums = calloc(psums->len, sizeof(qsipsum));
+    assert(psums->psums != NULL);
+    if (fread((void*) (psums->psums), sizeof(qsipsum), psums->len, fp)
+            != psums->len)
+    {
+        fprintf(stderr, "ERROR: read_qsipsums: psums->psums read failure.\n");
+        free(psums->psums);
+        free(psums);
+    }
+
+    return psums;
 }
 
 void
