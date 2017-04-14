@@ -31,32 +31,44 @@ int global_quiet_mode;
 char* global_input_path;
 char* global_tree_path;
 
+/* Returns EOF if things went badly.
+ */
+int
+read_coord(FILE* fp, unsigned int* x, unsigned int* y)
+{
+    unsigned int uint_read, uint_read_2;
+    if (readcsv_get_uint(fp, &uint_read) != EOF)
+    {
+        if (readcsv_get_uint(fp, &uint_read_2) != EOF)
+        {
+            *x = uint_read;
+            *y = uint_read_2;
+            return 0;
+        }
+    }
+    return EOF;
+}
+
 /* Currently, data is assigned to *every* node.
  */
 n_qtree*
 read_qtree(FILE* fp, void* data)
 {
     n_qtree* tree;
-    int ret_val;
-    unsigned int uint_read, uint_read_2;
+    unsigned int x, y;
 
     q_fprintf_if_eq(global_input_path, NULL, stdout, "Enter tree depth: ");
-    ret_val = readcsv_get_uint(fp, &uint_read);
-    if (ret_val == EOF)
+    if (readcsv_get_uint(fp, &x) == EOF)
     {
         return NULL;
     }
-    tree = new_qtree(uint_read);
+    tree = new_qtree(x);
 
     q_fprintf_if_eq(global_input_path, NULL, stdout,
             "\nEnter co-ords, x-coord first, EOF when complete: ");
-    while ((ret_val = readcsv_get_uint(fp, &uint_read)) != EOF)
+    while (read_coord(fp, &x, &y) != EOF)
     {
-        if ((ret_val = readcsv_get_uint(fp, &uint_read_2)) == EOF)
-        {
-            break;
-        }
-        insert_coord(tree, data, uint_read, uint_read_2, 1);
+        insert_coord(tree, data, x, y, 1);
     }
 
     return tree;
