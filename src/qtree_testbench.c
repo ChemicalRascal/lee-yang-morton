@@ -24,6 +24,8 @@
 
 #define fprintf_if_eq(a, b, fp, args...) {if((a)==(b)){fprintf((fp), args);}}
 #define q_fprintf(fp, args...) fprintf_if_eq(global_quiet_mode, 0, fp, args)
+#define q_fprintf_if_eq(a, b, fp, args...) {if((a)==(b))\
+    {q_fprintf((fp), args);}}
 
 int global_quiet_mode;
 char* global_input_path;
@@ -32,25 +34,25 @@ char* global_tree_path;
 /* Currently, data is assigned to *every* node.
  */
 n_qtree*
-read_qtree(FILE* fp, void* data, char* input_path)
+read_qtree(FILE* fp, void* data)
 {
     n_qtree* tree;
     int ret_val;
     unsigned int uint_read, uint_read_2;
 
-    fprintf_if_eq(input_path, NULL, stdout, "Enter tree depth: ");
-    ret_val = readcsv_get_uint(stdin, &uint_read);
+    q_fprintf_if_eq(global_input_path, NULL, stdout, "Enter tree depth: ");
+    ret_val = readcsv_get_uint(fp, &uint_read);
     if (ret_val == EOF)
     {
         return NULL;
     }
     tree = new_qtree(uint_read);
 
-    fprintf_if_eq(input_path, NULL, stdout,
+    q_fprintf_if_eq(global_input_path, NULL, stdout,
             "\nEnter co-ords, x-coord first, EOF when complete: ");
-    while ((ret_val = readcsv_get_uint(stdin, &uint_read)) != EOF)
+    while ((ret_val = readcsv_get_uint(fp, &uint_read)) != EOF)
     {
-        if ((ret_val = readcsv_get_uint(stdin, &uint_read_2)) == EOF)
+        if ((ret_val = readcsv_get_uint(fp, &uint_read_2)) == EOF)
         {
             break;
         }
@@ -88,10 +90,10 @@ exit_fprintf_usage(char** argv)
 int
 main(int argc, char** argv, char** envp)
 {
-    int opt;
-    int search_mode, build_mode;
+    int opt, build_mode;
     FILE* input_fp;
     FILE* tree_fp;
+    qsiseq* seq;
 
     if (argc == 1)
     {
@@ -132,6 +134,27 @@ main(int argc, char** argv, char** envp)
                 exit_fprintf_usage(argv);
                 break;
         }
+    }
+
+    if (global_tree_path == NULL)
+    {
+        exit_fprintf_usage(argv);
+    }
+
+    input_fp = fopen(global_input_path, "r");
+    tree_fp = fopen(global_tree_path, (build_mode==1)?"wb":"rb");
+
+    if (build_mode == 1)
+    {
+        n_qtree* tree;
+        int junk_data = 1;
+
+        tree = read_qtree(input_fp, &junk_data);
+        seq = qsiseq_from_n_qtree(tree);
+        free_qtree(tree, 1);
+        write_qsiseq(seq, tree_fp);
+        free_qsiseq(seq);
+        exit(EXIT_SUCCESS);
     }
 
     printf("q: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
