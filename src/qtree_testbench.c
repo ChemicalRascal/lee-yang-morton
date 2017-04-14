@@ -2,7 +2,7 @@
 
 /*******************************************
  *
- *  Main testbench program for lee_yang.h,
+ *  Main testbench program for leeyang.h,
  *      and associated libraries.
  *
  *******************************************/
