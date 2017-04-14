@@ -19,18 +19,26 @@
 
 #include <limits.h>
 
-#define fprintf_if_eq(a, b, file, str) {if((a)==(b)){fprintf(file, str);}}
+#include <unistd.h>
+#include <string.h>
+
+#define fprintf_if_eq(a, b, fp, args...) {if((a)==(b)){fprintf((fp), args);}}
+#define q_fprintf(fp, args...) fprintf_if_eq(global_quiet_mode, 0, fp, args)
+
+int global_quiet_mode;
+char* global_input_path;
+char* global_tree_path;
 
 /* Currently, data is assigned to *every* node.
  */
 n_qtree*
-read_qtree(FILE* file, void* data)
+read_qtree(FILE* fp, void* data, char* input_path)
 {
     n_qtree* tree;
     int ret_val;
     unsigned int uint_read, uint_read_2;
 
-    fprintf_if_eq(file, stdin, stdout, "Enter tree depth: ");
+    fprintf_if_eq(input_path, NULL, stdout, "Enter tree depth: ");
     ret_val = readcsv_get_uint(stdin, &uint_read);
     if (ret_val == EOF)
     {
@@ -38,7 +46,7 @@ read_qtree(FILE* file, void* data)
     }
     tree = new_qtree(uint_read);
 
-    fprintf_if_eq(file, stdin, stdout,
+    fprintf_if_eq(input_path, NULL, stdout,
             "\nEnter co-ords, x-coord first, EOF when complete: ");
     while ((ret_val = readcsv_get_uint(stdin, &uint_read)) != EOF)
     {
@@ -52,80 +60,89 @@ read_qtree(FILE* file, void* data)
     return tree;
 }
 
-int
-main()
+void
+exit_fprintf_help(char** argv)
 {
-    n_qtree* tree;
-    int dummy = 1;
-    //link_node* n;
+    fprintf(stdout, "Usage: %s [OPTION]... -t FILE\n", argv[0]);
+    fprintf(stdout, "Perform range queries using the Lee-Yang algorithm.\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "-t FILE must be provided.\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  -b           build 'treefile'\n");
+    fprintf(stdout, "  -s           perform range queries on 'treefile'\n");
+    fprintf(stdout, "               NOTE: -b and -s mutually exclude\n");
+    fprintf(stdout, "  -q           make no output to stdout\n");
+    fprintf(stdout, "  -f FILE      read from FILE instead of stdin\n");
+    fprintf(stdout, "  -t FILE      use FILE as 'treefile'\n");
+    exit(EXIT_SUCCESS);
+}
 
-    tree = read_qtree(stdin, &dummy);
-    printf("\n");
-    link_nodes_morton(tree);
+void
+exit_fprintf_usage(char** argv)
+{
+    /*
+     */
+    fprintf(stderr, "Usage: %s [OPTION]... -t [FILE]\n", argv[0]);
+    fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
+    exit(EXIT_FAILURE);
+}
 
-    print_qtree_integerwise(tree, 1);
+int
+main(int argc, char** argv, char** envp)
+{
+    int opt;
+    int search_mode, build_mode;
+    FILE* input_fp;
+    FILE* tree_fp;
 
-    printf("(2,2)->(5,5): %lu\n", lee_yang(tree, 2, 2, 5, 5));
 
-    printf("---\n");
+    if (argc == 1)
+    {
+        exit_fprintf_usage(argv);
+    }
+    if (argc == 2)
+    {
+        if (strcmp(argv[1], "--help") == 0)
+        {
+            exit_fprintf_help(argv);
+        }
+    }
 
-    qsiseq* seq = qsiseq_from_n_qtree(tree);
-    pprint_qsiseq(seq);
-    printf("---\n");
-    printf("(2,2)->(5,5): %lu\n", lee_yang_qsi(seq, 2, 2, 5, 5));
-    printf("---1\n");
+    global_quiet_mode = 0;
+    search_mode = 0;
+    build_mode = 0;
+    global_input_path = NULL;
+    global_tree_path = NULL;
+    input_fp = NULL;
+    tree_fp = NULL;
 
-    FILE* fp = fopen("psums.temp", "wb");
-    write_qsipsums(seq->hi_psums, fp);
-    assert(fclose(fp) == 0);
+    while ((opt = getopt(argc, argv, "bsqf:t:")) != -1)
+    {
+        switch (opt)
+        {
+            case 'b':
+                build_mode = 1;
+                break;
+            case 's':
+                search_mode = 1;
+                break;
+            case 'q':
+                global_quiet_mode = 1;
+                break;
+            case 'f':
+                global_input_path = optarg;
+                break;
+            case 't':
+                global_tree_path = optarg;
+                break;
+            default:
+                exit_fprintf_usage(argv);
+                break;
+        }
+    }
 
-    printf("---2\n");
+    printf("q: %d, s: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
+            search_mode, build_mode, global_input_path, global_tree_path);
 
-    free_qsipsums(seq->hi_psums);
-    seq->hi_psums = NULL;
-    pprint_qsiseq(seq);
-
-    printf("---3\n");
-
-    fp = fopen("psums.temp", "rb");
-    seq->hi_psums = read_qsipsums(fp);
-    assert(seq->hi_psums != NULL);
-    assert(fclose(fp) == 0);
-    pprint_qsiseq(seq);
-
-    printf("---4\n");
-
-    fp = fopen("seq_hi.temp", "wb");
-    write_bitseq(seq->hi, fp);
-    assert(fclose(fp) == 0);
-    free_bitseq(seq->hi);
-    seq->hi = NULL;
-    pprint_qsiseq(seq);
-
-    printf("---5\n");
-    
-    fp = fopen("seq_hi.temp", "rb");
-    seq->hi = read_bitseq(fp);
-    assert(seq->hi != NULL);
-    assert(fclose(fp) == 0);
-    pprint_qsiseq(seq);
-
-    printf("---6\n");
-
-    fp = fopen("seq_full.temp", "wb");
-    write_qsiseq(seq, fp);
-    assert(fclose(fp) == 0);
-    free_qsiseq(seq);
-    seq = NULL;
-    pprint_qsiseq(seq);
-
-    printf("---7\n");
-
-    fp = fopen("seq_full.temp", "rb");
-    seq = read_qsiseq(fp);
-    assert(seq != NULL);
-    assert(fclose(fp) == 0);
-    pprint_qsiseq(seq);
-
-    return 0;
+    exit(EXIT_SUCCESS);
 }
