@@ -110,5 +110,22 @@ main()
     assert(fclose(fp) == 0);
     pprint_qsiseq(seq);
 
+    printf("---6\n");
+
+    fp = fopen("seq_full.temp", "wb");
+    write_qsiseq(seq, fp);
+    assert(fclose(fp) == 0);
+    free_qsiseq(seq);
+    seq = NULL;
+    pprint_qsiseq(seq);
+
+    printf("---7\n");
+
+    fp = fopen("seq_full.temp", "rb");
+    seq = read_qsiseq(fp);
+    assert(seq != NULL);
+    assert(fclose(fp) == 0);
+    pprint_qsiseq(seq);
+
     return 0;
 }

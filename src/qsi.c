@@ -20,6 +20,7 @@
 /* Change these whenever formats or structs change. One might suggest
  * something that looks like the current date/time.
  */
+#define QSISEQ_SERIALIZE_MAGIC_NUMBER 201704130411L
 #define QSIPSUMS_SERIALIZE_MAGIC_NUMBER 201704130419L
 
 unsigned int qsi_set_lowbit_length(qsiseq*);
@@ -68,9 +69,9 @@ free_qsiseq(qsiseq* seq)
 {
     if (seq != NULL)
     {
-        free_bitseq(q->hi);
-        free_bitseq(q->lo);
-        free_qsipsums(q->hi_psums);
+        free_bitseq(seq->hi);
+        free_bitseq(seq->lo);
+        free_qsipsums(seq->hi_psums);
     }
     free(seq);
     return;
@@ -143,6 +144,88 @@ read_qsipsums(FILE* fp)
     }
 
     return psums;
+}
+
+/* Writes a qsiseq to a given file pointer, fp.
+ *
+ * Relies on working write_bitseq() and write_qsipsums() functions that don't
+ * close the file pointer.
+ */
+void
+write_qsiseq(qsiseq* seq, FILE* fp)
+{
+    long unsigned int magic = QSISEQ_SERIALIZE_MAGIC_NUMBER;
+    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_qsiseq: magic write failure.\n");
+        return;
+    }
+    if (fwrite((void*) seq, sizeof(qsiseq), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: write_qsiseq: seq write failure.\n");
+        return;
+    }
+    write_bitseq(seq->hi, fp);
+    write_bitseq(seq->lo, fp);
+    write_qsipsums(seq->hi_psums, fp);
+    return;
+}
+
+qsiseq*
+read_qsiseq(FILE* fp)
+{
+    long unsigned int magic;
+    qsiseq* seq;
+
+    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_qsiseq: magic read failure.\n");
+        return NULL;
+    }
+    if (magic != QSISEQ_SERIALIZE_MAGIC_NUMBER)
+    {
+        fprintf(stderr,
+                "ERROR: read_qsiseq: magic num %lu expected, %lu found.\n",
+                QSISEQ_SERIALIZE_MAGIC_NUMBER, magic);
+        return NULL;
+    }
+
+    seq = malloc(sizeof(qsiseq));
+    assert(seq != NULL);
+    if (fread((void*) seq, sizeof(qsiseq), 1, fp) != 1)
+    {
+        fprintf(stderr, "ERROR: read_qsiseq: seq read failure.\n");
+        free(seq);
+        return NULL;
+    }
+
+    seq->hi = read_bitseq(fp);
+    if (seq->hi == NULL)
+    {
+        fprintf(stderr, "ERROR: read_qsiseq: read_bitseq fail on seq->hi.\n");
+        free(seq);
+        return NULL;
+    }
+    seq->lo = read_bitseq(fp);
+    if (seq->lo == NULL)
+    {
+        fprintf(stderr, "ERROR: read_qsiseq: read_bitseq fail on seq->lo.\n");
+        free_bitseq(seq->hi);
+        free(seq);
+        return NULL;
+    }
+    seq->hi_psums = read_qsipsums(fp);
+    if (seq->hi_psums == NULL)
+    {
+        fprintf(stderr,
+                "ERROR: read_qsiseq: read_qsipsums fail on seq->hi_psums.\n");
+        free_bitseq(seq->hi);
+        free_bitseq(seq->lo);
+        free(seq);
+        return NULL;
+    }
+
+    return seq;
 }
 
 void
@@ -522,6 +605,12 @@ pprint_qsipsums(qsipsums* sums)
 void
 pprint_qsiseq(qsiseq* seq)
 {
+    if (seq == NULL)
+    {
+        printf("NULL\n");
+        return;
+    }
+
     printf("u: %lu, ", seq->u);
     printf("n: %lu, ", seq->n);
     printf("len: %lu, ", seq->len);

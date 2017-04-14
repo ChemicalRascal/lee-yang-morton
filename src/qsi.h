@@ -70,6 +70,9 @@ typedef struct qsi_next_state_s
 } qsi_next_state;
 
 qsiseq* new_qsiseq();
+void free_qsiseq(qsiseq*);
+void write_qsiseq(qsiseq*, FILE*);
+qsiseq* read_qsiseq(FILE*);
 
 qsipsums* new_qsipsums();
 void free_qsipsums(qsipsums*);
