@@ -39,7 +39,10 @@ new_qsipsums()
 void
 free_qsipsums(qsipsums* psums)
 {
-    free(psums->psums);
+    if (psums != NULL)
+    {
+        free(psums->psums);
+    }
     free(psums);
     return;
 }
@@ -58,6 +61,19 @@ new_qsiseq()
     q->tree_depth = 0L;
     q->q = QSI_DEFAULT_Q;
     return q;
+}
+
+void
+free_qsiseq(qsiseq* seq)
+{
+    if (seq != NULL)
+    {
+        free_bitseq(q->hi);
+        free_bitseq(q->lo);
+        free_qsipsums(q->hi_psums);
+    }
+    free(seq);
+    return;
 }
 
 /* Writes a qsipsums to a given file pointer, fp.
