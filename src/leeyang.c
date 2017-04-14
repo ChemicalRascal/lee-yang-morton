@@ -37,6 +37,14 @@ new_qtree(unsigned int depth)
     return tree;
 }
 
+void
+free_qtree(n_qtree* tree, int linkednodes)
+{
+    free_qnode(tree->root, linkednodes);
+    free(tree);
+    return;
+}
+
 n_qnode*
 new_qnode(void* data)
 {
@@ -60,6 +68,25 @@ new_qnode(void* data)
     return node;
 }
 
+void
+free_qnode(n_qnode* qnode, int linkednodes)
+{
+    if (qnode == NULL)
+    {
+        return;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        free_qnode(qnode->child[i], linkednodes);
+    }
+    if (linkednodes == 1)
+    {
+        free_link_node(qnode->data);
+    }
+    free(qnode);
+    return;
+}
+
 link_node*
 new_link_node(void* data, unsigned int x, unsigned int y)
 {
@@ -73,6 +100,13 @@ new_link_node(void* data, unsigned int x, unsigned int y)
     node->n     = NULL; /* Leave the link initially as NULL. */
 
     return node;
+}
+
+void
+free_link_node(link_node* n)
+{
+    free(n);
+    return;
 }
 
 /*TODO: Expand this to use a linked list at each leaf node. Or even
