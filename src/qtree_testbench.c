@@ -66,11 +66,9 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "Usage: %s [OPTION]... -t FILE\n", argv[0]);
     fprintf(stdout, "Perform range queries using the Lee-Yang algorithm.\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "-t FILE must be provided.\n");
+    fprintf(stdout, "  -t FILE must be provided.\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "  -b           build 'treefile'\n");
-    fprintf(stdout, "  -s           perform range queries on 'treefile'\n");
-    fprintf(stdout, "               NOTE: -b and -s mutually exclude\n");
     fprintf(stdout, "  -q           make no output to stdout\n");
     fprintf(stdout, "  -f FILE      read from FILE instead of stdin\n");
     fprintf(stdout, "  -t FILE      use FILE as 'treefile'\n");
@@ -95,7 +93,6 @@ main(int argc, char** argv, char** envp)
     FILE* input_fp;
     FILE* tree_fp;
 
-
     if (argc == 1)
     {
         exit_fprintf_usage(argv);
@@ -109,7 +106,6 @@ main(int argc, char** argv, char** envp)
     }
 
     global_quiet_mode = 0;
-    search_mode = 0;
     build_mode = 0;
     global_input_path = NULL;
     global_tree_path = NULL;
@@ -122,9 +118,6 @@ main(int argc, char** argv, char** envp)
         {
             case 'b':
                 build_mode = 1;
-                break;
-            case 's':
-                search_mode = 1;
                 break;
             case 'q':
                 global_quiet_mode = 1;
@@ -141,8 +134,8 @@ main(int argc, char** argv, char** envp)
         }
     }
 
-    printf("q: %d, s: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
-            search_mode, build_mode, global_input_path, global_tree_path);
+    printf("q: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
+            build_mode, global_input_path, global_tree_path);
 
     exit(EXIT_SUCCESS);
 }
