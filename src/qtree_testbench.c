@@ -150,6 +150,7 @@ main(int argc, char** argv, char** envp)
         int junk_data = 1;
 
         tree = read_qtree(input_fp, &junk_data);
+        link_nodes_morton(tree);
         seq = qsiseq_from_n_qtree(tree);
         free_qtree(tree, 1);
         write_qsiseq(seq, tree_fp);
@@ -157,8 +158,15 @@ main(int argc, char** argv, char** envp)
         exit(EXIT_SUCCESS);
     }
 
+    if (build_mode == 0)
+    {
+        seq = read_qsiseq(tree_fp);
+    }
+
+    /*
     printf("q: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
             build_mode, global_input_path, global_tree_path);
+            */
 
     exit(EXIT_SUCCESS);
 }

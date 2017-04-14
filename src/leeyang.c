@@ -105,7 +105,10 @@ new_link_node(void* data, unsigned int x, unsigned int y)
 void
 free_link_node(link_node* n)
 {
-    free(n);
+    if (n != NULL)
+    {
+        free(n);
+    }
     return;
 }
 
@@ -339,7 +342,7 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
             else
             {
                 /* DEBUG */
-                printf("Empty tree?\n");
+                fprintf(stderr, "link_nodes_morton_rec: Empty tree?\n");
             }
         }
 
@@ -353,13 +356,6 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
             link_nodes_morton_rec(node->child[2], p);
             link_nodes_morton_rec(node->child[1], p);
             link_nodes_morton_rec(node->child[0], p);
-            /* Recursive call in 3-2-1-0 order will mean that *p will now
-             * be "lowest" (by Morton order) data point accessible from this
-             * node.
-             */
-            /* TODO: Remove this. It isn't used. */
-            node->data = *p;
-            //printf("Linked a branch to %p\n", node->data);
         }
     }
     return;
@@ -408,7 +404,7 @@ get_dp_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
 {
     int i, child;
     link_node* r = NULL;
-    
+
     if (n == NULL)
     {
         return NULL;
