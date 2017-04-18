@@ -49,6 +49,28 @@ read_coord(FILE* fp, unsigned int* x, unsigned int* y)
     return EOF;
 }
 
+/* Returns EOF if things went badly.
+ */
+int
+read_query_range(FILE* fp, unsigned int* lox, unsigned int* loy,
+        unsigned int* hix, unsigned int* hiy)
+{
+    unsigned int x1, x2, y1, y2;
+
+    if (read_coord(fp, &x1, &y1) != EOF)
+    {
+        if (read_coord(fp, &x2, &y2) != EOF)
+        {
+            *lox = x1 < x2 ? x1 : x2;
+            *loy = y1 < y2 ? y1 : y2;
+            *hix = x1 > x2 ? x1 : x2;
+            *hiy = y1 > y2 ? y1 : y2;
+            return 0;
+        }
+    }
+    return EOF;
+}
+
 /* Currently, data is assigned to *every* node.
  */
 n_qtree*
@@ -152,9 +174,19 @@ main(int argc, char** argv, char** envp)
     {
         exit_fprintf_usage(argv);
     }
+    else
+    {
+        tree_fp = fopen(global_tree_path, (build_mode==1)?"wb":"rb");
+    }
 
-    input_fp = fopen(global_input_path, "r");
-    tree_fp = fopen(global_tree_path, (build_mode==1)?"wb":"rb");
+    if (global_input_path == NULL)
+    {
+        input_fp = stdin;
+    }
+    else
+    {
+        input_fp = fopen(global_input_path, "r");
+    }
 
     if (build_mode == 1)
     {
@@ -172,7 +204,14 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 0)
     {
+        unsigned int lox, loy, hix, hiy;
+        lox = loy = hix = hiy = 0;
+
         seq = read_qsiseq(tree_fp);
+        while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
+        {
+            printf("%lu\n", lee_yang_qsi(seq, lox, loy, hix, hiy));
+        }
     }
 
     /*
