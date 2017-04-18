@@ -49,6 +49,7 @@ def main():
     check_argv()
     points = gen_points(int(sys.argv[1]), float(sys.argv[2]))
     print_points(points, int(sys.argv[1]))
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
