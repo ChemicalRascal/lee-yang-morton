@@ -37,7 +37,8 @@ def parse_tree_line(line):
     return (int(match.group(1)), int(match.group(2)))
 
 def parse_query_line(line):
-    regex = "[^0-9]*([0-9]+)[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]*"
+    regex = ("[^0-9]*([0-9]+)[^0-9]+([0-9]+)" + 
+            "[^0-9]+([0-9]+)[^0-9]+([0-9]+)[^0-9]*")
     match = re.match(regex, line)
     if (match == None):
         return None
