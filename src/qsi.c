@@ -415,13 +415,23 @@ qsi_psum_bsearch(qsipsums* psums, long unsigned int target)
     long unsigned int lo, hi, mid;
     int comp;
 
+    if (psums->len == 0)
+    {
+        return ULONG_MAX;
+    }
+
     lo = 0;
     hi = psums->len - 1;
 
-    if (target < psums->psums[lo].sum || target > psums->psums[hi].sum)
+    if (target < psums->psums[lo].sum)
     {
         fprintf(stderr, "qsi_psum_bsearch: Err 00\n");
         return ULONG_MAX;
+    }
+
+    if (target > psums->psums[hi].sum)
+    {
+        return hi;
     }
 
     while (lo < hi)
@@ -495,7 +505,7 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
     long unsigned int t_hi, psum_index, val;
     qsi_next_state local_state;
 
-    if ((seq == NULL) || (target > seq->max))
+    if ((seq == NULL) || (target > seq->max) || (target == ULONG_MAX))
     {
         return ULONG_MAX;
     }
@@ -507,6 +517,11 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
     local_state.hi = seq->hi_psums->psums[psum_index].index;
     local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
     val = qsi_get_next(seq, &local_state);
+
+    if (val == ULONG_MAX)
+    {
+        return ULONG_MAX;
+    }
 
     while (val > target)
     {
@@ -526,6 +541,10 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
         local_state.hi = seq->hi_psums->psums[psum_index].index;
         local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
         val = qsi_get_next(seq, &local_state);
+        if (val == ULONG_MAX)
+        {
+            return ULONG_MAX;
+        }
     }
 
     while (val < target)
