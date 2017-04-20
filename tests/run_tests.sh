@@ -30,6 +30,6 @@ done) &&
 echo "queries made" &&
 ./../qtree_testbench -t $PREFIX.tree.bin < $PREFIX.queries > $PREFIX.qt_out &&
 echo "qt_out made" &&
-./run_queries_on_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
+./query_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
 echo "py_out made" &&
 diff $PREFIX.qt_out $PREFIX.py_out
