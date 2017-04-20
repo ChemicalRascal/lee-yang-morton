@@ -30,6 +30,7 @@ new_qtree(unsigned int depth)
     tree = malloc(sizeof(n_qtree));
     assert(tree != NULL);
     tree->depth = depth;
+    tree->n     = 0;
     tree->root  = malloc(sizeof(n_qnode));
     assert(tree->root != NULL);
     tree->root = new_qnode(NULL);
@@ -128,6 +129,7 @@ insert_coord(n_qtree* tree, void* data, unsigned int x, unsigned int y,
         tree->root = new_qnode(NULL);
     }
     insert_coord_rec(tree->root, data, 0, tree->depth, x, y, linkednodes);
+    tree->n += 1;
 }
 
 /* Recursive worker for insert_coord().
@@ -889,11 +891,7 @@ qsiseq_from_n_qtree(n_qtree* tree)
     seq->tree_depth = tree->depth;
     qsi_set_u(seq, (1<<((tree->depth)*2)));
     n = get_morton_highest(tree->root);
-    if (n == NULL)
-    {
-        return seq;
-    }
-    qsi_set_n(seq, weave_uints_to_luint(n->y, n->x));
+    qsi_set_n(seq, tree->n);
 
     n = get_morton_lowest(tree);
     while (n != NULL)

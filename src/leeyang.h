@@ -50,8 +50,9 @@ typedef struct n_qtree_s
      * ergo just a leaf.) Handily, this means that a tree will have a
      * canonoical size of 2^depth by 2^depth.
      */
-    unsigned int    depth;
-    n_qnode*        root;
+    unsigned int        depth;
+    n_qnode*            root;
+    long unsigned int   n;      // Number of inserted nodes.
 } n_qtree;
 
 typedef struct link_node_s
