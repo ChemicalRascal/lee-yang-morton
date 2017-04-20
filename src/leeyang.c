@@ -470,7 +470,7 @@ get_morton_highest(n_qnode* n)
     return NULL;
 }
 
-/* Returns the mcode of e.
+/* Returns the mcode of e. If something goes wrong, returns ULONG_MAX.
  *
  * outx: Pointer to where the x-coord of e should be stored.
  * outy: Pointer to where the y-coord of e should be stored.
@@ -591,12 +591,20 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
                 hix, loy, hix, hiy);
         far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
                 lox, loy, lox, hiy);
+        if (close_edge < dp_mcode)
+        {
+            close_edge = ULONG_MAX;
+        }
+        if (far_edge < dp_mcode)
+        {
+            far_edge = ULONG_MAX;
+        }
         if (far_edge < close_edge)
         {
             if (outx != NULL && outy != NULL)
             {
-                *outx = closex;
-                *outy = closey;
+                *outx = farx;
+                *outy = fary;
             }
             return far_edge;
         }
@@ -626,7 +634,15 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
             // b
             far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
                     lox, loy, hix, loy);
-            if ((far_edge < close_edge) && (dp_mcode < far_edge))
+            if (close_edge < dp_mcode)
+            {
+                close_edge = ULONG_MAX;
+            }
+            if (far_edge < dp_mcode)
+            {
+                far_edge = ULONG_MAX;
+            }
+            if (far_edge < close_edge)
             {
                 if (outx != NULL && outy != NULL)
                 {
@@ -656,7 +672,15 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
         // b
         far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
                 lox, loy, hix, loy);
-        if ((far_edge < close_edge) && (dp_mcode < far_edge))
+        if (close_edge < dp_mcode)
+        {
+            close_edge = ULONG_MAX;
+        }
+        if (far_edge < dp_mcode)
+        {
+            far_edge = ULONG_MAX;
+        }
+        if (far_edge < close_edge)
         {
             if (outx != NULL && outy != NULL)
             {
@@ -676,7 +700,7 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
     }
 
     /* Something is horribly wrong. */
-    return 0L;
+    return ULONG_MAX;
 }
 
 /* Returns e_mcode. Returns ULONG_MAX if dp is beyond the edge.
