@@ -124,7 +124,7 @@ exit_fprintf_usage(char** argv)
 int
 main(int argc, char** argv, char** envp)
 {
-    int opt, build_mode;
+    int opt, build_mode, print_mode;
     FILE* input_fp;
     FILE* tree_fp;
     qsiseq* seq;
@@ -143,12 +143,13 @@ main(int argc, char** argv, char** envp)
 
     global_quiet_mode = 0;
     build_mode = 0;
+    print_mode = 0;
     global_input_path = NULL;
     global_tree_path = NULL;
     input_fp = NULL;
     tree_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bsqf:t:")) != -1)
+    while ((opt = getopt(argc, argv, "bsqpf:t:")) != -1)
     {
         switch (opt)
         {
@@ -157,6 +158,9 @@ main(int argc, char** argv, char** envp)
                 break;
             case 'q':
                 global_quiet_mode = 1;
+                break;
+            case 'p':
+                print_mode = 1;
                 break;
             case 'f':
                 global_input_path = optarg;
@@ -198,6 +202,10 @@ main(int argc, char** argv, char** envp)
         seq = qsiseq_from_n_qtree(tree);
         free_qtree(tree, 1);
         write_qsiseq(seq, tree_fp);
+        if (print_mode == 1)
+        {
+            pprint_qsiseq(seq);
+        }
         free_qsiseq(seq);
         exit(EXIT_SUCCESS);
     }
@@ -208,6 +216,10 @@ main(int argc, char** argv, char** envp)
         lox = loy = hix = hiy = 0;
 
         seq = read_qsiseq(tree_fp);
+        if (print_mode == 1)
+        {
+            pprint_qsiseq(seq);
+        }
         while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
         {
             printf("%lu\n", lee_yang_qsi(seq, lox, loy, hix, hiy));
