@@ -67,7 +67,9 @@ def main():
     while line:
         match_tup = parse_query_line(line)
         if (match_tup != None):
-            print("{0}".format(run_query_against_tree(sys.argv[1],
+            print("{0},{1} {2},{3}: {4}".format(
+                match_tup[0], match_tup[1], match_tup[2], match_tup[3],
+                run_query_against_tree(sys.argv[1],
                 match_tup[0], match_tup[1], match_tup[2], match_tup[3])))
         line = sys.stdin.readline()
     sys.exit(0)
