@@ -222,8 +222,8 @@ main(int argc, char** argv, char** envp)
         }
         while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
         {
-            printf("%u,%u %u,%u: %lu\n", lox, loy, hix, hiy,
-                    lee_yang_qsi(seq, lox, loy, hix, hiy));
+            printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
+            printf("%lu\n", lee_yang_qsi(seq, lox, loy, hix, hiy));
         }
     }
 

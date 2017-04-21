@@ -953,8 +953,8 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
              * internal run, mind, but at a minimum we can go to the next dp
              * that is after *this* external run.
              */
-            n = qsi_get(seq, &seq_state, get_fp_from_dp(w_x, w_y, lox, loy,
-                        hix, hiy, seq->tree_depth));
+            n = get_fp_from_dp(w_x, w_y, lox, loy, hix, hiy, seq->tree_depth);
+            n = qsi_get(seq, &seq_state, n);
         }
     }
 
