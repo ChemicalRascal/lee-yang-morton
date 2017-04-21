@@ -811,22 +811,20 @@ get_fp_from_dp_e(
             if ((e_digit - dp_digit) != 1)
             {
                 fp_mcode += (e_digit - 1);
-                fp_mcode <<= 2;
                 i++;
             }
             else 
             {
                 assert((e_digit - dp_digit) == 1);
                 fp_mcode += e_digit;
-                fp_mcode <<= 2;
                 i++;
             }
             break;
         }
     }
-    if ((tree_depth - i - 1) > 0)
+    if (tree_depth > i)
     {
-        fp_mcode <<= (tree_depth - i - 1)*2;
+        fp_mcode <<= (tree_depth - i)*2;
     }
     return fp_mcode;
 }
