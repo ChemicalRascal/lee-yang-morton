@@ -774,28 +774,10 @@ get_fp_from_dp_e(
         unsigned int tree_depth)
 {
     long unsigned int fp_mcode = 0;
-    unsigned int dp_digit, e_digit, i, e_minor_y, e_minor_x,
-                 e_x, e_y, dpx, dpy;
+    unsigned int dp_digit, e_digit, i, e_x, e_y, dpx, dpy;
 
     unweave_luint_to_uints(e_mcode, &e_y, &e_x);
     unweave_luint_to_uints(dp_mcode, &dpy, &dpx);
-    /* Check to see if e_mcode-1, "e minor", is within the query window. If it
-     * is *not*, walking back would give the wrong result.
-     */
-    unweave_luint_to_uints(e_mcode-1, &e_minor_y, &e_minor_x);
-    if (!((lox <= e_minor_x) && (e_minor_x <= hix) && (loy <= e_minor_y)
-            && (e_minor_y <= hiy)))
-    {
-        /* e_mcode - 1 is outside the query window, so e is not after a
-         * "crossing bridge. So, fp = e.
-         */
-        if ((outx != NULL) && (outy != NULL))
-        {
-            *outx = e_x;
-            *outy = e_y;
-        }
-        return e_mcode;
-    }
 
     for (i = 0; i < tree_depth; i++)
     {
