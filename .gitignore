@@ -24,6 +24,7 @@ tmp*
 dictionary*
 vcore.*
 vgcore.*
+tests/data
 
 # Other files
 .directory
