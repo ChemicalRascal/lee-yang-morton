@@ -8,7 +8,7 @@
 PREFIX=data/$(date "+%Y.%m.%d.%T")
 MAX=$(python -c "print(2**$1 - 1)")
 
-mkdir data
+mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 > $PREFIX.csv &&
 echo "csv made" &&
