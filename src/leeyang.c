@@ -557,6 +557,14 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
                     hix, loy, hix, hiy);
             far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
                     lox, loy, lox, hiy);
+            if (close_edge < dp_mcode)
+            {
+                close_edge = ULONG_MAX;
+            }
+            if (far_edge < dp_mcode)
+            {
+                far_edge = ULONG_MAX;
+            }
             if (far_edge < close_edge)
             {
                 if (outx != NULL && outy != NULL)
