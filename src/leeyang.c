@@ -72,11 +72,12 @@ new_qnode(void* data)
 void
 free_qnode(n_qnode* qnode, int linkednodes)
 {
+    int i;
     if (qnode == NULL)
     {
         return;
     }
-    for (int i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++)
     {
         free_qnode(qnode->child[i], linkednodes);
     }
