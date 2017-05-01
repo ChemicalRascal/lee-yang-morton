@@ -15,19 +15,7 @@ echo "csv made" &&
 ./../qtree_testbench -t $PREFIX.tree.bin -f $PREFIX.csv -b &&
 echo "bin made" &&
 touch $PREFIX.queries &&
-(for lox in $(seq 0 $MAX);
-do
-    for hix in $(seq $lox $MAX);
-    do
-        for loy in $(seq 0 $MAX);
-        do
-            for hiy in $(seq $loy $MAX);
-            do
-                echo "$lox $loy $hix $hiy" >> $PREFIX.queries
-            done
-        done
-    done
-done) &&
+./../gen_queries -d $1 -f $PREFIX.queries &&
 echo "queries made" &&
 ./../qtree_testbench -t $PREFIX.tree.bin < $PREFIX.queries > $PREFIX.qt_out &&
 echo "qt_out made" &&
