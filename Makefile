@@ -7,9 +7,14 @@ MDFLAGS	= -p
 
 PROG	= qtree_testbench
 DEPS	= src/bitseq.h src/qsi.h src/leeyang.h src/read_csv.h
-OBJ	= bin/bitseq.o bin/qsi.o bin/leeyang.o bin/read_csv.o bin/qtree_testbench.o
-CFILES	= src/bitseq.c src/qsi.c src/leeyang.c src/read_csv.c src/qtree_testbench.c
+OBJ	= bin/bitseq.o bin/qsi.o bin/leeyang.o bin/read_csv.o \
+	  bin/qtree_testbench.o
+CFILES	= src/bitseq.c src/qsi.c src/leeyang.c src/read_csv.c \
+	  src/qtree_testbench.c
 BINDIR	= bin/
+
+PROG2	= gen_queries
+CFILES2	= src/gen_queries.c
 
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
@@ -19,10 +24,10 @@ GDB	= gdb
 DBFLAG	= 
 
 .PHONY: default
-default: $(PROG)
+default: $(PROG) $(PROG2)
 
 .PHONY: all
-all: clean $(PROG)
+all: clean $(PROG) $(PROG2)
 
 $(BINDIR):
 	$(MKDIR) $(MDFLAGS) $(BINDIR)
@@ -49,6 +54,10 @@ gdb:	val_build
 $(PROG): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
+.PHONY: $(PROG2)
+$(PROG2): $(CFILES2)
+	$(CC) $(CFLAGS) -o $@ $(CFILES2)
+
 .PHONY: clean
 clean:
-	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.*
+	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.* $(PROG2)
