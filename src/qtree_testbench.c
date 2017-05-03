@@ -16,6 +16,7 @@
 #include "qsi.h"
 #include "leeyang.h"
 #include "read_csv.h"
+#include "morton.h"
 
 #include <limits.h>
 
@@ -97,6 +98,36 @@ read_qtree(FILE* fp, void* data)
 }
 
 void
+exit_testbed(char** argv)
+{
+    int i, j;
+    long unsigned int z;
+    long unsigned int xa, ya;
+    unsigned int xb, yb;
+    for (j = 7; j >= 0; j--)
+    {
+        for (i = 0; i < 8; i++)
+        {
+            morton_PtoZ(i, j, &z);
+            printf("%2lu ", z);
+        }
+        printf("\n");
+    }
+
+    for (z = 0; z > 4096; z++)
+    {
+        morton_ZtoP(z, &xa, &ya);
+        unweave_luint_to_uints(z, &yb, &xb);
+        if ((xa != xb) || (ya != yb))
+        {
+            printf("%lu\n", z);
+        }
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+void
 exit_fprintf_help(char** argv)
 {
     fprintf(stdout, "Usage: %s [OPTION]... -t FILE\n", argv[0]);
@@ -138,6 +169,11 @@ main(int argc, char** argv, char** envp)
         if (strcmp(argv[1], "--help") == 0)
         {
             exit_fprintf_help(argv);
+        }
+
+        if (strcmp(argv[1], "--test") == 0)
+        {
+            exit_testbed(argv);
         }
     }
 
