@@ -531,6 +531,9 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
          *
          * Of course, it's easier to just use qsi_get_next in the loop, instead
          * of masking off the low bits from target and using that to compare.
+         *
+         * TODO: Mask off the low bits from the target and compare. qsi_get()
+         * needs to be closer to optimal.
          */
         if (psum_index == 0)
         {
