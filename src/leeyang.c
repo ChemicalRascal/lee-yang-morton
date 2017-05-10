@@ -17,6 +17,7 @@
 
 #include "bitseq.h"
 #include "qsi.h"
+#include "morton.h"
 
 #define get_child_from_mcode(m, d, cd) ((m>>((cd-d-1)*2))&3)
 
@@ -963,6 +964,465 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
              * that is after *this* external run.
              */
             n = get_fp_from_dp(w_x, w_y, lox, loy, hix, hiy, seq->tree_depth);
+            n = qsi_get(seq, &seq_state, n);
+        }
+    }
+
+    return count;
+}
+
+/* ---------------------------------------------------------------------------
+ *                   morton.h-enhanced functions
+ *
+ * (Also only calculates the corner mcodes once.)
+ * ---------------------------------------------------------------------------
+ */
+
+/* Returns e_mcode. Returns ULONG_MAX if dp is beyond the edge. Uses morton.h.
+ *
+ * dp_mcode:    mcode of datapoint (external run) being used to find the next
+ *              internal run.
+ * outx:        pointer to place to store e_x
+ * outy:        pointer to place to store e_y
+ * lox:         low x value of edge being considered
+ * loy:         low y value of edge being considered
+ * hix:         high x value of edge being considered
+ * hiy:         high y value of edge being considered
+ *
+ *
+ * TODO: Actually make it return ULONG_MAX if dp is beyond the edge. Or 0? IDK.
+ */
+uint64_t
+fast_get_e_from_dp_rec(long unsigned int dp_mcode,
+        unsigned int* outx, unsigned int* outy,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy)
+{
+    uint64_t r, mid_mcode;
+    unsigned int mid, unmv, lo, hi;
+    int horiz = (loy == hiy);
+
+    if ((loy == hiy) && (lox == hix))
+    {
+        if (outx != NULL && outy != NULL)
+        {
+            *outx = lox;
+            *outy = loy;
+        }
+        morton_PtoZ(lox, loy, &r);
+        return r;
+    }
+
+    if (horiz)
+    {
+        unmv = loy;
+        lo = lox;
+        hi = hix;
+    }
+    else
+    {
+        unmv = lox;
+        lo = loy;
+        hi = hiy;
+    }
+
+    /* But wait! Without *this* check, the search fails on crossing bridges.
+     *
+     * In this case, as dp_mcode falls between the two, e is the *higher*
+     * edgepoint.
+     */
+    if (hi == lo+1)
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, hix, loy, hix, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, hiy, hix, hiy); }
+    }
+
+    mid = (lo+hi)/2;
+    if (horiz)
+    {
+        morton_PtoZ(mid, unmv, &mid_mcode);
+    }
+    else
+    {
+        morton_PtoZ(unmv, mid, &mid_mcode);
+    }
+
+    if (dp_mcode < mid_mcode)
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, mid, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, mid); }
+    }
+    else
+    {
+        if (horiz)
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, mid, loy, hix, hiy); }
+        else
+        { return get_e_from_dp_rec(dp_mcode, outx, outy, lox, mid, hix, hiy); }
+    }
+}
+
+/* Warning: Here be excessive function parameters.
+ */
+long unsigned int
+fast_get_fp_from_dp_e(
+        unsigned int* outx, unsigned int* outy,
+        unsigned int dpx, unsigned int dpy,
+        uint64_t dp_mcode, uint64_t e_mcode,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy,
+        unsigned int tree_depth)
+{
+    long unsigned int fp_mcode = 0;
+    unsigned int dp_digit, e_digit, i;
+    uint64_t e_x, e_y;
+
+    morton_ZtoP(e_mcode, &e_y, &e_x);
+    for (i = 0; i < tree_depth; i++)
+    {
+        dp_digit = (dp_mcode >> ((tree_depth-i-1)*2) & 3);
+        e_digit = (e_mcode >> ((tree_depth-i-1)*2) & 3);
+        if (e_digit == dp_digit)
+        {
+            fp_mcode += e_digit;
+            fp_mcode <<= 2;
+        }
+        else
+        {
+            if ((e_digit - dp_digit) != 1)
+            {
+                fp_mcode += (e_digit - 1);
+                i++;
+            }
+            else
+            {
+                assert((e_digit - dp_digit) == 1);
+                fp_mcode += e_digit;
+                i++;
+            }
+            break;
+        }
+    }
+    if (tree_depth > i)
+    {
+        fp_mcode <<= (tree_depth - i)*2;
+    }
+    return fp_mcode;
+}
+
+/* Returns the mcode of e. If something goes wrong, returns ULONG_MAX. Uses
+ * morton.h.
+ *
+ * outx: Pointer to where the x-coord of e should be stored.
+ * outy: Pointer to where the y-coord of e should be stored.
+ */
+long unsigned int
+fast_get_e_from_dp(unsigned int* outx, unsigned int* outy,
+        unsigned int dpx, unsigned int dpy, uint64_t dp_mcode,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy,
+        uint64_t sw_mcode, uint64_t se_mcode,
+        uint64_t nw_mcode, uint64_t ne_mcode)
+{
+    unsigned int dp_region;
+    unsigned int closex, closey, farx, fary;
+    long unsigned int close_edge, far_edge;
+
+    if ((dp_mcode < sw_mcode) || (dp_mcode > ne_mcode))
+    {
+        /* e is undefined for dps that are fundamentally outside the mcode-low
+         * and mcode-high of the query window
+         *
+         * Which is to say the code doesn't work for those values, but
+         * Lee-Yang also doesn't need to find e for these values, so I'm just
+         * treating this as undefined rather than work out what the desired
+         * behaviour should be.
+         */
+        dp_region = 0;
+    }
+    else
+    {
+        /* Optimized search (Lee-Yang 5.4) */
+        /* First, construct an integer from comparisons, and then map that
+         * integer to the Lee-Yang region numbers.
+         */
+        dp_region = (dpx>=lox) + 2*(dpx>hix) + 4*(dpy>=loy) + 8*(dpy>hiy);
+        switch(dp_region)
+        {
+            case 1:     /* 0001 - S  */
+                dp_region = 1;
+                break;
+            case 3:     /* 0011 - SE */
+                dp_region = 2;
+                break;
+            case 4:     /* 0100 - W  */
+                dp_region = 6;
+                break;
+            case 7:     /* 0111 - E  */
+                dp_region = 3;
+                break;
+            case 12:    /* 1100 - NW */
+                dp_region = 5;
+                break;
+            case 13:    /* 1101 - N  */
+                dp_region = 5;
+                break;
+            default:
+                dp_region = 0;
+                break;
+        }
+    }
+    if (dp_region == 1)
+    {
+        /* S */
+
+        return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, loy);
+    }
+    else if (dp_region == 2)
+    {
+        /* SE */
+
+        if (dp_mcode < se_mcode)
+        {
+            return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, hix, loy);
+        }
+        else
+        {
+            close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                    hix, loy, hix, hiy);
+            far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                    lox, loy, lox, hiy);
+            if (close_edge < dp_mcode)
+            {
+                close_edge = ULONG_MAX;
+            }
+            if (far_edge < dp_mcode)
+            {
+                far_edge = ULONG_MAX;
+            }
+            if (far_edge < close_edge)
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = farx;
+                    *outy = fary;
+                }
+                return far_edge;
+            }
+            else
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = closex;
+                    *outy = closey;
+                }
+                return close_edge;
+            }
+        }
+    }
+    else if (dp_region == 6)
+    {
+        /* W */
+
+        return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, lox, hiy);
+    }
+    else if (dp_region == 3)
+    {
+        /* E */
+
+        close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                hix, loy, hix, hiy);
+        far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                lox, loy, lox, hiy);
+        if (close_edge < dp_mcode)
+        {
+            close_edge = ULONG_MAX;
+        }
+        if (far_edge < dp_mcode)
+        {
+            far_edge = ULONG_MAX;
+        }
+        if (far_edge < close_edge)
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = farx;
+                *outy = fary;
+            }
+            return far_edge;
+        }
+        else
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return close_edge;
+        }
+    }
+    else if (dp_region == 5)
+    {
+        /* NW */
+
+        if (dp_mcode < nw_mcode)
+        {
+            return get_e_from_dp_rec(dp_mcode, outx, outy, lox, loy, lox, hiy);
+        }
+        else
+        {
+            // t
+            close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                    lox, hiy, hix, hiy);
+            // b
+            far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                    lox, loy, hix, loy);
+            if (close_edge < dp_mcode)
+            {
+                close_edge = ULONG_MAX;
+            }
+            if (far_edge < dp_mcode)
+            {
+                far_edge = ULONG_MAX;
+            }
+            if (far_edge < close_edge)
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = farx;
+                    *outy = fary;
+                }
+                return far_edge;
+            }
+            else
+            {
+                if (outx != NULL && outy != NULL)
+                {
+                    *outx = closex;
+                    *outy = closey;
+                }
+                return close_edge;
+            }
+        }
+    }
+    else if (dp_region == 4)
+    {
+        /* N */
+
+        // t
+        close_edge = get_e_from_dp_rec(dp_mcode, &closex, &closey,
+                lox, hiy, hix, hiy);
+        // b
+        far_edge = get_e_from_dp_rec(dp_mcode, &farx, &fary,
+                lox, loy, hix, loy);
+        if (close_edge < dp_mcode)
+        {
+            close_edge = ULONG_MAX;
+        }
+        if (far_edge < dp_mcode)
+        {
+            far_edge = ULONG_MAX;
+        }
+        if (far_edge < close_edge)
+        {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return far_edge;
+        }
+        else {
+            if (outx != NULL && outy != NULL)
+            {
+                *outx = closex;
+                *outy = closey;
+            }
+            return close_edge;
+        }
+    }
+
+    /* Something is horribly wrong. */
+    return ULONG_MAX;
+}
+
+/* Returns the mcode of fp. Uses morton.h.
+ *
+ * dpx, dpy:    Co-ords of dp.
+ * lox, loy:    Co-ords of query SW corner.
+ * hix, hiy:    Co-ords of query NE corner.
+ * tree_depth:  Canonical depth of qtree.
+ */
+long unsigned int
+fast_get_fp_from_dp(unsigned int dpx, unsigned int dpy, uint64_t dp_mcode,
+        unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy,
+        uint64_t sw_mcode, uint64_t se_mcode,
+        uint64_t nw_mcode, uint64_t ne_mcode,
+        unsigned int tree_depth)
+{
+    uint64_t mcode;
+    //morton_PtoZ(dpx, dpy, &dp_mcode);
+    mcode = fast_get_e_from_dp(NULL, NULL, dpx, dpy, dp_mcode,
+            lox, loy, hix, hiy, sw_mcode, se_mcode, nw_mcode, ne_mcode);
+    mcode = fast_get_fp_from_dp_e(NULL, NULL, dpx, dpy, dp_mcode, mcode,
+            lox, loy, hix, hiy, tree_depth);
+
+    return mcode;
+}
+
+/* Performs a Lee-Yang, Morton-path based range query on the window defined
+ * by (lox, loy) and (hix, hiy). Returns the number of data points in the
+ * window. Uses morton.h
+ *
+ * seq:     Pointer to qsiseq to perform the range query upon. Generate via
+ *          qsiseq_from_n_qtree().
+ * lox:     x-coord of SW corner of query window
+ * loy:     y-coord of SW corner of query window
+ * hix:     x-coord of NE corner of query window
+ * hiy:     y-coord of NE corner of query window
+ */
+long unsigned int
+fast_lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy,
+        unsigned int hix, unsigned int hiy)
+{
+    uint64_t sw_mcode, se_mcode, nw_mcode, ne_mcode, n, w_x, w_y;
+    long unsigned int count = 0L;
+    qsi_next_state seq_state;
+
+    if (seq == NULL)
+    {
+        return 0L;
+    }
+
+    morton_PtoZ(lox, loy, &sw_mcode);
+    morton_PtoZ(hix, loy, &se_mcode);
+    morton_PtoZ(lox, hiy, &nw_mcode);
+    morton_PtoZ(hix, hiy, &ne_mcode);
+
+    n = qsi_get(seq, &seq_state, sw_mcode);
+
+    while ((n != ULONG_MAX) && (n <= ne_mcode))
+    {
+        morton_ZtoP(n, &w_x, &w_y);
+        if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
+        {
+            /* We're in an internal run. */
+            count += 1;
+            n = qsi_get_next(seq, &seq_state);
+            continue;
+        }
+        else
+        {
+            /* We're in an external run. Skip it -- not nessecarily *to* an
+             * internal run, mind, but at a minimum we can go to the next dp
+             * that is after *this* external run.
+             */
+            n = fast_get_fp_from_dp(w_x, w_y, n, lox, loy, hix, hiy,
+                    sw_mcode, se_mcode, nw_mcode, ne_mcode, seq->tree_depth);
             n = qsi_get(seq, &seq_state, n);
         }
     }
