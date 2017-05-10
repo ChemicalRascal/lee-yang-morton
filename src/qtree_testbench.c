@@ -138,6 +138,7 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "\n");
     fprintf(stdout, "  -b           build 'treefile'\n");
     fprintf(stdout, "  -q           make no output to stdout\n");
+    fprintf(stdout, "  -c           do timing comparisons instead\n");
     fprintf(stdout, "  -f FILE      read from FILE instead of stdin\n");
     fprintf(stdout, "  -t FILE      use FILE as 'treefile'\n");
     exit(EXIT_SUCCESS);
