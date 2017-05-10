@@ -22,6 +22,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <sys/time.h>
 
 #define fprintf_if_eq(a, b, fp, args...) {if((a)==(b)){fprintf((fp), args);}}
 #define q_fprintf(fp, args...) fprintf_if_eq(global_quiet_mode, 0, fp, args)
@@ -155,7 +156,7 @@ exit_fprintf_usage(char** argv)
 int
 main(int argc, char** argv, char** envp)
 {
-    int opt, build_mode, print_mode;
+    int opt, build_mode, print_mode, timing_mode;
     FILE* input_fp;
     FILE* tree_fp;
     qsiseq* seq;
@@ -180,12 +181,13 @@ main(int argc, char** argv, char** envp)
     global_quiet_mode = 0;
     build_mode = 0;
     print_mode = 0;
+    timing_mode = 0;
     global_input_path = NULL;
     global_tree_path = NULL;
     input_fp = NULL;
     tree_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bsqpf:t:")) != -1)
+    while ((opt = getopt(argc, argv, "bqpcf:t:")) != -1)
     {
         switch (opt)
         {
@@ -203,6 +205,9 @@ main(int argc, char** argv, char** envp)
                 break;
             case 't':
                 global_tree_path = optarg;
+                break;
+            case 'c':
+                timing_mode = 1;
                 break;
             default:
                 exit_fprintf_usage(argv);
@@ -248,6 +253,9 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 0)
     {
+        long int slow_ly, fast_ly, slow_time, fast_time;
+        long int time_diff;
+        struct timeval flag1, flag2, flag3;
         unsigned int lox, loy, hix, hiy;
         lox = loy = hix = hiy = 0;
 
@@ -258,15 +266,40 @@ main(int argc, char** argv, char** envp)
         }
         while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
         {
-            printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
-            printf("%lu\n", lee_yang_qsi(seq, lox, loy, hix, hiy));
+            if (timing_mode == 1)
+            {
+                printf("%3u,%3u %3u,%3u: ", lox, loy, hix, hiy);
+
+                gettimeofday(&flag1, NULL);
+                slow_ly = lee_yang_qsi(seq, lox, loy, hix, hiy);
+                gettimeofday(&flag2, NULL);
+                fast_ly = fast_lee_yang_qsi(seq, lox, loy, hix, hiy);
+                gettimeofday(&flag3, NULL);
+
+                slow_time = flag2.tv_usec - flag1.tv_usec;
+                if (slow_time < 0)
+                {
+                    slow_time += 1000000;
+                }
+                fast_time = flag3.tv_usec - flag2.tv_usec;
+                if (fast_time < 0)
+                {
+                    fast_time += 1000000;
+                }
+                time_diff = fast_time - slow_time;
+
+                printf("%3ld, %3ld ", slow_ly, fast_ly);
+                assert(slow_ly == fast_ly);
+                printf("slow: %4ld, fast: %4ld, diff: %6ld\n", slow_time,
+                        fast_time, time_diff);
+            }
+            else
+            {
+                printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
+                printf("%lu\n", fast_lee_yang_qsi(seq, lox, loy, hix, hiy));
+            }
         }
     }
-
-    /*
-    printf("q: %d, b: %d, gip: %s, gtp: %s\n", global_quiet_mode,
-            build_mode, global_input_path, global_tree_path);
-            */
 
     exit(EXIT_SUCCESS);
 }
