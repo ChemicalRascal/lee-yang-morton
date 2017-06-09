@@ -127,7 +127,7 @@ bitseq*
 new_bitseq()
 {
     bitseq* b;
-    b = malloc(sizeof(bitseq));
+    b = (bitseq*)malloc(sizeof(bitseq));
     assert(b != NULL);
     b->length       = 0;
     b->alloc_size   = 0;
@@ -154,7 +154,7 @@ realloc_bitseq(bitseq* seq, unsigned int newsize)
 
     if (seq->alloc_size < newsize)
     {
-        seq->seq = realloc(seq->seq, newsize);
+        seq->seq = (unsigned char*)realloc(seq->seq, newsize);
         assert(seq->seq != NULL);
 
         /* Set all the bytes out to the new size out to 0.
@@ -215,7 +215,7 @@ read_bitseq(FILE* fp)
         return NULL;
     }
 
-    seq = malloc(sizeof(bitseq));
+    seq = (bitseq*)malloc(sizeof(bitseq));
     assert(seq != NULL);
     if (fread((void*) seq, sizeof(bitseq), 1, fp) != 1)
     {
@@ -224,7 +224,7 @@ read_bitseq(FILE* fp)
         return NULL;
     }
 
-    seq->seq = calloc(seq->alloc_size, sizeof(unsigned char));
+    seq->seq = (unsigned char*)calloc(seq->alloc_size, sizeof(unsigned char));
     assert(seq->seq != NULL);
     if (fread((void*) (seq->seq), sizeof(unsigned char), seq->alloc_size, fp)
             != seq->alloc_size)
@@ -347,7 +347,7 @@ new_bitseq_from_ptr(void* a, unsigned int len)
 {
     bitseq* seq;
     unsigned int i;
-    unsigned char* a_array = a;
+    unsigned char* a_array = (unsigned char*)a;
     unsigned char c = 0;
 
     seq = new_bitseq();

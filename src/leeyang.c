@@ -28,11 +28,11 @@ n_qtree*
 new_qtree(unsigned int depth)
 {
     n_qtree* tree;
-    tree = malloc(sizeof(n_qtree));
+    tree = (n_qtree*)malloc(sizeof(n_qtree));
     assert(tree != NULL);
     tree->depth = depth;
     tree->n     = 0;
-    tree->root  = malloc(sizeof(n_qnode));
+    tree->root  = (n_qnode*)malloc(sizeof(n_qnode));
     assert(tree->root != NULL);
     tree->root = new_qnode(NULL);
 
@@ -51,7 +51,7 @@ n_qnode*
 new_qnode(void* data)
 {
     n_qnode* node;
-    node = malloc(sizeof(n_qnode));
+    node = (n_qnode*)malloc(sizeof(n_qnode));
     assert(node != NULL);
 
     /* If there's no data, the programmer *should* have given data as NULL */
@@ -84,7 +84,7 @@ free_qnode(n_qnode* qnode, int linkednodes)
     }
     if (linkednodes == 1)
     {
-        free_link_node(qnode->data);
+        free_link_node((link_node*)(qnode->data));
     }
     free(qnode);
     return;
@@ -94,7 +94,7 @@ link_node*
 new_link_node(void* data, unsigned int x, unsigned int y)
 {
     link_node* node;
-    node = malloc(sizeof(link_node));
+    node = (link_node*)malloc(sizeof(link_node));
     assert(node != NULL);
 
     node->data  = data;
@@ -321,7 +321,7 @@ link_nodes_morton(n_qtree* tree)
     link_node** p;
     if (tree != NULL || tree->root != NULL)
     {
-        p = malloc(sizeof(link_node*));
+        p = (link_node**)malloc(sizeof(link_node*));
         assert(p != NULL);
         *p = NULL;
         link_nodes_morton_rec(tree->root, p);
@@ -341,7 +341,7 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
             if (node->data != NULL)
             {
                 ((link_node*)node->data)->n = *p;
-                *p = node->data;
+                *p = (link_node*)node->data;
             }
             else
             {
@@ -415,7 +415,7 @@ get_dp_rec(n_qnode* n, long unsigned int m, unsigned int canon_depth,
     }
     if (node_is_leaf(n))
     {
-        return n->data;
+        return (link_node*)(n->data);
     }
 
     child = get_child_from_mcode(m, current_depth, canon_depth);
@@ -457,7 +457,7 @@ get_morton_highest(n_qnode* n)
     }
     if (node_is_leaf(n))
     {
-        return n->data;
+        return (link_node*)(n->data);
     }
 
     for (i = 3; i >= 0; i--)
@@ -907,7 +907,7 @@ qsiseq_from_n_qtree(n_qtree* tree)
     n = get_morton_highest(tree->root);
     qsi_set_n(seq, tree->n);
 
-    n = get_morton_lowest(tree);
+    n = (link_node*)get_morton_lowest(tree);
     while (n != NULL)
     {
         qsi_append(seq, weave_uints_to_luint(n->y, n->x));

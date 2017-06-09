@@ -29,9 +29,9 @@ qsipsums*
 new_qsipsums()
 {
     qsipsums* s;
-    s = malloc(sizeof(qsipsums));
+    s = (qsipsums*)malloc(sizeof(qsipsums));
     assert(s != NULL);
-    s->psums = calloc(QSI_INIT_PSUMS_LEN, sizeof(qsipsum));
+    s->psums = (qsipsum*)calloc(QSI_INIT_PSUMS_LEN, sizeof(qsipsum));
     s->len  = 0;
     s->size = QSI_INIT_PSUMS_LEN;
     return s;
@@ -52,7 +52,7 @@ qsiseq*
 new_qsiseq()
 {
     qsiseq* q;
-    q = malloc(sizeof(qsiseq));
+    q = (qsiseq*)malloc(sizeof(qsiseq));
     assert(q != NULL);
     q->hi = new_bitseq();
     q->lo = new_bitseq();
@@ -124,7 +124,7 @@ read_qsipsums(FILE* fp)
         return NULL;
     }
 
-    psums = malloc(sizeof(qsipsums));
+    psums = (qsipsums*)malloc(sizeof(qsipsums));
     assert(psums != NULL);
     if (fread((void*) psums, sizeof(qsipsums), 1, fp) != 1)
     {
@@ -133,7 +133,7 @@ read_qsipsums(FILE* fp)
         return NULL;
     }
 
-    psums->psums = calloc(psums->len, sizeof(qsipsum));
+    psums->psums = (qsipsum*)calloc(psums->len, sizeof(qsipsum));
     assert(psums->psums != NULL);
     if (fread((void*) (psums->psums), sizeof(qsipsum), psums->len, fp)
             != psums->len)
@@ -190,7 +190,7 @@ read_qsiseq(FILE* fp)
         return NULL;
     }
 
-    seq = malloc(sizeof(qsiseq));
+    seq = (qsiseq*)malloc(sizeof(qsiseq));
     assert(seq != NULL);
     if (fread((void*) seq, sizeof(qsiseq), 1, fp) != 1)
     {
@@ -239,7 +239,8 @@ qsi_append_psum(qsiseq* seq, long unsigned int index, long unsigned int sum)
             /* This shouldn't be possible, but whatever */
             sums->size = 1;
         }
-        sums->psums = realloc(sums->psums, sizeof(qsipsum)*(sums->size)*2);
+        sums->psums = (qsipsum*)realloc(sums->psums,
+                sizeof(qsipsum)*(sums->size)*2);
         assert(sums->psums != NULL);
         sums->size *= 2;
     }
