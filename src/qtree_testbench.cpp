@@ -24,6 +24,8 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include <sdsl/vectors.hpp>
+
 #define fprintf_if_eq(a, b, fp, args...) {if((a)==(b)){fprintf((fp), args);}}
 #define q_fprintf(fp, args...) fprintf_if_eq(global_quiet_mode, 0, fp, args)
 #define q_fprintf_if_eq(a, b, fp, args...) {if((a)==(b))\

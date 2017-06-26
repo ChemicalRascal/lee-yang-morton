@@ -1,6 +1,6 @@
 CC  	= g++
 CFLAGS	= -Wall
-LFLAGS	=
+LFLAGS	= -lsdsl -ldivsufsort -ldivsufsort64
 RM	= rm
 RMFLAGS	= -f
 MKDIR	= mkdir
@@ -68,7 +68,6 @@ gdb:	val_build
 $(PROG): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-.PHONY: $(PROG2)
 $(PROG2): $(CFILES2)
 	$(CC) $(CFLAGS) $(CFILES2) -o $@
 
