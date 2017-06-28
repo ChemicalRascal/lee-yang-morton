@@ -7,7 +7,7 @@
  *
  *******************************************/
 
-#include "leeyang.h"
+#include "leeyang.hpp"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -15,8 +15,8 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#include "bitseq.h"
-#include "qsi.h"
+#include "bitseq.hpp"
+#include "qsi.hpp"
 #include "morton.h"
 
 #define get_child_from_mcode(m, d, cd) ((m>>((cd-d-1)*2))&3)

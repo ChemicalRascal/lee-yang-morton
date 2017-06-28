@@ -11,6 +11,7 @@
 #define BITSEQ_H
 
 #include <stdio.h>
+#include <iostream>
 
 typedef struct bitseq_s
 {
@@ -22,8 +23,8 @@ typedef struct bitseq_s
 bitseq* new_bitseq();
 void free_bitseq(bitseq*);
 
-void write_bitseq(bitseq*, FILE*);
-bitseq* read_bitseq(FILE*);
+void write_bitseq(bitseq*, std::ostream&);
+bitseq* read_bitseq(std::istream&);
 
 void insert_bit(bitseq*, unsigned int, unsigned char);
 void append_bit(bitseq*, unsigned char);

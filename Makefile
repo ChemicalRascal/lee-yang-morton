@@ -9,16 +9,19 @@ MDFLAGS	= -p
 AVX2FLAG= -mavx2
 
 PROG	= qtree_testbench
-DEPS	= src/bitseq.h src/qsi.h src/leeyang.h src/read_csv.h \
+DEPS	= src/bitseq.hpp src/qsi.hpp src/leeyang.hpp src/read_csv.h \
 	  src/morton.h
-OBJ	= bin/bitseq.o bin/qsi.o bin/leeyang.o bin/read_csv.o \
-	  bin/morton.o bin/qtree_testbench.o
-CFILES	= src/bitseq.c src/qsi.c src/leeyang.c src/read_csv.c \
+OBJ	= bin/bitseq.obj bin/qsi.obj bin/leeyang.obj bin/read_csv.o \
+	  bin/morton.o bin/qtree_testbench.obj
+CFILES	= src/bitseq.cpp src/qsi.cpp src/leeyang.cpp src/read_csv.c \
 	  src/morton.c src/qtree_testbench.cpp
 BINDIR	= bin/
 
 PROG2	= gen_queries
 CFILES2	= src/gen_queries.c
+
+PROG3	= test_ostream
+CFILES3	= src/test_ostream.cpp
 
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
@@ -39,10 +42,10 @@ avx2: clean avx2_set all
 $(BINDIR):
 	$(MKDIR) $(MDFLAGS) $(BINDIR)
 
-bin/qtree_testbench.o: src/qtree_testbench.cpp $(DEPS) $(BINDIR)
+bin/%.o: src/%.c $(DEPS) $(BINDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/%.o: src/%.c $(DEPS) $(BINDIR)
+bin/%.obj: src/%.cpp $(DEPS) $(BINDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: val_set
@@ -71,6 +74,9 @@ $(PROG): $(OBJ)
 $(PROG2): $(CFILES2)
 	$(CC) $(CFLAGS) $(CFILES2) -o $@
 
+$(PROG3): $(CFILES3) $(DEPS)
+	$(CC) $(CFLAGS) $(CFILES3) bin/bitseq.obj -o $@ $(LFLAGS)
+
 .PHONY: clean
 clean:
-	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.* $(PROG2)
+	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.* $(PROG2) $(PROG3)

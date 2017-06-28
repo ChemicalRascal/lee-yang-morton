@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "bitseq.h"
-#include "qsi.h"
-#include "leeyang.h"
+#include "bitseq.hpp"
+#include "qsi.hpp"
+#include "leeyang.hpp"
 #include "read_csv.h"
 #include "morton.h"
 
@@ -161,7 +161,7 @@ main(int argc, char** argv, char** envp)
 {
     int opt, build_mode, print_mode, timing_mode;
     FILE* input_fp;
-    FILE* tree_fp;
+    std::fstream tree_file;
     qsiseq* seq;
 
     if (argc == 1)
@@ -188,7 +188,6 @@ main(int argc, char** argv, char** envp)
     global_input_path = NULL;
     global_tree_path = NULL;
     input_fp = NULL;
-    tree_fp = NULL;
 
     while ((opt = getopt(argc, argv, "bqpcf:t:")) != -1)
     {
@@ -224,7 +223,11 @@ main(int argc, char** argv, char** envp)
     }
     else
     {
-        tree_fp = fopen(global_tree_path, (build_mode==1)?"wb":"rb");
+        tree_file = std::fstream(global_tree_path, std::fstream::binary |
+                ((build_mode == 1)
+                    ? (std::fstream::out | std::fstream::trunc)
+                    : (std::fstream::in))
+                );
     }
 
     if (global_input_path == NULL)
@@ -244,13 +247,16 @@ main(int argc, char** argv, char** envp)
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
         seq = qsiseq_from_n_qtree(tree);
+        pprint_qsiseq(seq);
         free_qtree(tree, 1);
-        write_qsiseq(seq, tree_fp);
+        write_qsiseq(seq, tree_file);
         if (print_mode == 1)
         {
             pprint_qsiseq(seq);
         }
+
         free_qsiseq(seq);
+        tree_file.close();
         exit(EXIT_SUCCESS);
     }
 
@@ -262,7 +268,7 @@ main(int argc, char** argv, char** envp)
         unsigned int lox, loy, hix, hiy;
         lox = loy = hix = hiy = 0;
 
-        seq = read_qsiseq(tree_fp);
+        seq = read_qsiseq(tree_file);
         if (print_mode == 1)
         {
             pprint_qsiseq(seq);

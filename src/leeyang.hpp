@@ -10,7 +10,7 @@
 #ifndef LEEYANG_H
 #define LEEYANG_H
 
-#include "qsi.h"
+#include "qsi.hpp"
 
 typedef struct n_qnode_s
 {

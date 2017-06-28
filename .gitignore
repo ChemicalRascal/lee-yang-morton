@@ -19,6 +19,7 @@ gen_queries
 *.exe
 *.out
 *.app
+bin/
 
 # Test artefacts
 tmp*

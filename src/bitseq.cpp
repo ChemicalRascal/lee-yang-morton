@@ -7,7 +7,7 @@
  *
  *******************************************/
 
-#include "bitseq.h"
+#include "bitseq.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,6 +16,8 @@
 
 #include <stdint.h>
 #include <endian.h>
+
+#include <sdsl/vectors.hpp>
 
 /* Change these whenever formats or structs change. One might suggest
  * something that looks like the current date/time.
@@ -169,24 +171,26 @@ realloc_bitseq(bitseq* seq, unsigned int newsize)
     return;
 }
 
-/* Writes a bitseq to a given file pointer, fp.
+/* Writes a bitseq to a given ostream, outfile.
  */
 void
-write_bitseq(bitseq* seq, FILE* fp)
+write_bitseq(bitseq* seq, std::ostream& outfile)
 {
     long unsigned int magic = BITSEQ_SERIALIZE_MAGIC_NUMBER;
-    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    outfile.write((char*)&magic, sizeof(long unsigned int));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_bitseq: magic write failure.\n");
         return;
     }
-    if (fwrite((void*) seq, sizeof(bitseq), 1, fp) != 1)
+    outfile.write((char*)seq, sizeof(bitseq));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_bitseq: seq write failure.\n");
         return;
     }
-    if (fwrite((void*) (seq->seq), sizeof(unsigned char), seq->alloc_size, fp)
-            != seq->alloc_size)
+    outfile.write((char*)(seq->seq), sizeof(unsigned char)*seq->alloc_size);
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_bitseq: seq->seq write failure.\n");
         return;
@@ -194,15 +198,16 @@ write_bitseq(bitseq* seq, FILE* fp)
     return;
 }
 
-/* Reads a bitseq from a given file pointer, fp.
+/* Reads a bitseq from a given istream, infile.
  */
 bitseq*
-read_bitseq(FILE* fp)
+read_bitseq(std::istream& infile)
 {
     long unsigned int magic;
     bitseq* seq;
 
-    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    infile.read((char*)&magic, sizeof(long unsigned int));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_bitseq: magic read failure.\n");
         return NULL;
@@ -217,7 +222,8 @@ read_bitseq(FILE* fp)
 
     seq = (bitseq*)malloc(sizeof(bitseq));
     assert(seq != NULL);
-    if (fread((void*) seq, sizeof(bitseq), 1, fp) != 1)
+    infile.read((char*)seq, sizeof(bitseq));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_bitseq: psums read failure.\n");
         free(seq);
@@ -226,8 +232,8 @@ read_bitseq(FILE* fp)
 
     seq->seq = (unsigned char*)calloc(seq->alloc_size, sizeof(unsigned char));
     assert(seq->seq != NULL);
-    if (fread((void*) (seq->seq), sizeof(unsigned char), seq->alloc_size, fp)
-            != seq->alloc_size)
+    infile.read((char*)seq->seq, sizeof(unsigned char) * seq->alloc_size);
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_bitseq: seq->seq read failure.\n");
         free(seq->seq);

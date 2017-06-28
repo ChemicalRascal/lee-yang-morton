@@ -7,7 +7,7 @@
  *
  *******************************************/
 
-#include "qsi.h"
+#include "qsi.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -82,21 +82,23 @@ free_qsiseq(qsiseq* seq)
  * This is pretty useless on its own. You're probably after write_sqiseq().
  */
 void
-write_qsipsums(qsipsums* psums, FILE* fp)
+write_qsipsums(qsipsums* psums, std::ostream& outfile)
 {
     long unsigned int magic = QSIPSUMS_SERIALIZE_MAGIC_NUMBER;
-    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    outfile.write((char*)&magic, sizeof(long unsigned int));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_qsipsums: magic write failure.\n");
         return;
     }
-    if (fwrite((void*) psums, sizeof(qsipsums), 1, fp) != 1)
+    outfile.write((char*)psums, sizeof(qsipsums));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_qsipsums: psums write failure.\n");
         return;
     }
-    if (fwrite((void*) (psums->psums), sizeof(qsipsum), psums->len, fp)
-            != psums->len)
+    outfile.write((char*)(psums->psums), sizeof(qsipsum) * psums->len);
+    if (!outfile.good())
     {
         fprintf(stderr,
                 "ERROR: write_qsipsums: psums->psums write failure.\n");
@@ -106,12 +108,12 @@ write_qsipsums(qsipsums* psums, FILE* fp)
 }
 
 qsipsums*
-read_qsipsums(FILE* fp)
+read_qsipsums(std::istream& infile)
 {
     long unsigned int magic;
     qsipsums* psums;
-
-    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    infile.read((char*)&magic, sizeof(long unsigned int));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_qsipsums: magic read failure.\n");
         return NULL;
@@ -123,26 +125,24 @@ read_qsipsums(FILE* fp)
                 QSIPSUMS_SERIALIZE_MAGIC_NUMBER, magic);
         return NULL;
     }
-
     psums = (qsipsums*)malloc(sizeof(qsipsums));
     assert(psums != NULL);
-    if (fread((void*) psums, sizeof(qsipsums), 1, fp) != 1)
+    infile.read((char*) psums, sizeof(qsipsums));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_qsipsums: psums read failure.\n");
         free(psums);
         return NULL;
     }
-
     psums->psums = (qsipsum*)calloc(psums->len, sizeof(qsipsum));
     assert(psums->psums != NULL);
-    if (fread((void*) (psums->psums), sizeof(qsipsum), psums->len, fp)
-            != psums->len)
+    infile.read((char*)(psums->psums), sizeof(qsipsum) * psums->len);
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_qsipsums: psums->psums read failure.\n");
         free(psums->psums);
         free(psums);
     }
-
     return psums;
 }
 
@@ -152,32 +152,35 @@ read_qsipsums(FILE* fp)
  * close the file pointer.
  */
 void
-write_qsiseq(qsiseq* seq, FILE* fp)
+write_qsiseq(qsiseq* seq, std::ostream& outfile)
 {
     long unsigned int magic = QSISEQ_SERIALIZE_MAGIC_NUMBER;
-    if (fwrite((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    outfile.write((char*)&magic, sizeof(long unsigned int));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_qsiseq: magic write failure.\n");
         return;
     }
-    if (fwrite((void*) seq, sizeof(qsiseq), 1, fp) != 1)
+    outfile.write((char*)seq, sizeof(qsiseq));
+    if (!outfile.good())
     {
         fprintf(stderr, "ERROR: write_qsiseq: seq write failure.\n");
         return;
     }
-    write_bitseq(seq->hi, fp);
-    write_bitseq(seq->lo, fp);
-    write_qsipsums(seq->hi_psums, fp);
+    write_bitseq(seq->hi, outfile);
+    write_bitseq(seq->lo, outfile);
+    write_qsipsums(seq->hi_psums, outfile);
+    outfile.flush();
     return;
 }
 
 qsiseq*
-read_qsiseq(FILE* fp)
+read_qsiseq(std::istream& infile)
 {
     long unsigned int magic;
     qsiseq* seq;
-
-    if (fread((void*) &magic, sizeof(long unsigned int), 1, fp) != 1)
+    infile.read((char*)&magic, sizeof(long unsigned int));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_qsiseq: magic read failure.\n");
         return NULL;
@@ -192,21 +195,21 @@ read_qsiseq(FILE* fp)
 
     seq = (qsiseq*)malloc(sizeof(qsiseq));
     assert(seq != NULL);
-    if (fread((void*) seq, sizeof(qsiseq), 1, fp) != 1)
+    infile.read((char*)seq, sizeof(qsiseq));
+    if (!infile.good())
     {
         fprintf(stderr, "ERROR: read_qsiseq: seq read failure.\n");
         free(seq);
         return NULL;
     }
-
-    seq->hi = read_bitseq(fp);
+    seq->hi = read_bitseq(infile);
     if (seq->hi == NULL)
     {
         fprintf(stderr, "ERROR: read_qsiseq: read_bitseq fail on seq->hi.\n");
         free(seq);
         return NULL;
     }
-    seq->lo = read_bitseq(fp);
+    seq->lo = read_bitseq(infile);
     if (seq->lo == NULL)
     {
         fprintf(stderr, "ERROR: read_qsiseq: read_bitseq fail on seq->lo.\n");
@@ -214,7 +217,7 @@ read_qsiseq(FILE* fp)
         free(seq);
         return NULL;
     }
-    seq->hi_psums = read_qsipsums(fp);
+    seq->hi_psums = read_qsipsums(infile);
     if (seq->hi_psums == NULL)
     {
         fprintf(stderr,
@@ -224,7 +227,6 @@ read_qsiseq(FILE* fp)
         free(seq);
         return NULL;
     }
-
     return seq;
 }
 
