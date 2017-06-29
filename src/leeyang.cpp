@@ -784,10 +784,10 @@ get_fp_from_dp_e(
         unsigned int tree_depth)
 {
     long unsigned int fp_mcode = 0;
-    unsigned int dp_digit, e_digit, i, e_x, e_y, dpx, dpy;
+    long unsigned int dp_digit, e_digit, i, e_x, e_y, dpx, dpy;
 
-    unweave_luint_to_uints(e_mcode, &e_y, &e_x);
-    unweave_luint_to_uints(dp_mcode, &dpy, &dpx);
+    morton_ZtoP(e_mcode, &e_y, &e_x);
+    morton_ZtoP(dp_mcode, &dpy, &dpx);
 
     for (i = 0; i < tree_depth; i++)
     {
@@ -934,7 +934,7 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
         unsigned int hiy)
 {
     long unsigned int le_mcode, ge_mcode, n, count = 0L;
-    unsigned int w_x, w_y;
+    long unsigned int w_x, w_y;
     qsi_next_state seq_state;
 
     if (seq == NULL)
@@ -949,7 +949,7 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
 
     while ((n != ULONG_MAX) && (n <= ge_mcode))
     {
-        unweave_luint_to_uints(n, &w_y, &w_x);
+        morton_ZtoP(n, &w_y, &w_x);
         if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
         {
             /* We're in an internal run. */
