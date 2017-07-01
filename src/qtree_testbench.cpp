@@ -106,7 +106,7 @@ exit_testbed(char** argv)
     int i, j;
     long unsigned int z;
     long unsigned int xa, ya;
-    unsigned int xb, yb;
+    long unsigned int xb, yb;
     for (j = 7; j >= 0; j--)
     {
         for (i = 0; i < 8; i++)
@@ -120,7 +120,7 @@ exit_testbed(char** argv)
     for (z = 0; z > 4096; z++)
     {
         morton_ZtoP(z, &xa, &ya);
-        unweave_luint_to_uints(z, &yb, &xb);
+        morton_ZtoP(z, &yb, &xb);
         if ((xa != xb) || (ya != yb))
         {
             printf("%lu\n", z);
@@ -247,7 +247,6 @@ main(int argc, char** argv, char** envp)
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
         seq = qsiseq_from_n_qtree(tree);
-        pprint_qsiseq(seq);
         free_qtree(tree, 1);
         write_qsiseq(seq, tree_file);
         if (print_mode == 1)
