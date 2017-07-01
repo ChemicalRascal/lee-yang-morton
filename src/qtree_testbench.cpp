@@ -120,7 +120,7 @@ exit_testbed(char** argv)
     for (z = 0; z > 4096; z++)
     {
         morton_ZtoP(z, &xa, &ya);
-        morton_ZtoP(z, &yb, &xb);
+        morton_ZtoP(z, &xb, &yb);
         if ((xa != xb) || (ya != yb))
         {
             printf("%lu\n", z);

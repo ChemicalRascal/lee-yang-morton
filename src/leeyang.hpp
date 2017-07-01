@@ -57,8 +57,8 @@ typedef struct n_qtree_s
 
 typedef struct link_node_s
 {
-    unsigned int            x;
-    unsigned int            y;
+    long unsigned int       x;
+    long unsigned int       y;
     struct link_node_s*     n;
     void*                   data;
 } link_node;

@@ -381,6 +381,7 @@ link_node*
 get_dp_mcode(n_qtree* tree, long unsigned int m)
 {
     link_node* n;
+    long unsigned int n_mcode;
 
     n = get_dp_rec(tree->root, m, tree->depth, 0);
 
@@ -389,7 +390,8 @@ get_dp_mcode(n_qtree* tree, long unsigned int m)
         return NULL;
     }
 
-    if (weave_uints_to_luint(n->y, n->x) < m)
+    morton_PtoZ(n->x, n->y, &n_mcode);
+    if (n_mcode < m)
     {
         /* No dp at that mcode */
         n = n->n;
@@ -397,7 +399,7 @@ get_dp_mcode(n_qtree* tree, long unsigned int m)
     else
     {
         /* TODO: Remove, DEBUG */
-        assert(weave_uints_to_luint(n->y, n->x) == m);
+        assert(n_mcode == m);
     }
     return n;
 }
@@ -786,8 +788,8 @@ get_fp_from_dp_e(
     long unsigned int fp_mcode = 0;
     long unsigned int dp_digit, e_digit, i, e_x, e_y, dpx, dpy;
 
-    morton_ZtoP(e_mcode, &e_y, &e_x);
-    morton_ZtoP(dp_mcode, &dpy, &dpx);
+    morton_ZtoP(e_mcode, &e_x, &e_y);
+    morton_ZtoP(dp_mcode, &dpx, &dpy);
 
     for (i = 0; i < tree_depth; i++)
     {
@@ -949,7 +951,7 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
 
     while ((n != ULONG_MAX) && (n <= ge_mcode))
     {
-        morton_ZtoP(n, &w_y, &w_x);
+        morton_ZtoP(n, &w_x, &w_y);
         if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
         {
             /* We're in an internal run. */
