@@ -67,7 +67,6 @@ val:	val_build
 gdb:	val_build
 	$(GDB) $(DBFLAG) ./$(PROG)
 
-.PHONY: $(PROG)
 $(PROG): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 

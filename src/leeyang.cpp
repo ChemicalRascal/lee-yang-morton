@@ -369,9 +369,11 @@ link_nodes_morton_rec(n_qnode* node, link_node** p)
  * returns the next highest datapoint.
  */
 link_node*
-get_dp(n_qtree* tree, unsigned int x, unsigned int y)
+get_dp(n_qtree* tree, long unsigned int x, long unsigned int y)
 {
-    return get_dp_mcode(tree, weave_uints_to_luint(y, x));
+    long unsigned int m;
+    morton_PtoZ(x, y, &m);
+    return get_dp_mcode(tree, m);
 }
 
 /* Returns the data point for a given morton code. If no such data point
@@ -491,11 +493,11 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
     unsigned int closex, closey, farx, fary;
     long unsigned int close_edge, far_edge;
 
-    sw_mcode = weave_uints_to_luint(loy, lox);
-    se_mcode = weave_uints_to_luint(loy, hix);
-    nw_mcode = weave_uints_to_luint(hiy, lox);
-    ne_mcode = weave_uints_to_luint(hiy, hix);
-    dp_mcode = weave_uints_to_luint(dpy, dpx);
+    morton_PtoZ(lox, loy, &sw_mcode);
+    morton_PtoZ(hix, loy, &se_mcode);
+    morton_PtoZ(lox, hiy, &nw_mcode);
+    morton_PtoZ(hix, hiy, &ne_mcode);
+    morton_PtoZ(dpx, dpy, &dp_mcode);
 
     if ((dp_mcode < sw_mcode) || (dp_mcode > ne_mcode))
     {
@@ -736,7 +738,8 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
             *outx = lox;
             *outy = loy;
         }
-        return weave_uints_to_luint(loy, lox);
+        morton_PtoZ(lox, loy, &mid_mcode);
+        return mid_mcode;
     }
 
     if (horiz) { unmv = loy; lo = lox; hi = hix; }
@@ -756,8 +759,8 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
     }
 
     mid = (lo+hi)/2;
-    if (horiz) { mid_mcode = weave_uints_to_luint(unmv, mid); }
-    else { mid_mcode = weave_uints_to_luint(mid, unmv); }
+    if (horiz) { morton_PtoZ(mid, unmv, &mid_mcode); }
+    else { morton_PtoZ(unmv, mid, &mid_mcode); }
 
     if (dp_mcode < mid_mcode)
     {
@@ -831,15 +834,14 @@ get_fp_from_dp_e(
  * tree_depth:  Canonical depth of qtree.
  */
 long unsigned int
-get_fp_from_dp(unsigned int dpx, unsigned int dpy,
-        unsigned int lox, unsigned int loy,
-        unsigned int hix, unsigned int hiy,
+get_fp_from_dp(long unsigned int dpx, long unsigned int dpy,
+        long unsigned int lox, long unsigned int loy,
+        long unsigned int hix, long unsigned int hiy,
         unsigned int tree_depth)
 {
     long unsigned int mcode, dp_mcode;
 
-    dp_mcode = weave_uints_to_luint(dpy, dpx);
-
+    morton_PtoZ(dpx, dpy, &dp_mcode);
     mcode = get_e_from_dp(NULL, NULL, dpx, dpy, lox, loy, hix, hiy);
     mcode = get_fp_from_dp_e(NULL, NULL, dp_mcode, mcode, lox, loy, hix, hiy,
             tree_depth);
@@ -862,7 +864,7 @@ long unsigned int
 lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
         unsigned int hiy)
 {
-    long unsigned int le_mcode, ge_mcode, count = 0L;
+    long unsigned int le_mcode, ge_mcode, n_mcode, count = 0L;
     link_node* n;
 
     if ((tree == NULL) || (tree->root == NULL))
@@ -870,12 +872,13 @@ lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
         return 0L;
     }
 
-    le_mcode = weave_uints_to_luint(loy, lox);
-    ge_mcode = weave_uints_to_luint(hiy, hix);
+    morton_PtoZ(lox, loy, &le_mcode);
+    morton_PtoZ(hix, hiy, &ge_mcode);
 
     n = get_dp_mcode(tree, le_mcode);
+    morton_PtoZ(n->x, n->y, &n_mcode);
 
-    while ((n != NULL) && (weave_uints_to_luint(n->y, n->x) <= ge_mcode))
+    while ((n != NULL) && (n_mcode <= ge_mcode))
     {
         if ((lox <= n->x) && (n->x <= hix) && (loy <= n->y) && (n->y <= hiy))
         {
@@ -903,6 +906,7 @@ qsiseq_from_n_qtree(n_qtree* tree)
 {
     link_node* n;
     qsiseq* seq = new_qsiseq();
+    long unsigned int n_mcode;
 
     seq->tree_depth = tree->depth;
     qsi_set_u(seq, (1<<((tree->depth)*2)));
@@ -912,7 +916,8 @@ qsiseq_from_n_qtree(n_qtree* tree)
     n = (link_node*)get_morton_lowest(tree);
     while (n != NULL)
     {
-        qsi_append(seq, weave_uints_to_luint(n->y, n->x));
+        morton_PtoZ(n->x, n->y, &n_mcode);
+        qsi_append(seq, n_mcode);
         n = n->n;
     }
     qsi_update_psums(seq);
@@ -932,8 +937,8 @@ qsiseq_from_n_qtree(n_qtree* tree)
  * hiy:     y-coord of NE corner of query window
  */
 long unsigned int
-lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
-        unsigned int hiy)
+lee_yang_qsi(qsiseq* seq, long unsigned int lox, long unsigned int loy,
+        long unsigned int hix, long unsigned int hiy)
 {
     long unsigned int le_mcode, ge_mcode, n, count = 0L;
     long unsigned int w_x, w_y;
@@ -944,8 +949,8 @@ lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy, unsigned int hix,
         return 0L;
     }
 
-    le_mcode = weave_uints_to_luint(loy, lox);
-    ge_mcode = weave_uints_to_luint(hiy, hix);
+    morton_PtoZ(lox, loy, &le_mcode);
+    morton_PtoZ(hix, hiy, &ge_mcode);
 
     n = qsi_get(seq, &seq_state, le_mcode);
 

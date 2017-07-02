@@ -98,12 +98,13 @@ long unsigned int get_e_from_dp_rec(long unsigned int, unsigned int*,
 long unsigned int get_fp_from_dp_e(unsigned int*, unsigned int*,
         long unsigned int, long unsigned int, unsigned int, unsigned int,
         unsigned int, unsigned int, unsigned int);
-long unsigned int get_fp_from_dp(unsigned int, unsigned int, unsigned int,
-        unsigned int, unsigned int, unsigned int, unsigned int);
+long unsigned int get_fp_from_dp(long unsigned int, long unsigned int,
+        long unsigned int, long unsigned int, long unsigned int,
+        long unsigned int, unsigned int);
 
 qsiseq* qsiseq_from_n_qtree(n_qtree*);
-long unsigned int lee_yang_qsi(qsiseq*, unsigned int, unsigned int,
-        unsigned int, unsigned int);
+long unsigned int lee_yang_qsi(qsiseq*, long unsigned int, long unsigned int,
+        long unsigned int, long unsigned int);
 long unsigned int fast_lee_yang_qsi(qsiseq*, unsigned int, unsigned int,
         unsigned int, unsigned int);
 
