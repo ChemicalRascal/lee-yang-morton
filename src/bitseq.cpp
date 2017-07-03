@@ -20,7 +20,7 @@
 /* Change these whenever formats or structs change. One might suggest
  * something that looks like the current date/time.
  */
-#define BITSEQ_SERIALIZE_MAGIC_NUMBER 201704130611L
+#define BITSEQ_SERIALIZE_MAGIC_NUMBER 201707040000L
 
 /* It physically pains me to do this
  *
