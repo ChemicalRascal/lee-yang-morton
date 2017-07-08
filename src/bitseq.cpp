@@ -264,7 +264,6 @@ get_bit(bitseq* seq, unsigned int index)
 void
 pprint_bitseq(bitseq* seq)
 {
-    unsigned int mask;
     unsigned int i;
 
     if (seq == NULL)
@@ -273,23 +272,13 @@ pprint_bitseq(bitseq* seq)
         return;
     }
 
-    for (i = 0; i < (seq->vec->size()/CHAR_BIT); i++)
+    for (i = 0; i < seq->vec->size(); i++)
     {
-        mask = 1 << (CHAR_BIT - 1);
-        while (mask)
+        printf("%u", get_bit(seq, i));
+        if (i%8 == 7)
         {
-            /* mask will eventually equal zero due to the repeated shift
-             */
-            printf("%u", (mask & (*(seq->vec))[i]) ? 1 : 0 );
-            mask >>= 1;
+            printf(" ");
         }
-        printf(" ");
-    }
-    mask = 1 << (CHAR_BIT - 1);
-    for (i = 0; i < (seq->vec->size() % CHAR_BIT); i++)
-    {
-        printf("%u", (mask & (*(seq->vec))[seq->vec->size()/CHAR_BIT]) ? 1:0);
-        mask >>= 1;
     }
     printf("\n");
     return;

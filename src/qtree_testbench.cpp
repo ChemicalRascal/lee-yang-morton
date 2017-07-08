@@ -17,6 +17,7 @@
 #include "leeyang.hpp"
 #include "read_csv.h"
 #include "morton.h"
+#include "bit_qtree.hpp"
 
 #include <limits.h>
 
@@ -242,12 +243,16 @@ main(int argc, char** argv, char** envp)
     if (build_mode == 1)
     {
         n_qtree* tree;
+        BitQTree bitqtree;
         int junk_data = 1;
 
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
+        if (print_mode == 1)
+        {
+            print_qtree_integerwise(tree, 0);
+        }
         seq = qsiseq_from_n_qtree(tree);
-        free_qtree(tree, 1);
         write_qsiseq(seq, tree_file);
         if (print_mode == 1)
         {
@@ -256,6 +261,21 @@ main(int argc, char** argv, char** envp)
 
         free_qsiseq(seq);
         tree_file.close();
+        tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
+                    std::fstream::out | std::fstream::trunc);
+        bitqtree = BitQTree(tree);
+        bitqtree.serialize(tree_file);
+
+        free_qtree(tree, 1);
+        bitqtree = BitQTree();
+        tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
+                    std::fstream::in);
+        bitqtree.load(tree_file);
+        tree = bitqtree.remake_tree();
+        if (print_mode == 1)
+        {
+            print_qtree_integerwise(tree, 0);
+        }
         exit(EXIT_SUCCESS);
     }
 

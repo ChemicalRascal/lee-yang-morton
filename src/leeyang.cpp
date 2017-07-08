@@ -91,7 +91,7 @@ free_qnode(n_qnode* qnode, int linkednodes)
 }
 
 link_node*
-new_link_node(void* data, unsigned int x, unsigned int y)
+new_link_node(void* data, long unsigned int x, long unsigned int y)
 {
     link_node* node;
     node = (link_node*)malloc(sizeof(link_node));
@@ -308,7 +308,7 @@ print_qtree_integerwise(n_qtree* tree, int linkednodes)
             }
             else
             {
-                printf("%d ", *point);
+                printf("%d ", 1);
             }
         }
         printf("\n");

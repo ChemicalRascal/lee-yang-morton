@@ -67,7 +67,7 @@ n_qnode* new_qnode(void*);
 void free_qnode(n_qnode*, int);
 n_qtree* new_qtree(unsigned int);
 void free_qtree(n_qtree*, int);
-link_node* new_link_node(void*, unsigned int, unsigned int);
+link_node* new_link_node(void*, long unsigned int, long unsigned int);
 void free_link_node(link_node*);
 void insert_coord(n_qtree*, void*, unsigned int, unsigned int, int);
 void* query_coord(n_qtree*, unsigned int, unsigned int);
