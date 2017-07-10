@@ -28,6 +28,7 @@ class BitQTree : public sdsl::int_vector<4>
         n_qtree* remake_tree() const;
         sdsl::int_vector<4>::size_type serialize(std::ostream& out);
         void load(std::istream& in);
+        unsigned int len();
 
     private:
         unsigned int remake_tree(n_qnode* n) const;

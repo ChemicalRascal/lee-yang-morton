@@ -110,6 +110,12 @@ BitQTree::load(std::istream& in)
     return;
 }
 
+unsigned int
+BitQTree::len()
+{
+    return this->length;
+}
+
 void
 BitQTree::double_size()
 {
