@@ -61,7 +61,6 @@ OffsetQTree
         {
             this->append_bitqtree(tree);
             this->fix_c_depth();
-            printf("Depth of new OffsetQTree: %lu\n", this->c_depth);
         };
 
         //TODO: Work out if this needs to actually be public or not.
@@ -70,6 +69,9 @@ OffsetQTree
 
         unsigned char query_coord(size_type x, size_type y);
         void pprint();
+
+        void serialize(std::ostream& out);
+        void load(std::istream& in);
 
     private:
         /* Append a node, if possible, and return the index of that node.
@@ -90,6 +92,8 @@ OffsetQTree
          * elements, and if so, resizes the vector.
          */
         void check_fix_size(size_type num = 1);
+
+        void truncate_vec();
 
         /* Run through the tree and work out what the canonical depth is.
          */
@@ -116,6 +120,14 @@ OffsetQTree<int_type>::check_fix_size(size_type num)
     }
     this->vec.resize((2*this->vec.size() > this->length + num)?
             2*this->vec.size():this->length+num);
+    return;
+}
+
+template<class int_type>
+void
+OffsetQTree<int_type>::truncate_vec()
+{
+    this->vec.resize(this->length);
     return;
 }
 
@@ -241,6 +253,24 @@ OffsetQTree<int_type>::pprint()
     while (y-- > 0);
 }
 
-//TODO: Serialize function
+template<class int_type>
+void
+OffsetQTree<int_type>::serialize(std::ostream& out)
+{
+    this->truncate_vec();
+    out.write((char*)&this->length, sizeof(size_type))
+        .write((char*)&this->c_depth, sizeof(size_type))
+        .write((char*)this->vec.data(), sizeof(oqt_node) * this->length);
+}
+
+template<class int_type>
+void
+OffsetQTree<int_type>::load(std::istream& in)
+{
+    in.read((char*)&this->length, sizeof(size_type))
+        .read((char*)&this->c_depth, sizeof(size_type));
+    this->check_fix_size(this->length);
+    in.read((char*)this->vec.data(), sizeof(oqt_node) * this->length);
+}
 
 #endif /* OFFSET_QTREE_HPP */

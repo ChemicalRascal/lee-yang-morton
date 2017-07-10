@@ -291,9 +291,22 @@ main(int argc, char** argv, char** envp)
 
         //OffsetQTree section
         //Relies on BitQTree section
+        tree_file = std::fstream("oqt_file", std::fstream::binary |
+                    std::fstream::out | std::fstream::trunc);
         oqt = OffsetQTree<unsigned int>(&bitqtree);
         if (print_mode == 1)
         {
+            oqt.pprint();
+        }
+        oqt.serialize(tree_file);
+
+        oqt = OffsetQTree<unsigned int>();
+        tree_file = std::fstream("oqt_file", std::fstream::binary |
+                    std::fstream::in);
+        oqt.load(tree_file);
+        if (print_mode == 1)
+        {
+            printf("Post-write-read:\n");
             oqt.pprint();
         }
         //OffsetQTree section over
