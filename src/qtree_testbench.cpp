@@ -19,6 +19,8 @@
 #include "morton.h"
 #include "bit_qtree.hpp"
 
+#include "offset_qtree.hpp"
+
 #include <limits.h>
 
 #include <unistd.h>
@@ -165,6 +167,9 @@ main(int argc, char** argv, char** envp)
     std::fstream tree_file;
     qsiseq* seq;
 
+    BitQTree bitqtree;
+    OffsetQTree<unsigned int> oqt;
+
     if (argc == 1)
     {
         exit_fprintf_usage(argv);
@@ -243,7 +248,6 @@ main(int argc, char** argv, char** envp)
     if (build_mode == 1)
     {
         n_qtree* tree;
-        BitQTree bitqtree;
         int junk_data = 1;
 
         tree = read_qtree(input_fp, &junk_data);
@@ -261,21 +265,40 @@ main(int argc, char** argv, char** envp)
 
         free_qsiseq(seq);
         tree_file.close();
+
+        //TODO: Wrap this in per-baseline code
+        //TODO: Make all the baselines use filenames based on a global prefix
+        //      and per-baseline suffixes.
+
+        //BitQTree section
         tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
                     std::fstream::out | std::fstream::trunc);
         bitqtree = BitQTree(tree);
         bitqtree.serialize(tree_file);
 
-        free_qtree(tree, 1);
         bitqtree = BitQTree();
         tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
                     std::fstream::in);
         bitqtree.load(tree_file);
+
+        free_qtree(tree, 1);
         tree = bitqtree.remake_tree();
         if (print_mode == 1)
         {
             print_qtree_integerwise(tree, 0);
         }
+        //BitQTree section over, tree freed and remade
+
+        //OffsetQTree section
+        //Relies on BitQTree section
+        oqt = OffsetQTree<unsigned int>(&bitqtree);
+        if (print_mode == 1)
+        {
+            oqt.pprint();
+        }
+        //OffsetQTree section over
+
+        free_qtree(tree, 1);
         exit(EXIT_SUCCESS);
     }
 
