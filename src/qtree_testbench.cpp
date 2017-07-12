@@ -305,7 +305,6 @@ main(int argc, char** argv, char** envp)
         bqt_file = std::fstream(bqt_path.c_str(), std::fstream::binary |
                     std::fstream::out | std::fstream::trunc);
         bitqtree = BitQTree(tree);
-        printf("Doing the thing: %s\n", bqt_path.c_str());
         bitqtree.serialize(bqt_file);
         bqt_file.flush();
         free_qtree(tree, 1);
