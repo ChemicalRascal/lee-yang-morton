@@ -75,6 +75,8 @@ void free_qsiseq(qsiseq*);
 void write_qsiseq(qsiseq*, std::ostream&);
 qsiseq* read_qsiseq(std::istream&);
 
+void qsiseq_set_q(qsiseq*, unsigned int);
+
 qsipsums* new_qsipsums();
 void free_qsipsums(qsipsums*);
 void write_qsipsums(qsipsums*, std::ostream&);

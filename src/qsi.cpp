@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #define QSI_INIT_PSUMS_LEN  10
-#define QSI_DEFAULT_Q       2
+#define QSI_DEFAULT_Q       32
 
 /* Change these whenever formats or structs change. One might suggest
  * something that looks like the current date/time.
@@ -63,6 +63,13 @@ new_qsiseq()
     q->tree_depth = 0L;
     q->q = QSI_DEFAULT_Q;
     return q;
+}
+
+void
+qsiseq_set_q(qsiseq* seq, unsigned int q)
+{
+    seq->q = q;
+    return;
 }
 
 void

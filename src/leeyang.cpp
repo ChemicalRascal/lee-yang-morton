@@ -902,13 +902,14 @@ lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
 }
 
 qsiseq*
-qsiseq_from_n_qtree(n_qtree* tree)
+qsiseq_from_n_qtree(n_qtree* tree, unsigned int q)
 {
     link_node* n;
     qsiseq* seq = new_qsiseq();
     long unsigned int n_mcode;
 
     seq->tree_depth = tree->depth;
+    qsiseq_set_q(seq, q);
     qsi_set_u(seq, (1<<((tree->depth)*2)));
     n = get_morton_highest(tree->root);
     qsi_set_n(seq, tree->n);

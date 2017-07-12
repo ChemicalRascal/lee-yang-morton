@@ -173,6 +173,12 @@ main(int argc, char** argv, char** envp)
     //FIXME: Currently unused
     //std::fstream csv_file;
     std::fstream qsi_file, bqt_file, oqt_file;
+    std::fstream qsi_2_file;
+    std::fstream qsi_16_file;
+    std::fstream qsi_32_file;
+    std::fstream qsi_64_file;
+    std::fstream qsi_128_file;
+    std::fstream qsi_256_file;
 
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
@@ -279,8 +285,6 @@ main(int argc, char** argv, char** envp)
         n_qtree* tree;
         int junk_data = 1;
 
-        qsi_file = std::fstream(qsi_path.c_str(), std::fstream::binary |
-                    std::fstream::out | std::fstream::trunc);
 
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
@@ -288,15 +292,69 @@ main(int argc, char** argv, char** envp)
         {
             print_qtree_integerwise(tree, 0);
         }
-        seq = qsiseq_from_n_qtree(tree);
-        write_qsiseq(seq, qsi_file);
-        qsi_file.flush();
+        /*
+        seq_x = qsiseq_from_n_qtree(tree, x);
+        qsi_x_file = std::fstream((qsi_path+".x").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq_x, qsi_x_file);
+        qsi_x_file.flush();
+        free_qsiseq(seq_x);
+        */
+        seq = qsiseq_from_n_qtree(tree, 2);
+        qsi_2_file = std::fstream((qsi_path+".2").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_2_file);
+        qsi_2_file.flush();
+        free_qsiseq(seq);
+
+        seq = qsiseq_from_n_qtree(tree, 16);
+        qsi_16_file = std::fstream((qsi_path+".16").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_16_file);
+        qsi_16_file.flush();
+        free_qsiseq(seq);
+
+        seq = qsiseq_from_n_qtree(tree, 32);
+        qsi_32_file = std::fstream((qsi_path+".32").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_32_file);
+        qsi_32_file.flush();
+        free_qsiseq(seq);
+
+        seq = qsiseq_from_n_qtree(tree, 64);
+        qsi_64_file = std::fstream((qsi_path+".64").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_64_file);
+        qsi_64_file.flush();
+        free_qsiseq(seq);
+
+        seq = qsiseq_from_n_qtree(tree, 128);
+        qsi_128_file = std::fstream((qsi_path+".128").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_128_file);
+        qsi_128_file.flush();
+        free_qsiseq(seq);
+
+        seq = qsiseq_from_n_qtree(tree, 256);
+        qsi_256_file = std::fstream((qsi_path+".256").c_str(),
+                    std::fstream::binary | std::fstream::out |
+                    std::fstream::trunc);
+        write_qsiseq(seq, qsi_256_file);
+        qsi_256_file.flush();
+        free_qsiseq(seq);
+
+        /*
         if (print_mode == 1)
         {
             pprint_qsiseq(seq);
         }
-
-        free_qsiseq(seq);
+        */
         qsi_file.close();
 
         //TODO: Wrap this in per-baseline code -- arg flag per baseline

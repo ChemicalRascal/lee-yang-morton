@@ -102,7 +102,7 @@ long unsigned int get_fp_from_dp(long unsigned int, long unsigned int,
         long unsigned int, long unsigned int, long unsigned int,
         long unsigned int, unsigned int);
 
-qsiseq* qsiseq_from_n_qtree(n_qtree*);
+qsiseq* qsiseq_from_n_qtree(n_qtree*, unsigned int);
 long unsigned int lee_yang_qsi(qsiseq*, long unsigned int, long unsigned int,
         long unsigned int, long unsigned int);
 long unsigned int fast_lee_yang_qsi(qsiseq*, unsigned int, unsigned int,
