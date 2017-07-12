@@ -37,6 +37,7 @@
 int global_quiet_mode;
 char* global_input_path;
 char* global_tree_path;
+char* global_prefix_arg;
 
 /* Returns EOF if things went badly.
  */
@@ -80,6 +81,7 @@ read_query_range(FILE* fp, unsigned int* lox, unsigned int* loy,
 
 /* Currently, data is assigned to *every* node.
  */
+//TODO: Move this to std::istream
 n_qtree*
 read_qtree(FILE* fp, void* data)
 {
@@ -167,6 +169,11 @@ main(int argc, char** argv, char** envp)
     std::fstream tree_file;
     qsiseq* seq;
 
+    std::string prefix, csv_path, qsi_path, bqt_path, oqt_path;
+    //FIXME: Currently unused
+    //std::fstream csv_file;
+    std::fstream qsi_file, bqt_file, oqt_file;
+
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
 
@@ -193,9 +200,10 @@ main(int argc, char** argv, char** envp)
     timing_mode = 0;
     global_input_path = NULL;
     global_tree_path = NULL;
+    global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpcf:t:")) != -1)
+    while ((opt = getopt(argc, argv, "bqpcf:t:x:")) != -1)
     {
         switch (opt)
         {
@@ -214,6 +222,9 @@ main(int argc, char** argv, char** envp)
             case 't':
                 global_tree_path = optarg;
                 break;
+            case 'x':
+                global_prefix_arg = optarg;
+                break;
             case 'c':
                 timing_mode = 1;
                 break;
@@ -223,6 +234,7 @@ main(int argc, char** argv, char** envp)
         }
     }
 
+    /*
     if (global_tree_path == NULL)
     {
         exit_fprintf_usage(argv);
@@ -244,11 +256,31 @@ main(int argc, char** argv, char** envp)
     {
         input_fp = fopen(global_input_path, "r");
     }
+    */
+
+    if (global_prefix_arg == NULL)
+    {
+        exit_fprintf_usage(argv);
+    }
+    else
+    {
+        prefix = std::string(global_prefix_arg);
+        csv_path = prefix + (".csv");
+        qsi_path = prefix + (".qsi");
+        bqt_path = prefix + (".bqt");
+        oqt_path = prefix + (".oqt");
+
+        //FIXME: Get rid of this when moving csv/qsi I/O stuff to iostreams
+        input_fp = fopen(csv_path.c_str(), "r");
+    }
 
     if (build_mode == 1)
     {
         n_qtree* tree;
         int junk_data = 1;
+
+        qsi_file = std::fstream(qsi_path.c_str(), std::fstream::binary |
+                    std::fstream::out | std::fstream::trunc);
 
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
@@ -257,61 +289,43 @@ main(int argc, char** argv, char** envp)
             print_qtree_integerwise(tree, 0);
         }
         seq = qsiseq_from_n_qtree(tree);
-        write_qsiseq(seq, tree_file);
+        write_qsiseq(seq, qsi_file);
+        qsi_file.flush();
         if (print_mode == 1)
         {
             pprint_qsiseq(seq);
         }
 
         free_qsiseq(seq);
-        tree_file.close();
+        qsi_file.close();
 
-        //TODO: Wrap this in per-baseline code
-        //TODO: Make all the baselines use filenames based on a global prefix
-        //      and per-baseline suffixes.
+        //TODO: Wrap this in per-baseline code -- arg flag per baseline
 
         //BitQTree section
-        tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
+        bqt_file = std::fstream(bqt_path.c_str(), std::fstream::binary |
                     std::fstream::out | std::fstream::trunc);
         bitqtree = BitQTree(tree);
-        bitqtree.serialize(tree_file);
-
-        bitqtree = BitQTree();
-        tree_file = std::fstream("bit_qtree_file", std::fstream::binary |
-                    std::fstream::in);
-        bitqtree.load(tree_file);
-
+        printf("Doing the thing: %s\n", bqt_path.c_str());
+        bitqtree.serialize(bqt_file);
+        bqt_file.flush();
         free_qtree(tree, 1);
-        tree = bitqtree.remake_tree();
-        if (print_mode == 1)
-        {
-            print_qtree_integerwise(tree, 0);
-        }
-        //BitQTree section over, tree freed and remade
+        bqt_file.close();
+        //BitQTree section over, tree freed
 
         //OffsetQTree section
-        //Relies on BitQTree section
-        tree_file = std::fstream("oqt_file", std::fstream::binary |
+        //FIXME: Relies on BitQTree section for bitqtree
+        oqt_file = std::fstream(oqt_path.c_str(), std::fstream::binary |
                     std::fstream::out | std::fstream::trunc);
         oqt = OffsetQTree<unsigned int>(&bitqtree);
         if (print_mode == 1)
         {
             oqt.pprint();
         }
-        oqt.serialize(tree_file);
-
-        oqt = OffsetQTree<unsigned int>();
-        tree_file = std::fstream("oqt_file", std::fstream::binary |
-                    std::fstream::in);
-        oqt.load(tree_file);
-        if (print_mode == 1)
-        {
-            printf("Post-write-read:\n");
-            oqt.pprint();
-        }
+        oqt.serialize(oqt_file);
+        oqt_file.flush();
+        oqt_file.close();
         //OffsetQTree section over
 
-        free_qtree(tree, 1);
         exit(EXIT_SUCCESS);
     }
 
