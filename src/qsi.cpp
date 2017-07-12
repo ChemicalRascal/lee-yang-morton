@@ -59,6 +59,7 @@ new_qsiseq()
     q->hi_psums = new_qsipsums();
     q->len = 0L;
     q->max = 0L;
+    q->final_upper = 0L;
     q->tree_depth = 0L;
     q->q = QSI_DEFAULT_Q;
     return q;
