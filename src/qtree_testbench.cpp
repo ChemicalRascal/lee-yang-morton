@@ -11,6 +11,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <list>
+#include <tuple>
 
 #include "bitseq.hpp"
 #include "qsi.hpp"
@@ -34,10 +36,15 @@
 #define q_fprintf_if_eq(a, b, fp, args...) {if((a)==(b))\
     {q_fprintf((fp), args);}}
 
-int global_quiet_mode;
-char* global_input_path;
-char* global_tree_path;
-char* global_prefix_arg;
+int     global_quiet_mode;
+char*   global_prefix_arg;
+
+enum opmode_t
+{
+    qsi_mode,    // -c
+    bqt_mode,    // -d
+    oqt_mode,    // -e
+};
 
 /* Returns EOF if things went badly.
  */
@@ -88,15 +95,14 @@ read_qtree(FILE* fp, void* data)
     n_qtree* tree;
     unsigned int x, y;
 
-    q_fprintf_if_eq(global_input_path, NULL, stdout, "Enter tree depth: ");
+    q_fprintf(stdout, "Enter tree depth: ");
     if (readcsv_get_uint(fp, &x) == EOF)
     {
         return NULL;
     }
     tree = new_qtree(x);
 
-    q_fprintf_if_eq(global_input_path, NULL, stdout,
-            "\nEnter co-ords, x-coord first, EOF when complete: ");
+    q_fprintf(stdout, "\nEnter co-ords, x-coord first, EOF when complete: ");
     while (read_coord(fp, &x, &y) != EOF)
     {
         insert_coord(tree, data, x, y, 1);
@@ -166,20 +172,17 @@ main(int argc, char** argv, char** envp)
 {
     int opt, build_mode, print_mode, timing_mode;
     FILE* input_fp;
-    std::fstream tree_file;
-    qsiseq* seq;
 
-    std::string prefix, csv_path, qsi_path, bqt_path, oqt_path;
+    std::list<std::tuple<opmode_t, unsigned int>> mode_l =
+        std::list<std::tuple<opmode_t, unsigned int>>();
+
+    std::string prefix;
     //FIXME: Currently unused
     //std::fstream csv_file;
-    std::fstream qsi_file, bqt_file, oqt_file;
-    std::fstream qsi_2_file;
-    std::fstream qsi_16_file;
-    std::fstream qsi_32_file;
-    std::fstream qsi_64_file;
-    std::fstream qsi_128_file;
-    std::fstream qsi_256_file;
+    std::fstream tree_file;
 
+    // vars used in various modes
+    qsiseq* qsiseq;
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
 
@@ -204,12 +207,10 @@ main(int argc, char** argv, char** envp)
     build_mode = 0;
     print_mode = 0;
     timing_mode = 0;
-    global_input_path = NULL;
-    global_tree_path = NULL;
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpcf:t:x:")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tc:d:e:")) != -1)
     {
         switch (opt)
         {
@@ -222,47 +223,29 @@ main(int argc, char** argv, char** envp)
             case 'p':
                 print_mode = 1;
                 break;
-            case 'f':
-                global_input_path = optarg;
-                break;
-            case 't':
-                global_tree_path = optarg;
-                break;
             case 'x':
                 global_prefix_arg = optarg;
                 break;
-            case 'c':
+            case 't':
                 timing_mode = 1;
+                break;
+            case 'c':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (qsi_mode, atoi(optarg)));
+                break;
+            case 'd':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (bqt_mode, 0));
+                break;
+            case 'e':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (oqt_mode, 0));
                 break;
             default:
                 exit_fprintf_usage(argv);
                 break;
         }
     }
-
-    /*
-    if (global_tree_path == NULL)
-    {
-        exit_fprintf_usage(argv);
-    }
-    else
-    {
-        tree_file = std::fstream(global_tree_path, std::fstream::binary |
-                ((build_mode == 1)
-                    ? (std::fstream::out | std::fstream::trunc)
-                    : (std::fstream::in))
-                );
-    }
-
-    if (global_input_path == NULL)
-    {
-        input_fp = stdin;
-    }
-    else
-    {
-        input_fp = fopen(global_input_path, "r");
-    }
-    */
 
     if (global_prefix_arg == NULL)
     {
@@ -271,20 +254,14 @@ main(int argc, char** argv, char** envp)
     else
     {
         prefix = std::string(global_prefix_arg);
-        csv_path = prefix + (".csv");
-        qsi_path = prefix + (".qsi");
-        bqt_path = prefix + (".bqt");
-        oqt_path = prefix + (".oqt");
-
         //FIXME: Get rid of this when moving csv/qsi I/O stuff to iostreams
-        input_fp = fopen(csv_path.c_str(), "r");
+        input_fp = fopen((prefix + ".csv").c_str(), "r");
     }
 
     if (build_mode == 1)
     {
         n_qtree* tree;
         int junk_data = 1;
-
 
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
@@ -293,103 +270,66 @@ main(int argc, char** argv, char** envp)
             print_qtree_integerwise(tree, 0);
         }
 
-        /*
-        seq = qsiseq_from_n_qtree(tree, x);
-        qsi_x_file = std::fstream((qsi_path+".x").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_x_file);
-        qsi_x_file.flush();
-        free_qsiseq(seq);
-        */
-
-        seq = qsiseq_from_n_qtree(tree, 2);
-        qsi_2_file = std::fstream((qsi_path+".2").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_2_file);
-        qsi_2_file.flush();
-        free_qsiseq(seq);
-
-        seq = qsiseq_from_n_qtree(tree, 16);
-        qsi_16_file = std::fstream((qsi_path+".16").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_16_file);
-        qsi_16_file.flush();
-        free_qsiseq(seq);
-
-        seq = qsiseq_from_n_qtree(tree, 32);
-        qsi_32_file = std::fstream((qsi_path+".32").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_32_file);
-        qsi_32_file.flush();
-        free_qsiseq(seq);
-
-        seq = qsiseq_from_n_qtree(tree, 64);
-        qsi_64_file = std::fstream((qsi_path+".64").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_64_file);
-        qsi_64_file.flush();
-        free_qsiseq(seq);
-
-        seq = qsiseq_from_n_qtree(tree, 128);
-        qsi_128_file = std::fstream((qsi_path+".128").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_128_file);
-        qsi_128_file.flush();
-        free_qsiseq(seq);
-
-        seq = qsiseq_from_n_qtree(tree, 256);
-        qsi_256_file = std::fstream((qsi_path+".256").c_str(),
-                    std::fstream::binary | std::fstream::out |
-                    std::fstream::trunc);
-        write_qsiseq(seq, qsi_256_file);
-        qsi_256_file.flush();
-        free_qsiseq(seq);
-
-        /*
-        if (print_mode == 1)
+        while (!mode_l.empty())
         {
-            pprint_qsiseq(seq);
+            switch (std::get<0>(mode_l.front()))
+            {
+                case qsi_mode:
+                    qsiseq = qsiseq_from_n_qtree(tree, std::get<1>
+                            (mode_l.front()));
+                    tree_file = std::fstream((prefix + ".qsi_" +
+                                std::to_string(std::get<1>(mode_l.front()))
+                                ).c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    write_qsiseq(qsiseq, tree_file);
+                    tree_file.flush();
+                    tree_file.close();
+                    if (print_mode == 1)
+                    {
+                        printf("qsi:\n");
+                        pprint_qsiseq(qsiseq);
+                    }
+                    free_qsiseq(qsiseq);
+                    break;
+                case bqt_mode:
+                    bitqtree = BitQTree(tree);
+                    tree_file = std::fstream((prefix + ".bqt").c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    bitqtree.serialize(tree_file);
+                    tree_file.flush();
+                    tree_file.close();
+                    //TODO: bqt print mode?
+                    break;
+                case oqt_mode:
+                    //FIXME: It'd be faster have a constructor that takes
+                    //       a n_qtree*.
+                    bitqtree = BitQTree(tree);
+                    oqt = OffsetQTree<unsigned int>(&bitqtree);
+                    tree_file = std::fstream((prefix + ".oqt").c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    oqt.serialize(tree_file);
+                    tree_file.flush();
+                    tree_file.close();
+                    if (print_mode == 1)
+                    {
+                        printf("oqt:\n");
+                        oqt.pprint();
+                    }
+                    break;
+            }
+            mode_l.pop_front();
         }
-        */
-        qsi_file.close();
 
-        //TODO: Wrap this in per-baseline code -- arg flag per baseline
-
-        //BitQTree section
-        bqt_file = std::fstream(bqt_path.c_str(), std::fstream::binary |
-                    std::fstream::out | std::fstream::trunc);
-        bitqtree = BitQTree(tree);
-        bitqtree.serialize(bqt_file);
-        bqt_file.flush();
         free_qtree(tree, 1);
-        bqt_file.close();
-        //BitQTree section over, tree freed
-
-        //OffsetQTree section
-        //FIXME: Relies on BitQTree section for bitqtree
-        oqt_file = std::fstream(oqt_path.c_str(), std::fstream::binary |
-                    std::fstream::out | std::fstream::trunc);
-        oqt = OffsetQTree<unsigned int>(&bitqtree);
-        if (print_mode == 1)
-        {
-            oqt.pprint();
-        }
-        oqt.serialize(oqt_file);
-        oqt_file.flush();
-        oqt_file.close();
-        //OffsetQTree section over
-
         exit(EXIT_SUCCESS);
     }
 
     if (build_mode == 0)
     {
+        /* FIXME: Re-implement
         long int slow_ly, fast_ly, slow_time, fast_time;
         long int time_diff;
         struct timeval flag1, flag2, flag3;
@@ -436,6 +376,7 @@ main(int argc, char** argv, char** envp)
                 printf("%lu\n", fast_lee_yang_qsi(seq, lox, loy, hix, hiy));
             }
         }
+        */
     }
 
     exit(EXIT_SUCCESS);
