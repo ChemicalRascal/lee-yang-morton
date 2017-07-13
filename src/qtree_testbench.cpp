@@ -292,15 +292,17 @@ main(int argc, char** argv, char** envp)
         {
             print_qtree_integerwise(tree, 0);
         }
+
         /*
-        seq_x = qsiseq_from_n_qtree(tree, x);
+        seq = qsiseq_from_n_qtree(tree, x);
         qsi_x_file = std::fstream((qsi_path+".x").c_str(),
                     std::fstream::binary | std::fstream::out |
                     std::fstream::trunc);
-        write_qsiseq(seq_x, qsi_x_file);
+        write_qsiseq(seq, qsi_x_file);
         qsi_x_file.flush();
-        free_qsiseq(seq_x);
+        free_qsiseq(seq);
         */
+
         seq = qsiseq_from_n_qtree(tree, 2);
         qsi_2_file = std::fstream((qsi_path+".2").c_str(),
                     std::fstream::binary | std::fstream::out |
