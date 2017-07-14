@@ -41,6 +41,7 @@ char*   global_prefix_arg;
 
 enum opmode_t
 {
+    null_mode,   //
     qsi_mode,    // -c
     bqt_mode,    // -d
     oqt_mode,    // -e
@@ -144,6 +145,7 @@ exit_testbed(char** argv)
 void
 exit_fprintf_help(char** argv)
 {
+    //FIXME: Update this
     fprintf(stdout, "Usage: %s [OPTION]... -t FILE\n", argv[0]);
     fprintf(stdout, "Perform range queries using the Lee-Yang algorithm.\n");
     fprintf(stdout, "\n");
@@ -160,8 +162,7 @@ exit_fprintf_help(char** argv)
 void
 exit_fprintf_usage(char** argv)
 {
-    /*
-     */
+    //FIXME: Update this
     fprintf(stderr, "Usage: %s [OPTION]... -t [FILE]\n", argv[0]);
     fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
     exit(EXIT_FAILURE);
@@ -329,20 +330,86 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 0)
     {
-        /* FIXME: Re-implement
         long int slow_ly, fast_ly, slow_time, fast_time;
         long int time_diff;
         struct timeval flag1, flag2, flag3;
         unsigned int lox, loy, hix, hiy;
-        lox = loy = hix = hiy = 0;
 
-        seq = read_qsiseq(tree_file);
+        // null_mode used here to indicate some sort of error.
+        std::tuple<opmode_t, unsigned int> mode_flag =
+            std::tuple<opmode_t, unsigned int>(null_mode, 0);
+
+        // Work out which mode we should be in -- Multiple can be specified,
+        // but only the final one matters.
+        if (mode_l.empty())
+        {
+            exit_printf_usage(argv);
+        }
+        mode_flag = mode_l.back();
+        if (std::get<0>(mode_flag) == null_mode)
+        {
+            exit_printf_usage(argv);
+        }
+
+        switch (std::get<0>(mode_flag))
+        {
+            case qsi_mode:
+                tree_file = std::fstream((prefix + ".qsi_" +
+                            std::to_string(std::get<1>(mode_l.front()))
+                            ).c_str(),
+                        std::fstream::binary | std::fstream::in);
+                qsiseq = read_qsiseq(tree_file);
+                break;
+            case bqt_mode:
+                tree_file = std::fstream((prefix + ".bqt").c_str(),
+                        std::fstream::binary | std::fstream::in);
+                bqtree.load(tree_file);
+                break;
+            case oqt_mode:
+                tree_file = std::fstream((prefix + ".oqt").c_str(),
+                        std::fstream::binary | std::fstream::in);
+                oqtree.load(tree_file);
+                break;
+        }
+
         if (print_mode == 1)
         {
-            pprint_qsiseq(seq);
+            switch (std::get<0>(mode_flag))
+            {
+                case qsi_mode:
+                    pprint_qsiseq(qsiseq);
+                    break;
+                case bqt_mode:
+                    printf("bqt pprint() not implemented.\n");
+                    break;
+                case oqt_mode:
+                    oqtree.pprint();
+                    break;
+            }
         }
+
+        lox = loy = hix = hiy = 0;
         while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
         {
+            printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
+            switch (std::get<0>(mode_flag))
+            {
+                case qsi_mode:
+                    printf("%lu\n", fast_lee_yang_qsi(qsiseq,
+                                lox, loy, hix, hiy));
+                    break;
+                case bqt_mode:
+                    printf("bqt querying not implemented.\n");
+                    break;
+                case oqt_mode:
+                    //FIXME: This
+                    printf("oqt querying not implemented.\n");
+                    break;
+            }
+        }
+
+        /* FIXME: Re-implement timing stuff:
+         *
             if (timing_mode == 1)
             {
                 printf("%3u,%3u %3u,%3u: ", lox, loy, hix, hiy);
@@ -370,12 +437,6 @@ main(int argc, char** argv, char** envp)
                 printf("slow: %4ld, fast: %4ld, diff: %6ld\n", slow_time,
                         fast_time, time_diff);
             }
-            else
-            {
-                printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
-                printf("%lu\n", fast_lee_yang_qsi(seq, lox, loy, hix, hiy));
-            }
-        }
         */
     }
 
