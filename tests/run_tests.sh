@@ -7,18 +7,20 @@
 
 PREFIX=data/$(date "+%Y.%m.%d.%T")
 MAX=$(python -c "print(2**$1 - 1)")
+Q=16
 
 mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -t $PREFIX.tree.bin -f $PREFIX.csv -b &&
+./../qtree_testbench -x $PREFIX -b -e -c $Q -q &&
 echo "bin made" &&
 touch $PREFIX.queries &&
 ./../gen_queries -d $1 -f $PREFIX.queries &&
 echo "queries made" &&
-./../qtree_testbench -t $PREFIX.tree.bin < $PREFIX.queries > $PREFIX.qt_out &&
+./../qtree_testbench -x $PREFIX -c $Q < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
 echo "qt_out made" &&
 ./query_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
 echo "py_out made" &&
-diff $PREFIX.qt_out $PREFIX.py_out
+diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
+true

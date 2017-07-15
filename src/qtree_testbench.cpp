@@ -211,7 +211,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tc:d:e:")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tc:de")) != -1)
     {
         switch (opt)
         {
@@ -275,6 +275,9 @@ main(int argc, char** argv, char** envp)
         {
             switch (std::get<0>(mode_l.front()))
             {
+                case null_mode:
+                    exit_fprintf_usage(argv);
+                    break;
                 case qsi_mode:
                     qsiseq = qsiseq_from_n_qtree(tree, std::get<1>
                             (mode_l.front()));
@@ -330,9 +333,10 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 0)
     {
-        long int slow_ly, fast_ly, slow_time, fast_time;
-        long int time_diff;
-        struct timeval flag1, flag2, flag3;
+        //FIXME: Unused vars for timing stuff
+        //long int slow_ly, fast_ly, slow_time, fast_time;
+        //long int time_diff;
+        //struct timeval flag1, flag2, flag3;
         unsigned int lox, loy, hix, hiy;
 
         // null_mode used here to indicate some sort of error.
@@ -343,12 +347,18 @@ main(int argc, char** argv, char** envp)
         // but only the final one matters.
         if (mode_l.empty())
         {
-            exit_printf_usage(argv);
+            exit_fprintf_usage(argv);
         }
         mode_flag = mode_l.back();
         if (std::get<0>(mode_flag) == null_mode)
         {
-            exit_printf_usage(argv);
+            exit_fprintf_usage(argv);
+        }
+
+        if (timing_mode == 1)
+        {
+            printf("Timing mode isn't currently implemented, go away\n");
+            exit_fprintf_usage(argv);
         }
 
         switch (std::get<0>(mode_flag))
@@ -363,12 +373,15 @@ main(int argc, char** argv, char** envp)
             case bqt_mode:
                 tree_file = std::fstream((prefix + ".bqt").c_str(),
                         std::fstream::binary | std::fstream::in);
-                bqtree.load(tree_file);
+                bitqtree.load(tree_file);
                 break;
             case oqt_mode:
                 tree_file = std::fstream((prefix + ".oqt").c_str(),
                         std::fstream::binary | std::fstream::in);
-                oqtree.load(tree_file);
+                oqt.load(tree_file);
+                break;
+            default:
+                exit_fprintf_usage(argv);
                 break;
         }
 
@@ -383,13 +396,17 @@ main(int argc, char** argv, char** envp)
                     printf("bqt pprint() not implemented.\n");
                     break;
                 case oqt_mode:
-                    oqtree.pprint();
+                    oqt.pprint();
+                    break;
+                default:
+                    exit_fprintf_usage(argv);
                     break;
             }
         }
 
         lox = loy = hix = hiy = 0;
-        while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
+        //while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
+        while (read_query_range(stdin, &lox, &loy, &hix, &hiy) != EOF)
         {
             printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
             switch (std::get<0>(mode_flag))
@@ -404,6 +421,9 @@ main(int argc, char** argv, char** envp)
                 case oqt_mode:
                     //FIXME: This
                     printf("oqt querying not implemented.\n");
+                    break;
+                default:
+                    exit_fprintf_usage(argv);
                     break;
             }
         }

@@ -20,8 +20,8 @@
 /* Change these whenever formats or structs change. One might suggest
  * something that looks like the current date/time.
  */
-#define QSISEQ_SERIALIZE_MAGIC_NUMBER 201704130411L
-#define QSIPSUMS_SERIALIZE_MAGIC_NUMBER 201704130419L
+#define QSISEQ_SERIALIZE_MAGIC_NUMBER 20170715L
+#define QSIPSUMS_SERIALIZE_MAGIC_NUMBER 20170715L
 
 unsigned int qsi_set_lowbit_length(qsiseq*);
 
@@ -523,10 +523,19 @@ qsi_get(qsiseq* seq, qsi_next_state* state, long unsigned int target)
 
     t_hi = target >> seq->l;
     psum_index = qsi_psum_bsearch(seq->hi_psums, t_hi);
-
-    local_state.lo = psum_index * seq->q * seq->l;
-    local_state.hi = seq->hi_psums->psums[psum_index].index;
-    local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
+    if (psum_index == ULONG_MAX)
+    {
+        local_state.lo = 0;
+        local_state.hi = 0;
+        local_state.running_psum = 0;
+        psum_index = 0;
+    }
+    else
+    {
+        local_state.lo = psum_index * seq->q * seq->l;
+        local_state.hi = seq->hi_psums->psums[psum_index].index;
+        local_state.running_psum = seq->hi_psums->psums[psum_index].sum;
+    }
     val = qsi_get_next(seq, &local_state);
 
     if (val == ULONG_MAX)

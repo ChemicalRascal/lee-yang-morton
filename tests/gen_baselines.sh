@@ -12,5 +12,5 @@ mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -x $PREFIX -b -q -c 2 -c 4 -c 8 -d -e -p &&
+./../qtree_testbench -x $PREFIX -b -q -c 1 -c 2 -c 4 -c 128 -d -e -p &&
 echo "bin made"
