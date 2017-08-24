@@ -28,8 +28,8 @@ VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
 VGCFLAG = -g -O0
 
-GDB	= gdb
-DBFLAG	= 
+DBG	= gdb
+DBGFLAG	= -q
 
 .PHONY: default
 default: $(PROG)
@@ -44,6 +44,9 @@ $(BINDIR):
 	$(MKDIR) $(MDFLAGS) $(BINDIR)
 
 bin/%.o: src/%.c $(DEPS) | $(BINDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+bin/qtree_testbench.obj: src/qtree_testbench.cpp $(DEPS) $(HDEPS) | $(BINDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 bin/%.obj: src/%.cpp $(DEPS) | $(BINDIR)
@@ -66,7 +69,7 @@ val:	val_build
 
 .PHONY: gdb
 gdb:	val_build
-	$(GDB) $(DBFLAG) ./$(PROG)
+	$(DBG) $(DBGFLAG) ./$(PROG)
 
 $(PROG): $(OBJ) $(HDEPS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
