@@ -22,6 +22,7 @@
 #include "bit_qtree.hpp"
 
 #include "offset_qtree.hpp"
+#include "k2_range.hpp"
 
 #include <limits.h>
 
@@ -36,15 +37,19 @@
 #define q_fprintf_if_eq(a, b, fp, args...) {if((a)==(b))\
     {q_fprintf((fp), args);}}
 
+#define DEFAULT_VEC_SIZE 0
+#define vec_size_type uint64_t
+
 int     global_quiet_mode;
 char*   global_prefix_arg;
 
 enum opmode_t
 {
-    null_mode,   //
-    qsi_mode,    // -c
-    bqt_mode,    // -d
-    oqt_mode,    // -e
+    null_mode,      //
+    qsi_mode,       // -c
+    bqt_mode,       // -d
+    oqt_mode,       // -e
+    sdsl_k2_mode,   // -f
 };
 
 /* Returns EOF if things went badly.
@@ -85,6 +90,42 @@ read_query_range(FILE* fp, unsigned int* lox, unsigned int* loy,
         }
     }
     return EOF;
+}
+
+std::vector<std::tuple<vec_size_type, vec_size_type>>
+read_csv_to_vector(FILE* fp, unsigned int* size)
+{
+    unsigned int x, y;
+    std::vector<std::tuple<vec_size_type, vec_size_type>> v(DEFAULT_VEC_SIZE);
+
+    //Skip depth
+    readcsv_get_uint(fp, &x);
+    if (size != NULL)
+    {
+        *size = 0;
+    }
+    while (read_coord(fp, &x, &y) != EOF)
+    {
+        v.push_back(std::tuple<vec_size_type, vec_size_type>(x, y));
+        if (size != NULL && *size < std::max(x, y))
+        {
+            *size = std::max(x, y);
+        }
+    }
+    v.shrink_to_fit();
+    // k2 expects values within [0, size)
+    *size += 1;
+    return v;
+}
+
+void
+print_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>> v)
+{
+    std::vector<std::tuple<vec_size_type, vec_size_type>>::iterator i;
+    for (i = v.begin(); i != v.end(); i = std::next(i))
+    {
+        printf("%lu, %lu\n", std::get<0>(*i), std::get<1>(*i));
+    }
 }
 
 /* Currently, data is assigned to *every* node.
@@ -173,6 +214,7 @@ main(int argc, char** argv, char** envp)
 {
     int opt, build_mode, print_mode, timing_mode;
     FILE* input_fp;
+    unsigned int maxatt;
 
     std::list<std::tuple<opmode_t, unsigned int>> mode_l =
         std::list<std::tuple<opmode_t, unsigned int>>();
@@ -186,6 +228,9 @@ main(int argc, char** argv, char** envp)
     qsiseq* qsiseq;
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
+    
+    const unsigned int k = 2;
+    k2_range<k> k2;
 
     if (argc == 1)
     {
@@ -211,7 +256,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tc:de")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tc:def")) != -1)
     {
         switch (opt)
         {
@@ -242,6 +287,10 @@ main(int argc, char** argv, char** envp)
                 mode_l.push_back(std::tuple<opmode_t, unsigned int>
                         (oqt_mode, 0));
                 break;
+            case 'f':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (sdsl_k2_mode, 0));
+                break;
             default:
                 exit_fprintf_usage(argv);
                 break;
@@ -263,6 +312,10 @@ main(int argc, char** argv, char** envp)
     {
         n_qtree* tree;
         int junk_data = 1;
+
+        std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
+            read_csv_to_vector(input_fp, &maxatt);
+        rewind(input_fp);
 
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
@@ -323,6 +376,26 @@ main(int argc, char** argv, char** envp)
                         oqt.pprint();
                     }
                     break;
+                case sdsl_k2_mode:
+                    // TODO: Work out how to handle multiple different ks at
+                    // once
+                    //k = std::get<1>(mode_l.front());
+                    k2 = k2_range<k>(coord_vec, maxatt);
+                    tree_file = std::fstream((prefix + ".k2").c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    k2.serialize(tree_file);
+                    tree_file.flush();
+                    tree_file.close();
+                    tree_file = std::fstream((prefix + ".k2_size").c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    tree_file << std::to_string(maxatt) << std::endl;
+                    tree_file.flush();
+                    tree_file.close();
+                    break;
+                default:
+                    break;
             }
             mode_l.pop_front();
         }
@@ -380,6 +453,13 @@ main(int argc, char** argv, char** envp)
                         std::fstream::binary | std::fstream::in);
                 oqt.load(tree_file);
                 break;
+            case sdsl_k2_mode:
+                tree_file = std::fstream((prefix + ".k2").c_str(),
+                        std::fstream::binary | std::fstream::in);
+                k2.load(tree_file);
+                readcsv_get_uint(fopen((prefix + ".k2_size").c_str(), "r"),
+                        &maxatt);
+                break;
             default:
                 exit_fprintf_usage(argv);
                 break;
@@ -397,6 +477,9 @@ main(int argc, char** argv, char** envp)
                     break;
                 case oqt_mode:
                     oqt.pprint();
+                    break;
+                case sdsl_k2_mode:
+                    printf("k2 pprint() not implemented.\n");
                     break;
                 default:
                     exit_fprintf_usage(argv);
@@ -421,6 +504,9 @@ main(int argc, char** argv, char** envp)
                 case oqt_mode:
                     //FIXME: This
                     printf("oqt querying not implemented.\n");
+                    break;
+                case sdsl_k2_mode:
+                    printf("%lu\n", k2.range_count(lox, hix, loy, hiy));
                     break;
                 default:
                     exit_fprintf_usage(argv);

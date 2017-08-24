@@ -13,7 +13,7 @@ mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -x $PREFIX -b -e -c $Q -q &&
+./../qtree_testbench -x $PREFIX -b -e -c $Q -f -q &&
 echo "bin made" &&
 touch $PREFIX.queries &&
 ./../gen_queries -d $1 -f $PREFIX.queries &&
@@ -23,4 +23,7 @@ echo "qt_out made" &&
 ./query_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
 echo "py_out made" &&
 diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
+./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
+echo "k2_out made" &&
+diff $PREFIX.k2_out $PREFIX.py_out &&
 true
