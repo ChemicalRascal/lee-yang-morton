@@ -118,6 +118,24 @@ read_csv_to_vector(FILE* fp, unsigned int* size)
     return v;
 }
 
+std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
+    vec_size_type, vec_size_type>>
+read_range_queries_to_vector(FILE* fp)
+{
+    unsigned int lox, loy, hix, hiy;
+    std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
+        vec_size_type, vec_size_type>> v(DEFAULT_VEC_SIZE);
+
+    while (read_query_range(fp, &lox, &loy, &hix, &hiy) != EOF)
+    {
+        v.push_back(std::tuple<vec_size_type, vec_size_type, vec_size_type,
+                vec_size_type, vec_size_type>(lox, loy, hix, hiy, 0));
+    }
+    v.shrink_to_fit();
+    return v;
+}
+
+
 //std::vector<std::tuple<vec_size_type, vec_size_type>>
 void
 sort_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>>& v)
@@ -336,6 +354,13 @@ main(int argc, char** argv, char** envp)
         sort_coord_vector(coord_vec);
         rewind(input_fp);
 
+        tree_file = std::fstream((prefix + ".maxatt").c_str(),
+                std::fstream::binary | std::fstream::out |
+                std::fstream::trunc);
+        tree_file << std::to_string(maxatt) << std::endl;
+        tree_file.flush();
+        tree_file.close();
+
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
         if (print_mode == 1)
@@ -406,12 +431,6 @@ main(int argc, char** argv, char** envp)
                     k2.serialize(tree_file);
                     tree_file.flush();
                     tree_file.close();
-                    tree_file = std::fstream((prefix + ".k2_size").c_str(),
-                            std::fstream::binary | std::fstream::out |
-                            std::fstream::trunc);
-                    tree_file << std::to_string(maxatt) << std::endl;
-                    tree_file.flush();
-                    tree_file.close();
                     break;
                 default:
                     break;
@@ -429,7 +448,6 @@ main(int argc, char** argv, char** envp)
         //long int slow_ly, fast_ly, slow_time, fast_time;
         //long int time_diff;
         //struct timeval flag1, flag2, flag3;
-        unsigned int lox, loy, hix, hiy;
 
         // null_mode used here to indicate some sort of error.
         std::tuple<opmode_t, unsigned int> mode_flag =
@@ -453,6 +471,7 @@ main(int argc, char** argv, char** envp)
             exit_fprintf_usage(argv);
         }
 
+        readcsv_get_uint(fopen((prefix + ".maxatt").c_str(), "r"), &maxatt);
         switch (std::get<0>(mode_flag))
         {
             case qsi_mode:
@@ -476,8 +495,6 @@ main(int argc, char** argv, char** envp)
                 tree_file = std::fstream((prefix + ".k2").c_str(),
                         std::fstream::binary | std::fstream::in);
                 k2.load(tree_file);
-                readcsv_get_uint(fopen((prefix + ".k2_size").c_str(), "r"),
-                        &maxatt);
                 break;
             default:
                 exit_fprintf_usage(argv);
@@ -506,16 +523,21 @@ main(int argc, char** argv, char** envp)
             }
         }
 
-        lox = loy = hix = hiy = 0;
-        //while (read_query_range(input_fp, &lox, &loy, &hix, &hiy) != EOF)
-        while (read_query_range(stdin, &lox, &loy, &hix, &hiy) != EOF)
+        std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
+            vec_size_type, vec_size_type>> query_vec =
+                //read_range_queries_to_vector(input_fp);
+                read_range_queries_to_vector(stdin);
+        std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
+            vec_size_type, vec_size_type>>::iterator qvi;
+
+        for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
         {
-            printf("%u,%u %u,%u: ", lox, loy, hix, hiy);
             switch (std::get<0>(mode_flag))
             {
                 case qsi_mode:
-                    printf("%lu\n", fast_lee_yang_qsi(qsiseq,
-                                lox, loy, hix, hiy));
+                    std::get<4>(*qvi) = fast_lee_yang_qsi(qsiseq,
+                            std::get<0>(*qvi), std::get<1>(*qvi),
+                            std::get<2>(*qvi), std::get<3>(*qvi));
                     break;
                 case bqt_mode:
                     printf("bqt querying not implemented.\n");
@@ -525,12 +547,20 @@ main(int argc, char** argv, char** envp)
                     printf("oqt querying not implemented.\n");
                     break;
                 case sdsl_k2_mode:
-                    printf("%lu\n", k2.range_count(lox, hix, loy, hiy));
+                    std::get<4>(*qvi) = k2.range_count(
+                            std::get<0>(*qvi), std::get<2>(*qvi),
+                            std::get<1>(*qvi), std::get<3>(*qvi));
                     break;
                 default:
                     exit_fprintf_usage(argv);
                     break;
             }
+        }
+        for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+        {
+            printf("%lu,%lu %lu,%lu: %lu\n", std::get<0>(*qvi),
+                    std::get<1>(*qvi), std::get<2>(*qvi), std::get<3>(*qvi),
+                    std::get<4>(*qvi));
         }
 
         /* FIXME: Re-implement timing stuff:
