@@ -201,16 +201,20 @@ void
 exit_fprintf_help(char** argv)
 {
     //FIXME: Update this
-    fprintf(stdout, "Usage: %s [OPTION]... -t FILE\n", argv[0]);
+    fprintf(stdout, "Usage: %s [OPTIONS]... -x [PREFIX]\n", argv[0]);
     fprintf(stdout, "Perform range queries using the Lee-Yang algorithm.\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "  -t FILE must be provided.\n");
+    fprintf(stdout, "  -x PREFIX must be provided.\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "  -b           build 'treefile'\n");
-    fprintf(stdout, "  -q           make no output to stdout\n");
-    fprintf(stdout, "  -c           do timing comparisons instead\n");
-    fprintf(stdout, "  -f FILE      read from FILE instead of stdin\n");
-    fprintf(stdout, "  -t FILE      use FILE as 'treefile'\n");
+    fprintf(stdout, "  -q           quiet mode\n");
+    fprintf(stdout, "  -p           print mode\n");
+    fprintf(stdout, "  -b           build mode (otherwise, search mode)\n");
+    fprintf(stdout, "  -t           timing mode\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  -c Q         QSI w/ psum quantum of Q:   .qsi_$Q\n");
+    fprintf(stdout, "  -d           Binary Quad Tree:           .bqt\n");
+    fprintf(stdout, "  -e           Offset Quad Tree:           .oqt\n");
+    fprintf(stdout, "  -f           SDSL k2 Tree:               .k2\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -218,7 +222,7 @@ void
 exit_fprintf_usage(char** argv)
 {
     //FIXME: Update this
-    fprintf(stderr, "Usage: %s [OPTION]... -t [FILE]\n", argv[0]);
+    fprintf(stderr, "Usage: %s [OPTIONS]... -x [PREFIX]\n", argv[0]);
     fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
     exit(EXIT_FAILURE);
 }
