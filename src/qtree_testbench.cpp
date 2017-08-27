@@ -118,6 +118,20 @@ read_csv_to_vector(FILE* fp, unsigned int* size)
     return v;
 }
 
+//std::vector<std::tuple<vec_size_type, vec_size_type>>
+void
+sort_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>>& v)
+{
+    std::sort(v.begin(), v.end(), [](std::tuple<vec_size_type, vec_size_type>a,
+                std::tuple<vec_size_type, vec_size_type> b)
+            {
+                uint64_t za, zb;
+                morton_PtoZ(std::get<0>(a), std::get<1>(a), &za);
+                morton_PtoZ(std::get<0>(b), std::get<1>(b), &zb);
+                return za < zb;
+            });
+}
+
 void
 print_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>> v)
 {
@@ -315,6 +329,7 @@ main(int argc, char** argv, char** envp)
 
         std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
             read_csv_to_vector(input_fp, &maxatt);
+        sort_coord_vector(coord_vec);
         rewind(input_fp);
 
         tree = read_qtree(input_fp, &junk_data);
