@@ -444,10 +444,8 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 0)
     {
-        //FIXME: Unused vars for timing stuff
-        //long int slow_ly, fast_ly, slow_time, fast_time;
-        //long int time_diff;
-        //struct timeval flag1, flag2, flag3;
+        long int batch_sec, batch_usec;
+        struct timeval t_00, t_01;
 
         // null_mode used here to indicate some sort of error.
         std::tuple<opmode_t, unsigned int> mode_flag =
@@ -462,12 +460,6 @@ main(int argc, char** argv, char** envp)
         mode_flag = mode_l.back();
         if (std::get<0>(mode_flag) == null_mode)
         {
-            exit_fprintf_usage(argv);
-        }
-
-        if (timing_mode == 1)
-        {
-            printf("Timing mode isn't currently implemented, go away\n");
             exit_fprintf_usage(argv);
         }
 
@@ -525,11 +517,11 @@ main(int argc, char** argv, char** envp)
 
         std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
             vec_size_type, vec_size_type>> query_vec =
-                //read_range_queries_to_vector(input_fp);
                 read_range_queries_to_vector(stdin);
         std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
             vec_size_type, vec_size_type>>::iterator qvi;
 
+        gettimeofday(&t_00, NULL);
         for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
         {
             switch (std::get<0>(mode_flag))
@@ -556,43 +548,40 @@ main(int argc, char** argv, char** envp)
                     break;
             }
         }
-        for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+        gettimeofday(&t_01, NULL);
+        batch_sec = t_01.tv_sec - t_00.tv_sec;
+        batch_usec = t_01.tv_usec - t_00.tv_usec;
+        if (batch_usec < 0)
         {
-            printf("%lu,%lu %lu,%lu: %lu\n", std::get<0>(*qvi),
-                    std::get<1>(*qvi), std::get<2>(*qvi), std::get<3>(*qvi),
-                    std::get<4>(*qvi));
+            batch_usec += 1000000;
+            batch_sec -= 1;
         }
 
-        /* FIXME: Re-implement timing stuff:
-         *
-            if (timing_mode == 1)
+        if (timing_mode == 1)
+        {
+            switch (std::get<0>(mode_flag))
             {
-                printf("%3u,%3u %3u,%3u: ", lox, loy, hix, hiy);
-
-                gettimeofday(&flag1, NULL);
-                slow_ly = lee_yang_qsi(seq, lox, loy, hix, hiy);
-                gettimeofday(&flag2, NULL);
-                fast_ly = fast_lee_yang_qsi(seq, lox, loy, hix, hiy);
-                gettimeofday(&flag3, NULL);
-
-                slow_time = flag2.tv_usec - flag1.tv_usec;
-                if (slow_time < 0)
-                {
-                    slow_time += 1000000;
-                }
-                fast_time = flag3.tv_usec - flag2.tv_usec;
-                if (fast_time < 0)
-                {
-                    fast_time += 1000000;
-                }
-                time_diff = fast_time - slow_time;
-
-                printf("%3ld, %3ld ", slow_ly, fast_ly);
-                assert(slow_ly == fast_ly);
-                printf("slow: %4ld, fast: %4ld, diff: %6ld\n", slow_time,
-                        fast_time, time_diff);
+                case qsi_mode:
+                    printf("qsi     ");
+                    break;
+                case sdsl_k2_mode:
+                    printf("sdsl k2 ");
+                    break;
+                default:
+                    printf("??????? ");
+                    break;
             }
-        */
+            printf("%04ld.%06ld sec.usec\n", batch_sec, batch_usec);
+        }
+        else
+        {
+            for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+            {
+                printf("%lu,%lu %lu,%lu: %lu\n", std::get<0>(*qvi),
+                        std::get<1>(*qvi), std::get<2>(*qvi), std::get<3>(*qvi),
+                        std::get<4>(*qvi));
+            }
+        }
     }
 
     exit(EXIT_SUCCESS);
