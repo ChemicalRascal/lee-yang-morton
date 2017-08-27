@@ -562,13 +562,13 @@ main(int argc, char** argv, char** envp)
             switch (std::get<0>(mode_flag))
             {
                 case qsi_mode:
-                    printf("qsi     ");
+                    printf("qsi_%04d ", std::get<1>(mode_flag));
                     break;
                 case sdsl_k2_mode:
-                    printf("sdsl k2 ");
+                    printf("sdsl_k2  ");
                     break;
                 default:
-                    printf("??????? ");
+                    printf("???????? ");
                     break;
             }
             printf("%04ld.%06ld sec.usec\n", batch_sec, batch_usec);
