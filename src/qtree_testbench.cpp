@@ -347,7 +347,7 @@ main(int argc, char** argv, char** envp)
                     exit_fprintf_usage(argv);
                     break;
                 case qsi_mode:
-                    qsiseq = qsiseq_from_n_qtree(tree, std::get<1>
+                    qsiseq = qsiseq_from_c_vec(coord_vec, std::get<1>
                             (mode_l.front()));
                     tree_file = std::fstream((prefix + ".qsi_" +
                                 std::to_string(std::get<1>(mode_l.front()))

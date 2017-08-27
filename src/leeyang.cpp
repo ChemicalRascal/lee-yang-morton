@@ -926,6 +926,54 @@ qsiseq_from_n_qtree(n_qtree* tree, unsigned int q)
     return seq;
 }
 
+/* Constructs a qsisequence based on a coordinate vector. The coordinate vector
+ * must be pre-sorted into Morton order (z-order).
+ *
+ * q is the "quantum" for hi_psums, as per usual.
+ */
+qsiseq*
+qsiseq_from_c_vec(std::vector<std::tuple<uint64_t, uint64_t>>& v,
+        unsigned int q)
+{
+    std::vector<std::tuple<uint64_t, uint64_t>>::iterator vi;
+    uint64_t m, max, i;
+    qsiseq* seq;
+
+    seq = new_qsiseq();
+    qsiseq_set_q(seq, q);
+
+    /* Calculate minimum depth:
+     *
+     * The final coordinate will not be in the "0" subtree of the root node. If
+     * it was, *all* coordinates would be in that subtree, and thus the tree
+     * would have an unnessecary level -- the "0" subtree of the root node would
+     * be the actual root node in a minimum-depth quadtree.
+     *
+     * Thus, in base 4, the max morton code will start with a 1, 2, or 3. Thus,
+     * we can work out the depth via bitshifting:
+     *                (00)^(64-n)/2 xx (..)^(n-2)/2
+     * where xx = 01, 10, or 11, => d = n/2.
+     */
+    morton_PtoZ(std::get<0>(v.back()), std::get<1>(v.back()), &max);
+    i = 0;
+    while (max != 0)
+    {
+        max >>= 2;
+        i += 1;
+    }
+    seq->tree_depth = i;
+    qsi_set_u(seq, (1<<(i*2)));
+    qsi_set_n(seq, v.size());
+
+    for (vi = v.begin(); vi != v.end(); vi++)
+    {
+        morton_PtoZ(std::get<0>(*vi), std::get<1>(*vi), &m);
+        qsi_append(seq, m);
+    }
+    qsi_update_psums(seq);
+    return seq;
+}
+
 /* Performs a Lee-Yang, Morton-path based range query on the window defined
  * by (lox, loy) and (hix, hiy). Returns the number of data points in the
  * window.
