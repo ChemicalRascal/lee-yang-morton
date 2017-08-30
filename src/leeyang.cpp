@@ -1441,6 +1441,11 @@ fast_get_fp_from_dp(unsigned int dpx, unsigned int dpy, uint64_t dp_mcode,
  * hix:     x-coord of NE corner of query window
  * hiy:     y-coord of NE corner of query window
  */
+/* FIXME: Algorithm borks itself when querying "beyond the canonical tree"
+ *
+ * Ergo: On depth 7 (att. in [0, 127]), a query of blah,blah hix,hiy, where
+ * hix *or* hiy = 128, will cause an infinite loop!!!
+ */
 long unsigned int
 fast_lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy,
         unsigned int hix, unsigned int hiy)
