@@ -16,7 +16,7 @@ echo "csv made" &&
 ./../qtree_testbench -x $PREFIX -b -e -c $Q -f -q &&
 echo "bin made" &&
 touch $PREFIX.queries &&
-./../gen_queries -d $1 -f $PREFIX.queries &&
+./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $3 -n $4 &&
 echo "queries made" &&
 ./../qtree_testbench -x $PREFIX -c $Q < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
 echo "qt_out made" &&
@@ -25,5 +25,8 @@ echo "py_out made" &&
 diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
 ./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
 echo "k2_out made" &&
-diff $PREFIX.k2_out $PREFIX.py_out &&
+echo "k2 diff:" &&
+diff $PREFIX.k2_out $PREFIX.py_out #&&
+echo "qt diff:" &&
+diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
 true

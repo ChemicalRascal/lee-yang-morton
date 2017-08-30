@@ -16,6 +16,7 @@
 # Executables
 qtree_testbench
 gen_queries
+gen_queries_percent
 *.exe
 *.out
 *.app
