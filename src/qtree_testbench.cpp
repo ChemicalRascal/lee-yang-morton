@@ -552,34 +552,45 @@ main(int argc, char** argv, char** envp)
         std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
             vec_size_type, vec_size_type>>::iterator qvi;
 
-        gettimeofday(&t_00, NULL);
-        for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+        switch (std::get<0>(mode_flag))
         {
-            switch (std::get<0>(mode_flag))
-            {
-                case qsi_mode:
+            case qsi_mode:
+                gettimeofday(&t_00, NULL);
+                for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+                {
                     std::get<4>(*qvi) = fast_lee_yang_qsi(qsiseq,
                             std::get<0>(*qvi), std::get<1>(*qvi),
                             std::get<2>(*qvi), std::get<3>(*qvi));
-                    break;
-                case bqt_mode:
-                    printf("bqt querying not implemented.\n");
-                    break;
-                case oqt_mode:
-                    //FIXME: This
-                    printf("oqt querying not implemented.\n");
-                    break;
-                case sdsl_k2_mode:
+                }
+                gettimeofday(&t_01, NULL);
+                break;
+            case bqt_mode:
+                gettimeofday(&t_00, NULL);
+                printf("bqt querying not implemented.\n");
+                gettimeofday(&t_01, NULL);
+                break;
+            case oqt_mode:
+                //FIXME: This
+                gettimeofday(&t_00, NULL);
+                printf("oqt querying not implemented.\n");
+                gettimeofday(&t_01, NULL);
+                break;
+            case sdsl_k2_mode:
+                gettimeofday(&t_00, NULL);
+                for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+                {
                     std::get<4>(*qvi) = k2.range_count(
                             std::get<0>(*qvi), std::get<2>(*qvi),
                             std::get<1>(*qvi), std::get<3>(*qvi));
-                    break;
-                default:
-                    exit_fprintf_usage(argv);
-                    break;
-            }
+                }
+                gettimeofday(&t_01, NULL);
+                break;
+            default:
+                gettimeofday(&t_00, NULL);
+                exit_fprintf_usage(argv);
+                gettimeofday(&t_01, NULL);
+                break;
         }
-        gettimeofday(&t_01, NULL);
         batch_sec = t_01.tv_sec - t_00.tv_sec;
         batch_usec = t_01.tv_usec - t_00.tv_usec;
         if (batch_usec < 0)
