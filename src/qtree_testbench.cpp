@@ -93,28 +93,31 @@ read_query_range(FILE* fp, unsigned int* lox, unsigned int* loy,
 }
 
 std::vector<std::tuple<vec_size_type, vec_size_type>>
-read_csv_to_vector(FILE* fp, unsigned int* size)
+read_csv_to_vector(FILE* fp, std::tuple<unsigned, unsigned, unsigned,
+        unsigned>& bounds)
 {
     unsigned int x, y;
     std::vector<std::tuple<vec_size_type, vec_size_type>> v(DEFAULT_VEC_SIZE);
 
     //Skip depth
     readcsv_get_uint(fp, &x);
-    if (size != NULL)
-    {
-        *size = 0;
-    }
+    //min x, max x, min y, max y
+    std::get<0>(bounds) = (unsigned)-1;
+    std::get<1>(bounds) = 0;
+    std::get<2>(bounds) = (unsigned)-1;
+    std::get<3>(bounds) = 0;
     while (read_coord(fp, &x, &y) != EOF)
     {
         v.push_back(std::tuple<vec_size_type, vec_size_type>(x, y));
-        if (size != NULL && *size < std::max(x, y))
-        {
-            *size = std::max(x, y);
-        }
+        if (x < std::get<0>(bounds)) std::get<0>(bounds) = x;
+        if (x > std::get<1>(bounds)) std::get<1>(bounds) = x;
+        if (y < std::get<2>(bounds)) std::get<2>(bounds) = y;
+        if (y > std::get<3>(bounds)) std::get<3>(bounds) = y;
     }
     v.shrink_to_fit();
     // k2 expects values within [0, size)
-    *size += 1;
+    std::get<1>(bounds) += 1;
+    std::get<3>(bounds) += 1;
     return v;
 }
 
@@ -349,15 +352,43 @@ main(int argc, char** argv, char** envp)
         n_qtree* tree;
         int junk_data = 1;
 
+        std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
+
         std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
-            read_csv_to_vector(input_fp, &maxatt);
+            read_csv_to_vector(input_fp, bounds);
         sort_coord_vector(coord_vec);
         rewind(input_fp);
 
+        maxatt = std::max(std::get<1>(bounds), std::get<3>(bounds));
         tree_file = std::fstream((prefix + ".maxatt").c_str(),
                 std::fstream::binary | std::fstream::out |
                 std::fstream::trunc);
         tree_file << std::to_string(maxatt) << std::endl;
+        tree_file.flush();
+        tree_file.close();
+
+        tree_file = std::fstream((prefix + ".min_x").c_str(),
+                std::fstream::binary | std::fstream::out |
+                std::fstream::trunc);
+        tree_file << std::to_string(std::get<0>(bounds)) << std::endl;
+        tree_file.flush();
+        tree_file.close();
+        tree_file = std::fstream((prefix + ".max_x").c_str(),
+                std::fstream::binary | std::fstream::out |
+                std::fstream::trunc);
+        tree_file << std::to_string(std::get<1>(bounds)) << std::endl;
+        tree_file.flush();
+        tree_file.close();
+        tree_file = std::fstream((prefix + ".min_y").c_str(),
+                std::fstream::binary | std::fstream::out |
+                std::fstream::trunc);
+        tree_file << std::to_string(std::get<2>(bounds)) << std::endl;
+        tree_file.flush();
+        tree_file.close();
+        tree_file = std::fstream((prefix + ".max_y").c_str(),
+                std::fstream::binary | std::fstream::out |
+                std::fstream::trunc);
+        tree_file << std::to_string(std::get<3>(bounds)) << std::endl;
         tree_file.flush();
         tree_file.close();
 
