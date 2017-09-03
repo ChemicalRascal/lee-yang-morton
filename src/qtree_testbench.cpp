@@ -23,6 +23,7 @@
 
 #include "offset_qtree.hpp"
 #include "k2_range.hpp"
+#include "offset_finkel_bentley.hpp"
 
 #include <limits.h>
 
@@ -50,6 +51,7 @@ enum opmode_t
     bqt_mode,       // -d
     oqt_mode,       // -e
     sdsl_k2_mode,   // -f
+    ofb_mode,       // -g
 };
 
 /* Returns EOF if things went badly.
@@ -267,6 +269,7 @@ main(int argc, char** argv, char** envp)
     qsiseq* qsiseq;
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
+    OffsetFBTree<> ofb;
     
     const unsigned int k = 2;
     k2_range<k> k2;
@@ -295,7 +298,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tc:def")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tc:defg")) != -1)
     {
         switch (opt)
         {
@@ -329,6 +332,10 @@ main(int argc, char** argv, char** envp)
             case 'f':
                 mode_l.push_back(std::tuple<opmode_t, unsigned int>
                         (sdsl_k2_mode, 0));
+                break;
+            case 'g':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (ofb_mode, 0));
                 break;
             default:
                 exit_fprintf_usage(argv);
@@ -396,7 +403,7 @@ main(int argc, char** argv, char** envp)
         link_nodes_morton(tree);
         if (print_mode == 1)
         {
-            print_qtree_integerwise(tree, 0);
+            //print_qtree_integerwise(tree, 0);
         }
 
         while (!mode_l.empty())
@@ -463,6 +470,20 @@ main(int argc, char** argv, char** envp)
                     tree_file.flush();
                     tree_file.close();
                     break;
+                case ofb_mode:
+                    ofb = OffsetFBTree<>(coord_vec);
+                    tree_file = std::fstream((prefix + ".ofb").c_str(),
+                            std::fstream::binary | std::fstream::out |
+                            std::fstream::trunc);
+                    ofb.serialize(tree_file);
+                    if (print_mode == 1)
+                    {
+                        printf("ofb:\n");
+                        ofb.pprint();
+                    }
+                    tree_file.flush();
+                    tree_file.close();
+                    break;
                 default:
                     break;
             }
@@ -519,6 +540,11 @@ main(int argc, char** argv, char** envp)
                         std::fstream::binary | std::fstream::in);
                 k2.load(tree_file);
                 break;
+            case ofb_mode:
+                tree_file = std::fstream((prefix + ".ofb").c_str(),
+                        std::fstream::binary | std::fstream::in);
+                ofb.load(tree_file);
+                break;
             default:
                 exit_fprintf_usage(argv);
                 break;
@@ -539,6 +565,9 @@ main(int argc, char** argv, char** envp)
                     break;
                 case sdsl_k2_mode:
                     printf("k2 pprint() not implemented.\n");
+                    break;
+                case ofb_mode:
+                    ofb.pprint();
                     break;
                 default:
                     exit_fprintf_usage(argv);
@@ -583,6 +612,12 @@ main(int argc, char** argv, char** envp)
                             std::get<0>(*qvi), std::get<2>(*qvi),
                             std::get<1>(*qvi), std::get<3>(*qvi));
                 }
+                gettimeofday(&t_01, NULL);
+                break;
+            case ofb_mode:
+                //FIXME: This
+                gettimeofday(&t_00, NULL);
+                printf("ofb querying not implemented.\n");
                 gettimeofday(&t_01, NULL);
                 break;
             default:
