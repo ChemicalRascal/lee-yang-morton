@@ -13,18 +13,21 @@ mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -x $PREFIX -b -e -c $Q -f -q &&
+./../qtree_testbench -x $PREFIX -b -e -c $Q -f -g -q &&
 echo "bin made" &&
 touch $PREFIX.queries &&
 ./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $3 -n $4 &&
 echo "queries made" &&
+./../qtree_testbench -x $PREFIX -g < $PREFIX.queries > $PREFIX.ofb_out &&
+echo "ofb_out made" &&
+./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
+echo "k2_out made" &&
 ./../qtree_testbench -x $PREFIX -c $Q < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
 echo "qt_out made" &&
 ./query_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
 echo "py_out made" &&
-diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
-./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
-echo "k2_out made" &&
+echo "ofb diff:" &&
+diff $PREFIX.ofb_out $PREFIX.py_out #&&
 echo "k2 diff:" &&
 diff $PREFIX.k2_out $PREFIX.py_out #&&
 echo "qt diff:" &&

@@ -615,9 +615,13 @@ main(int argc, char** argv, char** envp)
                 gettimeofday(&t_01, NULL);
                 break;
             case ofb_mode:
-                //FIXME: This
                 gettimeofday(&t_00, NULL);
-                printf("ofb querying not implemented.\n");
+                for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+                {
+                    std::get<4>(*qvi) = ofb.range_count(
+                            std::get<0>(*qvi), std::get<2>(*qvi),
+                            std::get<1>(*qvi), std::get<3>(*qvi));
+                }
                 gettimeofday(&t_01, NULL);
                 break;
             default:
@@ -643,6 +647,9 @@ main(int argc, char** argv, char** envp)
                     break;
                 case sdsl_k2_mode:
                     printf("sdsl_k2  ");
+                    break;
+                case ofb_mode:
+                    printf("ofb      ");
                     break;
                 default:
                     printf("???????? ");
