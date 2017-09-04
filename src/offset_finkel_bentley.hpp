@@ -114,13 +114,15 @@ OffsetFBTree
  * Returns 4 if the keys are equal. Otherwise:
  * a.x <= b.x:
  *   a.y <= b.y: 0
- *   a.y >  b.y: 1
+ *   a.y >  b.y: 2
  * a.x >  b.x:
- *   a.y <= b.y: 2
+ *   a.y <= b.y: 1
  *   a.y >  b.y: 3
+ *
+ * Ergo, z-order, with bias towards 0 on borders.
  */
 template<class int_type, class attr_type>
-    unsigned int
+unsigned int
 OffsetFBTree<int_type, attr_type>::compare(std::tuple<attr_type, attr_type>& a,
         std::tuple<attr_type, attr_type>& b)
 {
@@ -134,11 +136,11 @@ OffsetFBTree<int_type, attr_type>::compare(std::tuple<attr_type, attr_type>& a,
         {
             return 0;
         }
-        return 1;
+        return 2;
     }
     if (std::get<1>(a) <= std::get<1>(b))
     {
-        return 2;
+        return 1;
     }
     return 3;
 }
@@ -182,6 +184,14 @@ int_type
 OffsetFBTree<int_type, attr_type>::append_node(
         std::tuple<attr_type, attr_type>& key)
 {
+    if (std::get<0>(key) < this->min_x || this->length == 0)
+        this->min_x = std::get<0>(key);
+    if (std::get<0>(key) > this->max_x || this->length == 0)
+        this->max_x = std::get<0>(key);
+    if (std::get<1>(key) < this->min_y || this->length == 0)
+        this->min_y = std::get<1>(key);
+    if (std::get<1>(key) > this->max_y || this->length == 0)
+        this->max_y = std::get<1>(key);
     return this->append_node(key, 0, 0, 0, 0);
 }
 
