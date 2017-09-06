@@ -97,8 +97,7 @@ OffsetFBTree
                 int_type c0, int_type c1, int_type c2, int_type c3);
 
         size_type range_count(int_type offset, attr_type x1, attr_type x2,
-                attr_type y1, attr_type y2, attr_type x_min, attr_type x_max,
-                attr_type y_min, attr_type y_max);
+                attr_type y1, attr_type y2);
 
         /* See if the vector needs to be resized in order to take num more
          * elements, and if so, resizes the vector.
@@ -254,15 +253,14 @@ size_type
 OffsetFBTree<int_type, attr_type>::range_count(attr_type x1, attr_type x2,
         attr_type y1, attr_type y2)
 {
-    return this->range_count(0, x1, x2, y1, y2,
-            this->min_x, this->max_x, this->min_y, this->max_y);
+    if (x2 < min_x || max_x < x1 || y2 < min_y || max_y < y1) return 0;
+    return this->range_count(0, x1, x2, y1, y2);
 }
 
 template<class int_type, class attr_type>
 size_type
 OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
-        attr_type x1, attr_type x2, attr_type y1, attr_type y2,
-        attr_type x_min, attr_type x_max, attr_type y_min, attr_type y_max)
+        attr_type x1, attr_type x2, attr_type y1, attr_type y2)
 {
     int_type count = 0;
     std::tuple<attr_type, attr_type> key;
@@ -273,46 +271,21 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
             (std::get<1>(key) >= y1) && (std::get<1>(key) <= y2));
     };
 
-    //Sanity
-    if (offset >= this->length)
-    {
-        return 0;
-    }
-    if (x2 < x_min || x_max < x1 || y2 < y_min || y_max < y1)
-    {
-        return 0;
-    }
-
     key = (*this)[offset].key;
     if (ir(key)) { /*Output*/ count++; }
 
     if ((*this)[offset].child[0] != 0 &&
             x1 <= std::get<0>(key) && y1 <= std::get<1>(key))
-    {
-        count += this->range_count((*this)[offset].child[0], x1, x2, y1, y2,
-                x_min, std::get<0>(key), y_min, std::get<1>(key));
-    }
-
+    { count += this->range_count((*this)[offset].child[0], x1, x2, y1, y2); }
     if ((*this)[offset].child[1] != 0 &&
             std::get<0>(key) < x2  && y1 <= std::get<1>(key))
-    {
-        count += this->range_count((*this)[offset].child[1], x1, x2, y1, y2,
-                std::get<0>(key), x_max, y_min, std::get<1>(key));
-    }
-
+    { count += this->range_count((*this)[offset].child[1], x1, x2, y1, y2); }
     if ((*this)[offset].child[2] != 0 &&
             x1 <= std::get<0>(key) && std::get<1>(key) < y2)
-    {
-        count += this->range_count((*this)[offset].child[2], x1, x2, y1, y2,
-                x_min, std::get<0>(key), std::get<1>(key), y_max);
-    }
-
+    { count += this->range_count((*this)[offset].child[2], x1, x2, y1, y2); }
     if ((*this)[offset].child[3] != 0 &&
             std::get<0>(key) < x2  && std::get<1>(key) < y2)
-    {
-        count += this->range_count((*this)[offset].child[3], x1, x2, y1, y2,
-                std::get<0>(key), x_max, std::get<1>(key), y_max);
-    }
+    { count += this->range_count((*this)[offset].child[3], x1, x2, y1, y2); }
 
     return count;
 }
