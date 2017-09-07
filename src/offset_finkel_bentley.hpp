@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 typedef uint64_t size_type;
 
@@ -41,6 +42,8 @@ class
 OffsetFBTree
 {
     public:
+        typedef std::tuple<attr_type, attr_type> key_type;
+        typedef std::vector<key_type> vec_type;
         typedef struct ofb_node
         {
             /* Base 4 'index' based on Lee-Young notation:
@@ -48,7 +51,7 @@ OffsetFBTree
              *          01
              */
             int_type    child[4];
-            std::tuple<attr_type, attr_type>    key;
+            key_type    key;
         } ofb_node;
 
     private:
@@ -61,21 +64,20 @@ OffsetFBTree
 
     public:
         OffsetFBTree() : vec(std::vector<ofb_node>(0)) {};
-        OffsetFBTree(std::vector<std::tuple<attr_type, attr_type>>& key_vec)
+        OffsetFBTree(vec_type& key_vec)
         {
-            this->append_keys(key_vec);
+            this->append_keys_optimal(key_vec);
         };
 
         OffsetFBTree<int_type, attr_type>::ofb_node& operator[](int_type i);
 
         /* Append the contents of a vector of keys
          */
-        void append_keys(std::vector<std::tuple<attr_type, attr_type>>& keys);
-        void append_keys_optimal(std::vector<std::tuple<attr_type, attr_type>>&
-                keys);
+        void append_keys(vec_type& keys);
+        int_type append_keys_optimal(vec_type& keys);
 
-        int_type append_key(std::tuple<attr_type, attr_type>& key);
-        int_type query_key(std::tuple<attr_type, attr_type>& key);
+        int_type append_key(key_type& key);
+        int_type query_key(key_type& key);
         int_type query_coord(attr_type& x, attr_type& y);
         void pprint();
         void pprint(int_type depth, int_type offset);
@@ -92,12 +94,17 @@ OffsetFBTree
          * If appending fails (for whatever reason), returns
          * OffsetFBTree->size().
          */
-        int_type append_node(std::tuple<attr_type, attr_type>& key);
-        int_type append_node(std::tuple<attr_type, attr_type> key,
-                int_type c0, int_type c1, int_type c2, int_type c3);
+        int_type append_node(key_type& key);
+        int_type append_node(key_type key, int_type c0, int_type c1,
+                int_type c2, int_type c3);
 
         size_type range_count(int_type offset, attr_type x1, attr_type x2,
                 attr_type y1, attr_type y2);
+
+        /* Recursive optimal inserter, using F&B's OptimizedConstruction
+         */
+        int_type append_itr_optimal(typename vec_type::iterator first,
+                typename vec_type::iterator last);
 
         /* See if the vector needs to be resized in order to take num more
          * elements, and if so, resizes the vector.
@@ -108,8 +115,7 @@ OffsetFBTree
 
         /* Compare two keys.
          */
-        unsigned int compare(std::tuple<attr_type, attr_type>& a,
-                std::tuple<attr_type, attr_type>& b);
+        unsigned int compare(key_type& a, key_type& b);
 
 };
 
@@ -127,8 +133,7 @@ OffsetFBTree
  */
 template<class int_type, class attr_type>
 unsigned int
-OffsetFBTree<int_type, attr_type>::compare(std::tuple<attr_type, attr_type>& a,
-        std::tuple<attr_type, attr_type>& b)
+OffsetFBTree<int_type, attr_type>::compare(key_type& a, key_type& b)
 {
     if (std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b))
     {
@@ -185,25 +190,23 @@ OffsetFBTree<int_type, attr_type>::truncate_vec()
  */
 template<class int_type, class attr_type>
 int_type
-OffsetFBTree<int_type, attr_type>::append_node(
-        std::tuple<attr_type, attr_type>& key)
+OffsetFBTree<int_type, attr_type>::append_node(key_type& key)
 {
-    if (std::get<0>(key) < this->min_x || this->length == 0)
+    if (this->length == 0 || std::get<0>(key) < this->min_x)
         this->min_x = std::get<0>(key);
-    if (std::get<0>(key) > this->max_x || this->length == 0)
+    if (this->length == 0 || std::get<0>(key) > this->max_x)
         this->max_x = std::get<0>(key);
-    if (std::get<1>(key) < this->min_y || this->length == 0)
+    if (this->length == 0 || std::get<1>(key) < this->min_y)
         this->min_y = std::get<1>(key);
-    if (std::get<1>(key) > this->max_y || this->length == 0)
+    if (this->length == 0 || std::get<1>(key) > this->max_y)
         this->max_y = std::get<1>(key);
     return this->append_node(key, 0, 0, 0, 0);
 }
 
 template<class int_type, class attr_type>
 int_type
-OffsetFBTree<int_type, attr_type>::append_node(
-        std::tuple<attr_type, attr_type> key, int_type c0, int_type c1,
-        int_type c2, int_type c3)
+OffsetFBTree<int_type, attr_type>::append_node(key_type key, int_type c0,
+        int_type c1, int_type c2, int_type c3)
 {
     this->check_fix_size();
     (*this)[this->length].key = key;
@@ -221,8 +224,7 @@ OffsetFBTree<int_type, attr_type>::append_node(
  */
 template<class int_type, class attr_type>
 int_type
-OffsetFBTree<int_type, attr_type>::query_key(
-        std::tuple<attr_type, attr_type>& key)
+OffsetFBTree<int_type, attr_type>::query_key(key_type& key)
 {
     unsigned char c;
     int_type i;
@@ -263,9 +265,9 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
         attr_type x1, attr_type x2, attr_type y1, attr_type y2)
 {
     int_type count = 0;
-    std::tuple<attr_type, attr_type> key;
+    key_type key;
     // InRegion
-    auto ir = [x1, x2, y1, y2](std::tuple<attr_type, attr_type> key)
+    auto ir = [x1, x2, y1, y2](const key_type& key)
     {
         return ((std::get<0>(key) >= x1) && (std::get<0>(key) <= x2) &&
             (std::get<1>(key) >= y1) && (std::get<1>(key) <= y2));
@@ -295,8 +297,7 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
  */
 template<class int_type, class attr_type>
 int_type
-OffsetFBTree<int_type, attr_type>::append_key(
-        std::tuple<attr_type, attr_type>& key)
+OffsetFBTree<int_type, attr_type>::append_key(key_type& key)
 {
     unsigned char c;
     int_type i, j;
@@ -328,10 +329,9 @@ OffsetFBTree<int_type, attr_type>::append_key(
  */
 template<class int_type, class attr_type>
 void
-OffsetFBTree<int_type, attr_type>::append_keys(
-        std::vector<std::tuple<attr_type, attr_type>>& keys)
+OffsetFBTree<int_type, attr_type>::append_keys(vec_type& keys)
 {
-    typename std::vector<std::tuple<attr_type, attr_type>>::iterator key_i;
+    typename vec_type::iterator key_i;
     for (key_i = keys.begin(); key_i != keys.end(); key_i++)
     {
         this->append_key(*key_i);
@@ -341,17 +341,61 @@ OffsetFBTree<int_type, attr_type>::append_keys(
 /* Append a vector of keys, optimally. Woo!
  */
 template<class int_type, class attr_type>
-void
-OffsetFBTree<int_type, attr_type>::append_keys_optimal(
-        std::vector<std::tuple<attr_type, attr_type>>& keys)
+int_type
+OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
 {
+    vec_type c0{}, c1{}, c2{}, c3{};
+    typename vec_type::iterator::difference_type m;
+    typename vec_type::iterator r_itr;
+    attr_type r_y;
+    int_type r_offset, pending_offset;
+
+    std::sort(keys.begin(), keys.end());
+    m = keys.size()/2;
+    r_itr = keys.begin() + m;
+    r_y = std::get<1>(keys[m]);
+    r_offset = this->append_key(keys[m]);
+
+    auto lo_y = [r_y](const key_type& k)
+    { return (r_y <= std::get<1>(k)); };
+    auto hi_y = [r_y](const key_type& k)
+    { return (r_y > std::get<1>(k)); };
+
+    /* Turns out that std::back_inserter(vector) doesn't resize the vector if
+     * the inserter would otherwise run over the end of it. vec.reserve(m+1)
+     * seems like the best way to do it currently (on the grounds that it works,
+     * valgrind doesn't complain anymore, and, in theory, these vectors won't
+     * hold more than m elements anyway... in theory).
+     */
+    c0.reserve(m+1);
+    std::copy_if(keys.begin(), r_itr, std::back_inserter(c0), lo_y);
+    c1.reserve(m+1);
+    std::copy_if(r_itr+1, keys.end(), std::back_inserter(c1), lo_y);
+    c2.reserve(m+1);
+    std::copy_if(keys.begin(), r_itr, std::back_inserter(c2), hi_y);
+    c3.reserve(m+1);
+    std::copy_if(r_itr+1, keys.end(), std::back_inserter(c3), hi_y);
+
+    if (c0.size() != 0)
+    {
+        pending_offset = this->append_keys_optimal(c0);
+        (*this)[r_offset].child[0] = pending_offset;
+    }
+    if (c1.size() != 0)
+        (*this)[r_offset].child[1] = this->append_keys_optimal(c1);
+    if (c2.size() != 0)
+        (*this)[r_offset].child[2] = this->append_keys_optimal(c2);
+    if (c3.size() != 0)
+        (*this)[r_offset].child[3] = this->append_keys_optimal(c3);
+
+    return r_offset;
 }
 
 template<class int_type, class attr_type>
 int_type
 OffsetFBTree<int_type, attr_type>::query_coord(attr_type& x, attr_type& y)
 {
-    return this->query_key(std::tuple<attr_type, attr_type>(x, y));
+    return this->query_key(key_type(x, y));
 }
 
 template<class int_type, class attr_type>
