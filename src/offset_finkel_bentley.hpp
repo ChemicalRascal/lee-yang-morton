@@ -382,11 +382,20 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
         (*this)[r_offset].child[0] = pending_offset;
     }
     if (c1.size() != 0)
-        (*this)[r_offset].child[1] = this->append_keys_optimal(c1);
+    {
+        pending_offset = this->append_keys_optimal(c1);
+        (*this)[r_offset].child[1] = pending_offset;
+    }
     if (c2.size() != 0)
-        (*this)[r_offset].child[2] = this->append_keys_optimal(c2);
+    {
+        pending_offset = this->append_keys_optimal(c2);
+        (*this)[r_offset].child[2] = pending_offset;
+    }
     if (c3.size() != 0)
-        (*this)[r_offset].child[3] = this->append_keys_optimal(c3);
+    {
+        pending_offset = this->append_keys_optimal(c3);
+        (*this)[r_offset].child[3] = pending_offset;
+    }
 
     return r_offset;
 }
