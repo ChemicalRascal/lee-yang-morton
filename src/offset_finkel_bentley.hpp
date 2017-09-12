@@ -82,6 +82,8 @@ OffsetFBTree
         void pprint();
         void pprint(int_type depth, int_type offset);
 
+        size_type count_nodes(int_type offset);
+
         void serialize(std::ostream& out);
         void load(std::istream& in);
 
@@ -104,6 +106,8 @@ OffsetFBTree
         /* Recursive optimal inserter, using F&B's OptimizedConstruction
          */
         int_type append_itr_optimal(typename vec_type::iterator first,
+                typename vec_type::iterator last);
+        int_type append_itr_optimal_old(typename vec_type::iterator first,
                 typename vec_type::iterator last);
 
         /* See if the vector needs to be resized in order to take num more
@@ -292,6 +296,24 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
     return count;
 }
 
+template<class int_type, class attr_type>
+size_type
+OffsetFBTree<int_type, attr_type>::count_nodes(int_type offset)
+{
+    int_type count = 1;
+
+    if ((*this)[offset].child[0] != 0)
+    { count += this->count_nodes((*this)[offset].child[0]); }
+    if ((*this)[offset].child[1] != 0)
+    { count += this->count_nodes((*this)[offset].child[1]); }
+    if ((*this)[offset].child[2] != 0)
+    { count += this->count_nodes((*this)[offset].child[2]); }
+    if ((*this)[offset].child[3] != 0)
+    { count += this->count_nodes((*this)[offset].child[3]); }
+
+    return count;
+}
+
 /* Returns the index to the key (regardless of if it was actually inserted or
  * just found).
  */
@@ -338,17 +360,44 @@ OffsetFBTree<int_type, attr_type>::append_keys(vec_type& keys)
     }
 }
 
-/* Append a vector of keys, optimally. Woo!
+/* It's a complete rewrite of append_keys_optimal_old().
  */
 template<class int_type, class attr_type>
 int_type
 OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
 {
-    vec_type c0{}, c1{}, c2{}, c3{};
+    vec_type c;
+    typename vec_type::iterator::difference_type m;
+    typename vec_type::iterator r_itr;
+    int_type r_offset;
+
+    std::sort(keys.begin(), keys.end());
+    m = keys.size()/2;
+    r_itr = keys.begin() + m;
+    r_y = std::get<1>(keys[m]);
+    r_offset = this->append_key(keys[m]);
+    
+    return r_offset;
+}
+
+/* Append a vector of keys, optimally. This doesn't work and I can't work out
+ * why, I'm goddamn done with the fucking thing
+ */
+template<class int_type, class attr_type>
+int_type
+OffsetFBTree<int_type, attr_type>::append_keys_optimal_old(vec_type& keys)
+{
+    vec_type c0, c1, c2, c3;
     typename vec_type::iterator::difference_type m;
     typename vec_type::iterator r_itr;
     attr_type r_y;
-    int_type r_offset, pending_offset;
+    int_type r_offset, c0_pending_offset, c1_pending_offset, c2_pending_offset,
+             c3_pending_offset;
+
+    c0_pending_offset = 0;
+    c1_pending_offset = 0;
+    c2_pending_offset = 0;
+    c3_pending_offset = 0;
 
     std::sort(keys.begin(), keys.end());
     m = keys.size()/2;
@@ -356,17 +405,13 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
     r_y = std::get<1>(keys[m]);
     r_offset = this->append_key(keys[m]);
 
-    auto lo_y = [r_y](const key_type& k)
-    { return (r_y <= std::get<1>(k)); };
-    auto hi_y = [r_y](const key_type& k)
-    { return (r_y > std::get<1>(k)); };
+    printf("r_offset: %lu\n", r_offset);
 
-    /* Turns out that std::back_inserter(vector) doesn't resize the vector if
-     * the inserter would otherwise run over the end of it. vec.reserve(m+1)
-     * seems like the best way to do it currently (on the grounds that it works,
-     * valgrind doesn't complain anymore, and, in theory, these vectors won't
-     * hold more than m elements anyway... in theory).
-     */
+    auto lo_y = [r_y](const key_type& k)
+    { return (std::get<1>(k) <= r_y); };
+    auto hi_y = [r_y](const key_type& k)
+    { return (std::get<1>(k) > r_y); };
+
     c0.reserve(m+1);
     std::copy_if(keys.begin(), r_itr, std::back_inserter(c0), lo_y);
     c1.reserve(m+1);
@@ -376,26 +421,70 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
     c3.reserve(m+1);
     std::copy_if(r_itr+1, keys.end(), std::back_inserter(c3), hi_y);
 
+    printf("k: %lu, 0:%lu, 1:%lu, 2:%lu, 3:%lu\n",
+            keys.size(), c0.size(), c1.size(), c2.size(), c3.size());
+    assert(keys.size() == 
+            c0.size()+ c1.size()+ c2.size()+ c3.size() +1);
+
     if (c0.size() != 0)
     {
-        pending_offset = this->append_keys_optimal(c0);
-        (*this)[r_offset].child[0] = pending_offset;
+        c0_pending_offset = this->append_keys_optimal(c0);
+        //assert(c0.size() == this->count_nodes(pending_offset));
     }
     if (c1.size() != 0)
     {
-        pending_offset = this->append_keys_optimal(c1);
-        (*this)[r_offset].child[1] = pending_offset;
+        c1_pending_offset = this->append_keys_optimal(c1);
+        if (c1.size() != this->count_nodes(c1_pending_offset))
+        {
+            this->pprint(0, c1_pending_offset);
+            printf("r_offset: %lu, c1_pending_offset: %lu\n", r_offset,
+                    c1_pending_offset);
+            //exit(EXIT_FAILURE);
+        }
+        //assert(c1.size() == this->count_nodes(pending_offset));
     }
     if (c2.size() != 0)
     {
-        pending_offset = this->append_keys_optimal(c2);
-        (*this)[r_offset].child[2] = pending_offset;
+        c2_pending_offset = this->append_keys_optimal(c2);
+        if (c2.size() != this->count_nodes(c2_pending_offset))
+        {
+            this->pprint(0, c2_pending_offset);
+            printf("r_offset: %lu, c2_pending_offset: %lu\n", r_offset,
+                    c2_pending_offset);
+            //exit(EXIT_FAILURE);
+        }
+        //assert(c2.size() == this->count_nodes(pending_offset));
     }
     if (c3.size() != 0)
     {
-        pending_offset = this->append_keys_optimal(c3);
-        (*this)[r_offset].child[3] = pending_offset;
+        c3_pending_offset = this->append_keys_optimal(c3);
+        if (c3.size() != this->count_nodes(c3_pending_offset))
+        {
+            this->pprint(0, c3_pending_offset);
+            printf("r_offset: %lu, c3_pending_offset: %lu\n", r_offset,
+                    c3_pending_offset);
+            //exit(EXIT_FAILURE);
+        }
+        //assert(c3.size() == this->count_nodes(pending_offset));
     }
+
+    (*this)[r_offset].child[0] = c0_pending_offset;
+    printf("returned c0: %lu == %lu?\n", c0.size(), this->count_nodes(
+                c0_pending_offset));
+    if (c0.size() != this->count_nodes(c0_pending_offset))
+    { this->pprint(0, c0_pending_offset);
+        printf("r_offset: %lu, c0_pending_offset: %lu\n", r_offset,
+                c0_pending_offset);
+        exit(EXIT_FAILURE); }
+    (*this)[r_offset].child[1] = c1_pending_offset;
+    printf("returned c1: %lu == %lu?\n", c1.size(), this->count_nodes(
+                c1_pending_offset));
+    (*this)[r_offset].child[2] = c2_pending_offset;
+    printf("returned c2: %lu == %lu?\n", c2.size(), this->count_nodes(
+                c2_pending_offset));
+    (*this)[r_offset].child[3] = c3_pending_offset;
+    printf("returned c3: %lu == %lu?\n", c3.size(), this->count_nodes(
+                c3_pending_offset));
 
     return r_offset;
 }
@@ -411,12 +500,13 @@ template<class int_type, class attr_type>
 void
 OffsetFBTree<int_type, attr_type>::pprint()
 {
-    std::streamsize w = std::cout.width();
     if (this->length != 0)
     {
         this->pprint(0,0);
     }
-    std::cout << std::setw(w);
+    std::cout << this->count_nodes(0) << std::endl;
+    std::cout << this->length << std::endl;
+    std::cout << this->vec.size() << std::endl;
 }
 
 template<class int_type, class attr_type>
@@ -424,8 +514,6 @@ void
 OffsetFBTree<int_type, attr_type>::pprint(int_type depth, int_type offset)
 {
     int_type i;
-    //for (i = 0; i < (depth * 2); i++)
-    //    std::cout << " ";
 
     std::cout
         << std::get<0>((*this)[offset].key) << ", "
