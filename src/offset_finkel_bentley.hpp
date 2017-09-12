@@ -103,13 +103,6 @@ OffsetFBTree
         size_type range_count(int_type offset, attr_type x1, attr_type x2,
                 attr_type y1, attr_type y2);
 
-        /* Recursive optimal inserter, using F&B's OptimizedConstruction
-         */
-        int_type append_itr_optimal(typename vec_type::iterator first,
-                typename vec_type::iterator last);
-        int_type append_itr_optimal_old(typename vec_type::iterator first,
-                typename vec_type::iterator last);
-
         /* See if the vector needs to be resized in order to take num more
          * elements, and if so, resizes the vector.
          */
@@ -366,7 +359,7 @@ template<class int_type, class attr_type>
 int_type
 OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
 {
-    vec_type c;
+    vec_type c_high, c_low;
     typename vec_type::iterator::difference_type m;
     typename vec_type::iterator r_itr;
     int_type r_offset;
@@ -376,115 +369,19 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
     r_itr = keys.begin() + m;
     r_y = std::get<1>(keys[m]);
     r_offset = this->append_key(keys[m]);
-    
-    return r_offset;
-}
 
-/* Append a vector of keys, optimally. This doesn't work and I can't work out
- * why, I'm goddamn done with the fucking thing
- */
-template<class int_type, class attr_type>
-int_type
-OffsetFBTree<int_type, attr_type>::append_keys_optimal_old(vec_type& keys)
-{
-    vec_type c0, c1, c2, c3;
-    typename vec_type::iterator::difference_type m;
-    typename vec_type::iterator r_itr;
-    attr_type r_y;
-    int_type r_offset, c0_pending_offset, c1_pending_offset, c2_pending_offset,
-             c3_pending_offset;
+    c_high = vec_type();
+    c_low = vec_type();
 
-    c0_pending_offset = 0;
-    c1_pending_offset = 0;
-    c2_pending_offset = 0;
-    c3_pending_offset = 0;
-
-    std::sort(keys.begin(), keys.end());
-    m = keys.size()/2;
-    r_itr = keys.begin() + m;
-    r_y = std::get<1>(keys[m]);
-    r_offset = this->append_key(keys[m]);
-
-    printf("r_offset: %lu\n", r_offset);
-
-    auto lo_y = [r_y](const key_type& k)
-    { return (std::get<1>(k) <= r_y); };
-    auto hi_y = [r_y](const key_type& k)
-    { return (std::get<1>(k) > r_y); };
-
-    c0.reserve(m+1);
-    std::copy_if(keys.begin(), r_itr, std::back_inserter(c0), lo_y);
-    c1.reserve(m+1);
-    std::copy_if(r_itr+1, keys.end(), std::back_inserter(c1), lo_y);
-    c2.reserve(m+1);
-    std::copy_if(keys.begin(), r_itr, std::back_inserter(c2), hi_y);
-    c3.reserve(m+1);
-    std::copy_if(r_itr+1, keys.end(), std::back_inserter(c3), hi_y);
-
-    printf("k: %lu, 0:%lu, 1:%lu, 2:%lu, 3:%lu\n",
-            keys.size(), c0.size(), c1.size(), c2.size(), c3.size());
-    assert(keys.size() == 
-            c0.size()+ c1.size()+ c2.size()+ c3.size() +1);
-
-    if (c0.size() != 0)
+    for (i = 0; i < m; i++)
     {
-        c0_pending_offset = this->append_keys_optimal(c0);
-        //assert(c0.size() == this->count_nodes(pending_offset));
+        if (std::get<1>(keys[i]) > std::get<1>(keys[m]))
+            // C2
+            c_high.push_back(keys[i]);
+        else
+            // C0
+            c_low.push_back(keys[i]);
     }
-    if (c1.size() != 0)
-    {
-        c1_pending_offset = this->append_keys_optimal(c1);
-        if (c1.size() != this->count_nodes(c1_pending_offset))
-        {
-            this->pprint(0, c1_pending_offset);
-            printf("r_offset: %lu, c1_pending_offset: %lu\n", r_offset,
-                    c1_pending_offset);
-            //exit(EXIT_FAILURE);
-        }
-        //assert(c1.size() == this->count_nodes(pending_offset));
-    }
-    if (c2.size() != 0)
-    {
-        c2_pending_offset = this->append_keys_optimal(c2);
-        if (c2.size() != this->count_nodes(c2_pending_offset))
-        {
-            this->pprint(0, c2_pending_offset);
-            printf("r_offset: %lu, c2_pending_offset: %lu\n", r_offset,
-                    c2_pending_offset);
-            //exit(EXIT_FAILURE);
-        }
-        //assert(c2.size() == this->count_nodes(pending_offset));
-    }
-    if (c3.size() != 0)
-    {
-        c3_pending_offset = this->append_keys_optimal(c3);
-        if (c3.size() != this->count_nodes(c3_pending_offset))
-        {
-            this->pprint(0, c3_pending_offset);
-            printf("r_offset: %lu, c3_pending_offset: %lu\n", r_offset,
-                    c3_pending_offset);
-            //exit(EXIT_FAILURE);
-        }
-        //assert(c3.size() == this->count_nodes(pending_offset));
-    }
-
-    (*this)[r_offset].child[0] = c0_pending_offset;
-    printf("returned c0: %lu == %lu?\n", c0.size(), this->count_nodes(
-                c0_pending_offset));
-    if (c0.size() != this->count_nodes(c0_pending_offset))
-    { this->pprint(0, c0_pending_offset);
-        printf("r_offset: %lu, c0_pending_offset: %lu\n", r_offset,
-                c0_pending_offset);
-        exit(EXIT_FAILURE); }
-    (*this)[r_offset].child[1] = c1_pending_offset;
-    printf("returned c1: %lu == %lu?\n", c1.size(), this->count_nodes(
-                c1_pending_offset));
-    (*this)[r_offset].child[2] = c2_pending_offset;
-    printf("returned c2: %lu == %lu?\n", c2.size(), this->count_nodes(
-                c2_pending_offset));
-    (*this)[r_offset].child[3] = c3_pending_offset;
-    printf("returned c3: %lu == %lu?\n", c3.size(), this->count_nodes(
-                c3_pending_offset));
 
     return r_offset;
 }
