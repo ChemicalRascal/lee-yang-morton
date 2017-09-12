@@ -67,6 +67,7 @@ OffsetFBTree
         OffsetFBTree(vec_type& key_vec)
         {
             this->append_keys_optimal(key_vec);
+            this->truncate_vec();
         };
 
         OffsetFBTree<int_type, attr_type>::ofb_node& operator[](int_type i);
@@ -363,17 +364,16 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
     typename vec_type::iterator::difference_type m;
     typename vec_type::iterator r_itr;
     int_type r_offset;
+    size_type i;
+    int_type offsets[4] = {0, 0, 0, 0};
 
     std::sort(keys.begin(), keys.end());
     m = keys.size()/2;
-    r_itr = keys.begin() + m;
-    r_y = std::get<1>(keys[m]);
-    r_offset = this->append_key(keys[m]);
+    r_offset = this->append_node(keys[m]);
 
     c_high = vec_type();
     c_low = vec_type();
-
-    for (i = 0; i < m; i++)
+    for (i = 0; i < (size_type)m; i++)
     {
         if (std::get<1>(keys[i]) > std::get<1>(keys[m]))
             // C2
@@ -382,6 +382,31 @@ OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
             // C0
             c_low.push_back(keys[i]);
     }
+    if (c_low.size() > 0)
+        offsets[0] = append_keys_optimal(c_low);
+    if (c_high.size() > 0)
+        offsets[2] = append_keys_optimal(c_high);
+
+    c_high = vec_type();
+    c_low = vec_type();
+    for (i = m+1; i < keys.size(); i++)
+    {
+        if (std::get<1>(keys[i]) > std::get<1>(keys[m]))
+            // C1
+            c_high.push_back(keys[i]);
+        else
+            // C3
+            c_low.push_back(keys[i]);
+    }
+    if (c_low.size() > 0)
+        offsets[1] = append_keys_optimal(c_low);
+    if (c_high.size() > 0)
+        offsets[3] = append_keys_optimal(c_high);
+
+    (*this)[r_offset].child[0] = offsets[0];
+    (*this)[r_offset].child[1] = offsets[1];
+    (*this)[r_offset].child[2] = offsets[2];
+    (*this)[r_offset].child[3] = offsets[3];
 
     return r_offset;
 }

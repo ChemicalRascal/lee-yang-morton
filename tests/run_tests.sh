@@ -4,6 +4,9 @@
 # run_tests.sh: Using the python scripts, run all possible queries on a
 #               randomly-generated tree of size $1 and a point probability
 #               of $2, and compare the python output with the "real" output.
+#               $3 -- Size of queries as a percent of the total area of the
+#                     space
+#               $4 -- Number of queries generated
 
 PREFIX=data/$(date "+%Y.%m.%d.%T")
 MAX=$(python -c "print(2**$1 - 1)")
