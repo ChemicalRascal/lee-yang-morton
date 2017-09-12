@@ -83,4 +83,4 @@ $(PROG3): $(CFILES3) $(OBJ)
 
 .PHONY: clean
 clean:
-	$(RM) $(RMFLAGS) $(PROG) $(OBJ) vgcore.* $(PROG2) $(PROG3)
+	$(RM) $(RMFLAGS) $(PROG) $(OBJ) $(PROGOBJ) vgcore.* $(PROG2) $(PROG3)
