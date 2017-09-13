@@ -277,14 +277,31 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
     if ((*this)[offset].child[0] != 0 &&
             x1 <= std::get<0>(key) && y1 <= std::get<1>(key))
     { count += this->range_count((*this)[offset].child[0], x1, x2, y1, y2); }
+
     if ((*this)[offset].child[1] != 0 &&
-            std::get<0>(key) < x2  && y1 <= std::get<1>(key))
+            (
+                (std::get<0>(key) <  x2 && y1 <= std::get<1>(key))
+                //FIXME x eq is here because F&B got it wrong, and their
+                //      optimised construction assumes that nothing has
+                //      the same x-value as the midpoint.
+             || (std::get<0>(key) == x2 && y1 <= std::get<1>(key))
+            )
+       )
     { count += this->range_count((*this)[offset].child[1], x1, x2, y1, y2); }
+
     if ((*this)[offset].child[2] != 0 &&
-            x1 <= std::get<0>(key) && std::get<1>(key) < y2)
+            x1 <= std::get<0>(key) && std::get<1>(key) <  y2)
     { count += this->range_count((*this)[offset].child[2], x1, x2, y1, y2); }
+
     if ((*this)[offset].child[3] != 0 &&
-            std::get<0>(key) < x2  && std::get<1>(key) < y2)
+            (
+                (std::get<0>(key) <  x2 && std::get<1>(key) <  y2)
+                //FIXME x eq is here because F&B got it wrong, and their
+                //      optimised construction assumes that nothing has
+                //      the same x-value as the midpoint.
+             || (std::get<0>(key) == x2 && std::get<1>(key) <  y2)
+            )
+       )
     { count += this->range_count((*this)[offset].child[3], x1, x2, y1, y2); }
 
     return count;
@@ -495,6 +512,7 @@ OffsetFBTree<int_type, attr_type>::load(std::istream& in)
         .read((char*)&this->max_y, sizeof(attr_type));
     this->check_fix_size(this->length);
     in.read((char*)this->vec.data(), sizeof(ofb_node) * this->length);
+    this->truncate_vec();
 }
 
 #endif /* OFFSET_FINKEL_BENTLEY_HPP */
