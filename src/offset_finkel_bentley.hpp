@@ -279,14 +279,7 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
     { count += this->range_count((*this)[offset].child[0], x1, x2, y1, y2); }
 
     if ((*this)[offset].child[1] != 0 &&
-            (
-                (std::get<0>(key) <  x2 && y1 <= std::get<1>(key))
-                //FIXME x eq is here because F&B got it wrong, and their
-                //      optimised construction assumes that nothing has
-                //      the same x-value as the midpoint.
-             || (std::get<0>(key) == x2 && y1 <= std::get<1>(key))
-            )
-       )
+            (std::get<0>(key) <  x2 && y1 <= std::get<1>(key)))
     { count += this->range_count((*this)[offset].child[1], x1, x2, y1, y2); }
 
     if ((*this)[offset].child[2] != 0 &&
@@ -294,14 +287,7 @@ OffsetFBTree<int_type, attr_type>::range_count(int_type offset,
     { count += this->range_count((*this)[offset].child[2], x1, x2, y1, y2); }
 
     if ((*this)[offset].child[3] != 0 &&
-            (
-                (std::get<0>(key) <  x2 && std::get<1>(key) <  y2)
-                //FIXME x eq is here because F&B got it wrong, and their
-                //      optimised construction assumes that nothing has
-                //      the same x-value as the midpoint.
-             || (std::get<0>(key) == x2 && std::get<1>(key) <  y2)
-            )
-       )
+            (std::get<0>(key) <  x2 && std::get<1>(key) <  y2))
     { count += this->range_count((*this)[offset].child[3], x1, x2, y1, y2); }
 
     return count;
@@ -378,14 +364,20 @@ int_type
 OffsetFBTree<int_type, attr_type>::append_keys_optimal(vec_type& keys)
 {
     vec_type c_high, c_low;
-    typename vec_type::iterator::difference_type m;
-    typename vec_type::iterator r_itr;
+    size_type i, m;
     int_type r_offset;
-    size_type i;
     int_type offsets[4] = {0, 0, 0, 0};
 
     std::sort(keys.begin(), keys.end());
     m = keys.size()/2;
+    /* In cases where keys above m have the same x-value as keys[m], Finkel
+     * and Bentley's original algorithm breaks! So that's fun. Unfortunately,
+     * the solution here *does* invalidate the properties that F&B derive
+     * for the resulting graph.
+     */
+    while ((m + 1 < keys.size()) &&
+           (std::get<0>(keys[m]) == std::get<0>(keys[m + 1])))
+    { m += 1; }
     r_offset = this->append_node(keys[m]);
 
     c_high = vec_type();
