@@ -41,6 +41,10 @@
 #define DEFAULT_VEC_SIZE 0
 #define vec_size_type uint64_t
 
+//FIXME: Move n_qtree to a coord-vector-built-system (with ofb n_qtree isn't
+//       really nessecary though, consider removing entirely)
+#define HARDCODED_N_QTREE_DEPTH 6
+
 int     global_quiet_mode;
 char*   global_prefix_arg;
 
@@ -102,7 +106,7 @@ read_csv_to_vector(FILE* fp, std::tuple<unsigned, unsigned, unsigned,
     std::vector<std::tuple<vec_size_type, vec_size_type>> v(DEFAULT_VEC_SIZE);
 
     //Skip depth
-    readcsv_get_uint(fp, &x);
+    //readcsv_get_uint(fp, &x);
     //min x, max x, min y, max y
     std::get<0>(bounds) = (unsigned)-1;
     std::get<1>(bounds) = 0;
@@ -167,19 +171,14 @@ print_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>> v)
 
 /* Currently, data is assigned to *every* node.
  */
-//TODO: Move this to std::istream
+//TODO: Move this to using coordinate vectors -- if can be bothered?
 n_qtree*
 read_qtree(FILE* fp, void* data)
 {
     n_qtree* tree;
     unsigned int x, y;
 
-    q_fprintf(stdout, "Enter tree depth: ");
-    if (readcsv_get_uint(fp, &x) == EOF)
-    {
-        return NULL;
-    }
-    tree = new_qtree(x);
+    tree = new_qtree(HARDCODED_N_QTREE_DEPTH);
 
     q_fprintf(stdout, "\nEnter co-ords, x-coord first, EOF when complete: ");
     while (read_coord(fp, &x, &y) != EOF)
@@ -356,8 +355,8 @@ main(int argc, char** argv, char** envp)
 
     if (build_mode == 1)
     {
-        n_qtree* tree;
-        int junk_data = 1;
+        //n_qtree* tree;
+        //int junk_data = 1;
 
         std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
 
@@ -399,12 +398,14 @@ main(int argc, char** argv, char** envp)
         tree_file.flush();
         tree_file.close();
 
+        /*
         tree = read_qtree(input_fp, &junk_data);
         link_nodes_morton(tree);
         if (print_mode == 1)
         {
             //print_qtree_integerwise(tree, 0);
         }
+        */
 
         while (!mode_l.empty())
         {
@@ -432,6 +433,7 @@ main(int argc, char** argv, char** envp)
                     free_qsiseq(qsiseq);
                     break;
                 case bqt_mode:
+                    /* FIXME
                     bitqtree = BitQTree(tree);
                     tree_file = std::fstream((prefix + ".bqt").c_str(),
                             std::fstream::binary | std::fstream::out |
@@ -439,11 +441,14 @@ main(int argc, char** argv, char** envp)
                     bitqtree.serialize(tree_file);
                     tree_file.flush();
                     tree_file.close();
+                    */
                     //TODO: bqt print mode?
                     break;
                 case oqt_mode:
                     //FIXME: It'd be faster have a constructor that takes
                     //       a n_qtree*.
+                    /* FIXME: It'd be faster have a constructor that takes
+                     *       coord_vec.
                     bitqtree = BitQTree(tree);
                     oqt = OffsetQTree<unsigned int>(&bitqtree);
                     tree_file = std::fstream((prefix + ".oqt").c_str(),
@@ -457,6 +462,7 @@ main(int argc, char** argv, char** envp)
                         printf("oqt:\n");
                         oqt.pprint();
                     }
+                    */
                     break;
                 case sdsl_k2_mode:
                     // TODO: Work out how to handle multiple different ks at
@@ -490,7 +496,7 @@ main(int argc, char** argv, char** envp)
             mode_l.pop_front();
         }
 
-        free_qtree(tree, 1);
+        //free_qtree(tree, 1);
         exit(EXIT_SUCCESS);
     }
 
