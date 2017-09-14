@@ -243,25 +243,25 @@ main(int argc, char** argv, char** envp)
     out_file.close();
 
     //We know what these are
-    out_file = std::fstream((prefix + ".min_x").c_str(),
+    out_file.open((prefix + ".min_x").c_str(),
             std::fstream::binary | std::fstream::out |
             std::fstream::trunc);
     out_file << std::to_string(1) << std::endl;
     out_file.flush();
     out_file.close();
-    out_file = std::fstream((prefix + ".max_x").c_str(),
+    out_file.open((prefix + ".max_x").c_str(),
             std::fstream::binary | std::fstream::out |
             std::fstream::trunc);
     out_file << std::to_string(global_v.size()) << std::endl;
     out_file.flush();
     out_file.close();
-    out_file = std::fstream((prefix + ".min_y").c_str(),
+    out_file.open((prefix + ".min_y").c_str(),
             std::fstream::binary | std::fstream::out |
             std::fstream::trunc);
     out_file << std::to_string(1) << std::endl;
     out_file.flush();
     out_file.close();
-    out_file = std::fstream((prefix + ".max_y").c_str(),
+    out_file.open((prefix + ".max_y").c_str(),
             std::fstream::binary | std::fstream::out |
             std::fstream::trunc);
     out_file << std::to_string(global_v.size()) << std::endl;
