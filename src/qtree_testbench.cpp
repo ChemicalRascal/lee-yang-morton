@@ -269,7 +269,7 @@ main(int argc, char** argv, char** envp)
     BitQTree bitqtree;
     OffsetQTree<unsigned int> oqt;
     OffsetFBTree<> ofb;
-    
+
     const unsigned int k = 2;
     k2_range<k> k2;
 

@@ -25,6 +25,9 @@ CFILES2	= src/gen_queries.c
 PROG3	= gen_queries_percent
 CFILES3	= src/gen_queries_percent.cpp
 
+PROG4	= chazelle_reduce
+CFILES4	= src/chazelle_reduce.cpp
+
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
 VGCFLAG = -g -O0
@@ -36,7 +39,7 @@ DBGFLAG	= -q
 default: $(PROG)
 
 .PHONY: all
-all: clean $(PROG) $(PROG3)
+all: $(PROG) $(PROG3) $(PROG4)
 
 .PHONY: avx2
 avx2: clean avx2_set all
@@ -79,6 +82,12 @@ $(PROG2): $(CFILES2)
 	$(CC) $(CFLAGS) $(CFILES2) -o $@
 
 $(PROG3): $(CFILES3) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+$(PROG4): $(CFILES4) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+mwe: src/mwe.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 .PHONY: clean

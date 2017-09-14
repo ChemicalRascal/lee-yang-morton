@@ -81,3 +81,36 @@ readcsv_get_luint(FILE* file, long unsigned int* dest)
 {
     return readcsv_get_arbint(file, (void*) dest, LUINT_FORMAT);
 }
+
+int
+readcsv_get_double(FILE* file, double* dest)
+{
+    int peek_val;
+    while (1 == 1)
+    {
+        peek_val = readcsv_peekc(file);
+        if (peek_val == EOF)
+        {
+            return EOF;
+        }
+
+        if (!(isdigit(peek_val) || peek_val == '-'))
+        {
+            /* Go through stuff that aren't numbers. Or -, as floats can be
+             * negative, y'know.
+             */
+            fgetc(file);
+            continue;
+        }
+        else
+        {
+            /* Got digit */
+            peek_val = fscanf(file, "%lf", dest);
+            if (peek_val == 0)
+            {
+                return EOF;
+            }
+            return peek_val;
+        }
+    }
+}

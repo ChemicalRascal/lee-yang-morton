@@ -14,5 +14,6 @@
 
 int readcsv_get_uint(FILE*, unsigned int*);
 int readcsv_get_luint(FILE*, long unsigned int*);
+int readcsv_get_double(FILE*, double*);
 
 #endif /* READ_CSV_H */

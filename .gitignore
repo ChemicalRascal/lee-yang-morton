@@ -17,6 +17,7 @@
 qtree_testbench
 gen_queries
 gen_queries_percent
+chazelle_reduce
 *.exe
 *.out
 *.app
@@ -37,3 +38,8 @@ tests/data
 .DS_Store
 *.d
 *~
+
+# Datasets
+data_sets/*.csv
+data_sets/*.csv_raw
+data_sets/*.txt
