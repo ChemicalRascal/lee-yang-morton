@@ -43,3 +43,6 @@ tests/data
 data_sets/*.csv
 data_sets/*.csv_raw
 data_sets/*.txt
+data_sets/*.queries*
+data_sets/*.min_*
+data_sets/*.max_*
