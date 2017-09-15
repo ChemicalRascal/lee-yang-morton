@@ -7,6 +7,6 @@
 #   $2: Number of sets to generate
 #   $3: Number of queries per set
 
-for i in `seq 1 $3`; do
+for i in `seq 1 $2`; do
     ./../gen_queries_percent -x $1 -f $1.queries_$i -g -3 -h 3 -i 0.01 -n $3
 done
