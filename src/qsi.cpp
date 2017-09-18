@@ -613,13 +613,14 @@ long unsigned int
 qsi_get_next(qsiseq* seq, qsi_next_state* state)
 {
     long unsigned int read_lo, read_hi, i;
-    unsigned char bit;
+    //unsigned char bit;
 
     if (state == NULL || seq == NULL)
     {
         return ULONG_MAX;
     }
 
+    /*
     read_lo = 0;
     for (i = 0; i < seq->l; i++)
     {
@@ -630,6 +631,8 @@ qsi_get_next(qsiseq* seq, qsi_next_state* state)
         }
         read_lo = (read_lo << 1) | bit;
     }
+    */
+    read_lo = get_luint(seq->lo, state->lo, seq->l);
 
     i = state->hi;
     read_hi = read_unary_as_uint(seq->hi, &i);

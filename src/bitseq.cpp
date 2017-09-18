@@ -288,16 +288,29 @@ pprint_bitseq(bitseq* seq)
     return;
 }
 
-/* Appends the lowest n bits of a to seq.
+/* Appends the lowest n bits of a to seq. Unfortunately, does so in lsb->msb
+ * order, due to how set_int is implemented in sdsl::int_vector.
  */
 void
 append_luint_bits_low(bitseq* seq, long unsigned int a, unsigned int n)
 {
-    long int i;
-    for (i = n - 1; i >= 0; i--)
-    {
-        append_bit(seq, (unsigned char)((a>>i)&1));
-    }
+    long unsigned int mask = (1<<n)-1;
+    a &= mask;
+    seq->vec->set_int(seq->len, a, n);
+    seq->len += n;
+    //append_bit(seq, (unsigned char)((a>>i)&1));
+}
+
+/* Reads a chunk of bits as a luint, in lsb->msb order because that's how
+ * sdsl::int_vector works.
+ *
+ * i: Index to start reading from.
+ * n: Number of bits to read as luint.
+ */
+long unsigned int
+get_luint(bitseq* seq, long unsigned int i, unsigned int n)
+{
+    return seq->vec->get_int(i, n);
 }
 
 /* Appends a as a unary-encoded integer to seq.

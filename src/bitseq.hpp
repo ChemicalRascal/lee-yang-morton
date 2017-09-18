@@ -32,6 +32,7 @@ void insert_bit(bitseq*, unsigned int, unsigned char);
 void append_bit(bitseq*, unsigned char);
 
 void append_luint_bits_low(bitseq*, long unsigned int, unsigned int);
+long unsigned int get_luint(bitseq*, long unsigned int, unsigned int);
 
 void append_uint_in_unary(bitseq*, unsigned int);
 
