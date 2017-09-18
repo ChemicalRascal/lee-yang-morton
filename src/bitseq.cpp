@@ -170,6 +170,8 @@ write_bitseq(bitseq* seq, std::ostream& outfile)
         fprintf(stderr, "ERROR: write_bitseq: magic write failure.\n");
         return;
     }
+
+    outfile.write((char*)seq, sizeof(bitseq));
 #ifdef BITSEQ_MINIMAL_WRITE
     //Truncate the vector before writing.
     seq->vec->resize(seq->len);
@@ -207,6 +209,7 @@ read_bitseq(std::istream& infile)
 
     seq = (bitseq*)malloc(sizeof(bitseq));
     assert(seq != NULL);
+    infile.read((char*)seq, sizeof(bitseq));
     seq->vec = new sdsl::bit_vector();
     seq->vec->load(infile);
     if (!infile.good())
