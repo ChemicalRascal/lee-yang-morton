@@ -1,9 +1,7 @@
 /* vim: set et sts=4 sw=4 cc=80 tw=80: */
-
 /*******************************************
  *
- *  Main testbench program for leeyang.h,
- *      and associated libraries.
+ * Exhaustive query generator
  *
  *******************************************/
 
@@ -13,6 +11,10 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
+
+#include <string>
+
+#include "read_csv.h"
 
 void
 exit_fprintf_help(char** argv)
@@ -41,10 +43,13 @@ exit_fprintf_usage(char** argv)
 int
 main(int argc, char** argv, char** envp)
 {
-    int depth, opt, print_len_mode;
+    int opt, print_len_mode;
     FILE* output_fp;
     char* output_path;
-    long unsigned int max, lox, loy, hix, hiy, len;
+    char* prefix_arg;
+    long unsigned int lox, loy, hix, hiy, len;
+    unsigned int x_min, x_max, y_min, y_max;
+    std::string prefix;
 
     if (argc == 1)
     {
@@ -58,23 +63,19 @@ main(int argc, char** argv, char** envp)
         }
     }
 
-    depth = 0;
     print_len_mode = 1;
     output_path = NULL;
     output_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "d:f:l")) != -1)
+    while ((opt = getopt(argc, argv, "x:f:")) != -1)
     {
         switch (opt)
         {
-            case 'd':
-                depth = atoi(optarg);
+            case 'x':
+                prefix_arg = optarg;
                 break;
             case 'f':
                 output_path = optarg;
-                break;
-            case 'l':
-                print_len_mode = 1;
                 break;
             default:
                 exit_fprintf_usage(argv);
@@ -82,11 +83,14 @@ main(int argc, char** argv, char** envp)
         }
     }
 
-    if (depth <= 0)
+    if (prefix_arg == NULL)
     {
         exit_fprintf_usage(argv);
     }
-
+    else
+    {
+        prefix = std::string(prefix_arg);
+    }
     if (output_path == NULL)
     {
         output_fp = stdout;
@@ -96,16 +100,18 @@ main(int argc, char** argv, char** envp)
         output_fp = fopen(output_path, "w");
     }
 
-    max = (1 << depth);
-    len = 0;
+    readcsv_get_uint(fopen((prefix + ".min_x").c_str(), "r"), &x_min);
+    readcsv_get_uint(fopen((prefix + ".max_x").c_str(), "r"), &x_max);
+    readcsv_get_uint(fopen((prefix + ".min_y").c_str(), "r"), &y_min);
+    readcsv_get_uint(fopen((prefix + ".max_y").c_str(), "r"), &y_max);
 
-    for (lox = 0; lox < max; lox++)
+    for (lox = x_min; lox < x_max; lox++)
     {
-        for (hix = lox; hix < max; hix++)
+        for (hix = lox; hix < x_max; hix++)
         {
-            for (loy = 0; loy < max; loy++)
+            for (loy = y_min; loy < y_max; loy++)
             {
-                for (hiy = loy; hiy < max; hiy++)
+                for (hiy = loy; hiy < y_max; hiy++)
                 {
                     fprintf(output_fp, "%lu %lu %lu %lu\n", lox, loy, hix,
                             hiy);

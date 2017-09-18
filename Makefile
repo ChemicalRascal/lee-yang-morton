@@ -20,7 +20,7 @@ CFILES	= src/bitseq.cpp src/qsi.cpp src/leeyang.cpp src/read_csv.c \
 BINDIR	= bin/
 
 PROG2	= gen_queries
-CFILES2	= src/gen_queries.c
+CFILES2	= src/gen_queries.cpp
 
 PROG3	= gen_queries_percent
 CFILES3	= src/gen_queries_percent.cpp
@@ -39,7 +39,7 @@ DBGFLAG	= -q
 default: $(PROG)
 
 .PHONY: all
-all: $(PROG) $(PROG3) $(PROG4)
+all: $(PROG) $(PROG2) $(PROG3) $(PROG4)
 
 .PHONY: avx2
 avx2: clean avx2_set all
@@ -78,8 +78,8 @@ gdb:	val_build
 $(PROG): $(OBJ) $(PROGOBJ) $(HDEPS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-$(PROG2): $(CFILES2)
-	$(CC) $(CFLAGS) $(CFILES2) -o $@
+$(PROG2): $(CFILES2) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 $(PROG3): $(CFILES3) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
