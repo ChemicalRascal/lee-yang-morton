@@ -613,7 +613,6 @@ long unsigned int
 qsi_get_next(qsiseq* seq, qsi_next_state* state)
 {
     long unsigned int read_lo, read_hi, i;
-    //unsigned char bit;
 
     if (state == NULL || seq == NULL)
     {
@@ -632,6 +631,7 @@ qsi_get_next(qsiseq* seq, qsi_next_state* state)
         read_lo = (read_lo << 1) | bit;
     }
     */
+    if (state->lo >= seq->lo->len) { return ULONG_MAX; } 
     read_lo = get_luint(seq->lo, state->lo, seq->l);
 
     i = state->hi;
@@ -683,9 +683,9 @@ pprint_qsiseq(qsiseq* seq)
     printf("q: %u, ", seq->q);
     printf("\n");
     printf("hi: ");
-    pprint_bitseq(seq->hi);
+    pprint_bitseq(seq->hi, 8);
     printf("lo: ");
-    pprint_bitseq(seq->lo);
+    pprint_bitseq(seq->lo, seq->l);
     printf("hi_psums: ");
     pprint_qsipsums(seq->hi_psums);
 }

@@ -263,11 +263,11 @@ get_bit(bitseq* seq, unsigned int index)
         return 2;
     }
 
-    return (*(seq->vec))[index];
+    return seq->vec->get_int(index, 1);
 }
 
 void
-pprint_bitseq(bitseq* seq)
+pprint_bitseq(bitseq* seq, unsigned int group_size)
 {
     long unsigned int i;
 
@@ -282,9 +282,12 @@ pprint_bitseq(bitseq* seq)
     for (i = 0; i < seq->len; i++)
     {
         printf("%u", get_bit(seq, i));
-        if (i%8 == 7)
+        if (group_size != 0)
         {
-            printf(" ");
+            if (i%group_size == (group_size - 1))
+            {
+                printf(" ");
+            }
         }
     }
     printf("\n");
@@ -318,17 +321,27 @@ get_luint(bitseq* seq, long unsigned int i, unsigned int n)
 
 /* Appends a as a unary-encoded integer to seq.
  *
- * NB: Unary encoding is defined as 0^a1.
+ * NB: Unary encoding is defined as 0^a 1.
  */
 void
 append_uint_in_unary(bitseq* seq, unsigned int a)
 {
+    long unsigned int b = 1 << a;
+    /*FIXME: SDSL is *naughty* and doesn't actually initialise everything to 0.
+     * You can test this by preallocating a reasonably large bit_vector (ergo,
+     * one with a capacity of at least, say, 1k bits) and then just checking
+     * each bit.
+     */
+    seq->vec->set_int(seq->len, b, a+1);
+    seq->len += a + 1;
+    /*
     while (a > 0)
     {
         append_bit(seq, 0);
         a--;
     }
     append_bit(seq, 1);
+    */
 }
 
 /* Reads the unary code starting at position *index as an unsigned int.

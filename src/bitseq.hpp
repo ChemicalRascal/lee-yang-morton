@@ -56,7 +56,7 @@ unsigned int read_unary_as_uint(bitseq*, long unsigned int*);
 long unsigned int weave_uints_to_luint(unsigned int, unsigned int);
 //void unweave_luint_to_uints(long unsigned int, unsigned int*, unsigned int*);
 
-void pprint_bitseq(bitseq*);
+void pprint_bitseq(bitseq*, unsigned int);
 
 
 unsigned char get_bit_void_ptr(void*, unsigned int);
