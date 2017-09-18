@@ -20,23 +20,26 @@ mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 $3 $4 $5 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -x $PREFIX -b -c $Q -f -g -q &&
+./../qtree_testbench -x $PREFIX -b -f -g -q &&
 echo "bin made" &&
+./../qtree_testbench -x $PREFIX -b -c $Q -q &&
+echo "qsi made" &&
 touch $PREFIX.queries &&
-./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
+./../gen_queries -x $PREFIX -f $PREFIX.queries &&
+#./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
 echo "queries made" &&
 ./../qtree_testbench -x $PREFIX -g < $PREFIX.queries > $PREFIX.ofb_out &&
 echo "ofb_out made" &&
 ./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
 echo "k2_out made" &&
-./../qtree_testbench -x $PREFIX -c $Q < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
+./../qtree_testbench -x $PREFIX -qc $Q \
+                < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
 echo "qt_out made" &&
 ./query_tree.py $PREFIX.csv < $PREFIX.queries > $PREFIX.py_out &&
-echo "py_out made" &&
-echo "ofb diff:" &&
-diff $PREFIX.ofb_out $PREFIX.py_out #&&
-echo "k2 diff:" &&
-diff $PREFIX.k2_out $PREFIX.py_out #&&
-echo "qt diff:" &&
-diff $PREFIX.qt_${Q}_out $PREFIX.py_out &&
-true
+echo "py_out made"
+echo "ofb diff:"
+diff $PREFIX.ofb_out $PREFIX.py_out
+echo "k2 diff:"
+diff $PREFIX.k2_out $PREFIX.py_out
+echo "qt diff:"
+diff $PREFIX.qt_${Q}_out $PREFIX.py_out
