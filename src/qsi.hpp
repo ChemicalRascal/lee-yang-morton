@@ -92,6 +92,7 @@ long unsigned int qsi_get_final_upper(qsiseq*);
 long unsigned int qsi_get(qsiseq*, qsi_next_state*, long unsigned int);
 long unsigned int qsi_get_next(qsiseq*, qsi_next_state*);
 
+void qsi_preallocate(qsiseq*);
 void qsi_append(qsiseq*, long unsigned int);
 void qsi_append_psum(qsiseq*, long unsigned int, long unsigned int);
 

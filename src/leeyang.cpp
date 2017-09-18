@@ -936,7 +936,7 @@ qsiseq_from_c_vec(std::vector<std::tuple<uint64_t, uint64_t>>& v,
         unsigned int q)
 {
     std::vector<std::tuple<uint64_t, uint64_t>>::iterator vi;
-    uint64_t m, max, i;
+    uint64_t m, max, i, j;
     qsiseq* seq;
 
     seq = new_qsiseq();
@@ -962,8 +962,13 @@ qsiseq_from_c_vec(std::vector<std::tuple<uint64_t, uint64_t>>& v,
         i += 1;
     }
     seq->tree_depth = i;
-    qsi_set_u(seq, (1<<(i*2)));
+    //Gotta force this to be done in 64-bit space
+    j = 1;
+    j <<= i*2;
+    qsi_set_u(seq, j);
     qsi_set_n(seq, v.size());
+
+    qsi_preallocate(seq);
 
     for (vi = v.begin(); vi != v.end(); vi++)
     {

@@ -46,3 +46,5 @@ data_sets/*.txt
 data_sets/*.queries*
 data_sets/*.min_*
 data_sets/*.max_*
+data_sets/*.maxatt
+data_sets/*.qsi_*

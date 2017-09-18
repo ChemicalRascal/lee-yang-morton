@@ -381,6 +381,25 @@ qsi_get_final_upper(qsiseq* seq)
     return qsi_get_upper(seq, ULONG_MAX);
 }
 
+/* Preallocate the sequence. Needs to have had set_n already called (or seq->n
+ * set somehow otherwise).
+ */
+void
+qsi_preallocate(qsiseq* seq)
+{
+    /* bitseq works on sdsl vectors, but I wasn't at the time willing to just
+     * throw away the bitseq wrapper. Alas.
+     */
+    if (seq->n == 0) { return; }
+    /* Resize the sdsl::bitvectors
+     * These numbers are from Vigna
+     * I should probably make them #define function macros but can't be
+     * bothered
+     */
+    seq->hi->vec->resize(3*seq->n);
+    seq->lo->vec->resize(seq->l*seq->n);
+}
+
 void
 qsi_append(qsiseq* seq, long unsigned int a)
 {

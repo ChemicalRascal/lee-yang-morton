@@ -8,3 +8,7 @@ Building is dependent on Simon Gog's "Succinct Data Structure Library",
 avaliable at https://github.com/simongog/sdsl-lite -- either install it
 somewhere that your system expects it to be, or edit the Makefile to
 point g++ at the right directories.
+
+Compilation option things and stuff:
+
+* `BITSEQ_MINIMAL_WRITE` -- Makes bitseq truncate prior to writing

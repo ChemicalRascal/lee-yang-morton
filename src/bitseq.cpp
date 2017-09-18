@@ -170,8 +170,10 @@ write_bitseq(bitseq* seq, std::ostream& outfile)
         fprintf(stderr, "ERROR: write_bitseq: magic write failure.\n");
         return;
     }
+#ifdef BITSEQ_MINIMAL_WRITE
     //Truncate the vector before writing.
     seq->vec->resize(seq->len);
+#endif /* BITSEQ_MINIMAL_WRITE */
     seq->vec->serialize(outfile);
     if (!outfile.good())
     {
@@ -264,7 +266,7 @@ get_bit(bitseq* seq, unsigned int index)
 void
 pprint_bitseq(bitseq* seq)
 {
-    unsigned int i;
+    long unsigned int i;
 
     if (seq == NULL)
     {
@@ -272,7 +274,9 @@ pprint_bitseq(bitseq* seq)
         return;
     }
 
-    for (i = 0; i < seq->vec->size(); i++)
+    printf("%lu/%lu ", seq->len, seq->vec->capacity());
+
+    for (i = 0; i < seq->len; i++)
     {
         printf("%u", get_bit(seq, i));
         if (i%8 == 7)
