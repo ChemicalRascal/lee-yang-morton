@@ -28,6 +28,9 @@ CFILES3	= src/gen_queries_percent.cpp
 PROG4	= chazelle_reduce
 CFILES4	= src/chazelle_reduce.cpp
 
+PROG5	= check_qsi
+CFILES5	= src/check_qsi.cpp
+
 VGRIND	= valgrind
 VGFLAG	= --leak-check=full -v
 VGCFLAG = -g -O0
@@ -85,6 +88,9 @@ $(PROG3): $(CFILES3) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 $(PROG4): $(CFILES4) $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+$(PROG5): $(CFILES5) $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 mwe: src/mwe.cpp

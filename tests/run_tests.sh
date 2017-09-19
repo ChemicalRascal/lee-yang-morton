@@ -25,8 +25,8 @@ echo "bin made" &&
 ./../qtree_testbench -x $PREFIX -b -c $Q -q &&
 echo "qsi made" &&
 touch $PREFIX.queries &&
-./../gen_queries -x $PREFIX -f $PREFIX.queries &&
-#./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
+#./../gen_queries -x $PREFIX -f $PREFIX.queries &&
+./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
 echo "queries made" &&
 ./../qtree_testbench -x $PREFIX -g < $PREFIX.queries > $PREFIX.ofb_out &&
 echo "ofb_out made" &&

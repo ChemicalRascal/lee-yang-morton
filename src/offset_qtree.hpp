@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "morton.h"
+#include "bit_qtree.hpp"
 
 typedef uint64_t size_type;
 

@@ -18,6 +18,7 @@ qtree_testbench
 gen_queries
 gen_queries_percent
 chazelle_reduce
+check_qsi
 *.exe
 *.out
 *.app
