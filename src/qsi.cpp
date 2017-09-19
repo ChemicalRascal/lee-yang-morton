@@ -398,6 +398,10 @@ qsi_preallocate(qsiseq* seq)
      */
     seq->hi->vec->resize(3*seq->n);
     seq->lo->vec->resize(seq->l*seq->n);
+    /* Need to set the bits to zero because sdsl docs are wrong
+     */
+    sdsl::util::_set_zero_bits(*(seq->hi->vec));
+    sdsl::util::_set_zero_bits(*(seq->lo->vec));
 }
 
 void

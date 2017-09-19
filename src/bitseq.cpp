@@ -326,27 +326,11 @@ get_luint(bitseq* seq, long unsigned int i, unsigned int n)
 void
 append_uint_in_unary(bitseq* seq, unsigned int a)
 {
-    //DEBUG ghetto comment-out is ghetto
-    if (1 == 0)
-    {
-        long unsigned int b = 1 << a;
-        /*FIXME: SDSL is *naughty* and doesn't actually initialise everything
-         * to 0. You can test this by preallocating a reasonably large
-         * bit_vector (ergo, one with a capacity of at least, say, 1k bits)
-         * and then just checking each bit.
-         */
-        seq->vec->set_int(seq->len, b, a+1);
-        seq->len += a + 1;
-    }
-    else
-    {
-        while (a > 0)
-        {
-            append_bit(seq, 0);
-            a--;
-        }
-        append_bit(seq, 1);
-    }
+    /* Only possible because of the _set_zero_bits() call in qsi_preallocate(),
+     * otherwise don't use this, I guess
+     */
+    (*seq->vec)[seq->len+a] = 1;
+    seq->len += a + 1;
 }
 
 /* Reads the unary code starting at position *index as an unsigned int.
