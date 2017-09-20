@@ -51,3 +51,4 @@ data_sets/*.maxatt
 data_sets/*.qsi_*
 data_sets/*.k2
 data_sets/*.ofb
+data_sets/*.res*

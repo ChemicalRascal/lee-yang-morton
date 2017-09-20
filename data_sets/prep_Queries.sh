@@ -3,10 +3,14 @@
 #
 # prep_Queries.sh
 #
-#   $1: $PREFIX
-#   $2: Number of sets to generate
-#   $3: Number of queries per set
+#   $1:  $PREFIX
+#   $2:  Number of sets to generate
+#   $3+: Number of queries per set (avoid duplicates!)
 
-for i in `seq 1 $2`; do
-    ./../gen_queries_percent -x $1 -f $1.queries_$i -g -3 -h 3 -i 0.01 -n $3
+v=${@#$1}
+v=${v#$2}
+for i in $v; do
+    for j in `seq 1 $2`; do
+        ./../gen_queries_percent -x $1 -f ${1}.queries_${i}_${j} -g -3 -h 3 -i 0.01 -n $i
+    done
 done

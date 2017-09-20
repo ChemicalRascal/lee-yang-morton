@@ -4,6 +4,7 @@
 # prep_Binaries.sh
 #
 #   $1: $PREFIX
+#   $2+: List of "modes" ("-c n" as "-cn")
 
-./../qtree_testbench -x $1 -b -c 16 -c 32 -c 512 -c 2000 -c 20000 -f -g -q
-#./../qtree_testbench -x $1 -b -c 16
+#-c 16 -c 32 -c 512 -c 2000 -c 20000 -f -g -q
+./../qtree_testbench -bqx $1 -b ${@#$1}

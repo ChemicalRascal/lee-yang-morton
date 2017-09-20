@@ -237,6 +237,7 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "  -d           Binary Quad Tree:           .bqt\n");
     fprintf(stdout, "  -e           Offset Quad Tree:           .oqt\n");
     fprintf(stdout, "  -f           SDSL k2 Tree:               .k2\n");
+    fprintf(stdout, "  -g           Offset Finkel-Bentley       .ofb\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -649,16 +650,16 @@ main(int argc, char** argv, char** envp)
             switch (std::get<0>(mode_flag))
             {
                 case qsi_mode:
-                    printf("qsi_%04d ", std::get<1>(mode_flag));
+                    printf("qsi_%06d ", std::get<1>(mode_flag));
                     break;
                 case sdsl_k2_mode:
-                    printf("sdsl_k2  ");
+                    printf("sdsl_k2    ");
                     break;
                 case ofb_mode:
-                    printf("ofb      ");
+                    printf("ofb        ");
                     break;
                 default:
-                    printf("???????? ");
+                    printf("????????   ");
                     break;
             }
             printf("%04ld.%06ld sec.usec\n", batch_sec, batch_usec);
