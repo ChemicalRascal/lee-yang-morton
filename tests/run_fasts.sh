@@ -1,4 +1,4 @@
-#!/bin/env sh
+#!/usr/bin/env sh
 # vim: set et sts=4 sw=4 cc=80 tw=80: 
 #
 # run_tests.sh: Using the python scripts, run all possible queries on a

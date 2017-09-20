@@ -49,3 +49,5 @@ data_sets/*.min_*
 data_sets/*.max_*
 data_sets/*.maxatt
 data_sets/*.qsi_*
+data_sets/*.k2
+data_sets/*.ofb

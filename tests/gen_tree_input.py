@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # vim: set et sts=4 sw=4 cc=80 tw=80: 
 #
 # gen_tree_input.py:    Generate a file containing list of co-ordinates within

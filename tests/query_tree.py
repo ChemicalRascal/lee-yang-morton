@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # vim: set et sts=4 sw=4 cc=80 tw=80: 
 #
 # run_queries_on_tree.py:   Reads a "tree input" file, and a series of
