@@ -416,6 +416,7 @@ main(int argc, char** argv, char** envp)
                     exit_fprintf_usage(argv);
                     break;
                 case qsi_mode:
+                    sort_coord_vector(coord_vec);
                     qsiseq = qsiseq_from_c_vec(coord_vec, std::get<1>
                             (mode_l.front()));
                     tree_file = std::fstream((prefix + ".qsi_" +
