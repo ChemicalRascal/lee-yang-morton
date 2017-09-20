@@ -5,5 +5,5 @@
 #
 #   $1: $PREFIX
 
-#./../qtree_testbench -x $1 -b -c 16 -c 32 -c 512 -c 2000 -c 20000 -f -g -q
-./../qtree_testbench -x $1 -b -c 16
+./../qtree_testbench -x $1 -b -c 16 -c 32 -c 512 -c 2000 -c 20000 -f -g -q
+#./../qtree_testbench -x $1 -b -c 16
