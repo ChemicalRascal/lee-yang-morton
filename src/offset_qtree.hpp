@@ -14,7 +14,7 @@
 #include <iostream>
 #include <vector>
 
-#include "morton.h"
+#include "morton.hpp"
 #include "bit_qtree.hpp"
 
 typedef uint64_t size_type;
@@ -220,7 +220,7 @@ OffsetQTree<int_type>::query_coord(size_type x, size_type y)
 
     depth = 0;
     i = 0;
-    morton_PtoZ(x, y, &m);
+    morton::PtoZ(x, y, m);
     for (depth = 0; depth < this->c_depth; depth++)
     {
         c = (m >> ((this->c_depth - (depth + 1)) * 2)) & 3;

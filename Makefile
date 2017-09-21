@@ -11,12 +11,12 @@ AVX2FLAG= -mavx2
 PROG	= qtree_testbench
 PROGOBJ = bin/qtree_testbench.obj
 DEPS	= src/bitseq.hpp src/qsi.hpp src/leeyang.hpp src/read_csv.h \
-	  src/morton.h src/bit_qtree.hpp src/offset_qtree.hpp
+	  src/bit_qtree.hpp src/offset_qtree.hpp
 HDEPS	= src/k2_range.hpp src/offset_finkel_bentley.hpp
 OBJ	= bin/bitseq.obj bin/qsi.obj bin/leeyang.obj bin/read_csv.o \
-	  bin/morton.o bin/bit_qtree.obj
+	  bin/bit_qtree.obj
 CFILES	= src/bitseq.cpp src/qsi.cpp src/leeyang.cpp src/read_csv.c \
-	  src/morton.c src/qtree_testbench.cpp src/bit_qtree.cpp
+	  src/qtree_testbench.cpp src/bit_qtree.cpp
 BINDIR	= bin/
 
 PROG2	= gen_queries

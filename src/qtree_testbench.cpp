@@ -18,7 +18,7 @@
 #include "qsi.hpp"
 #include "leeyang.hpp"
 #include "read_csv.h"
-#include "morton.h"
+#include "morton.hpp"
 #include "bit_qtree.hpp"
 
 #include "offset_qtree.hpp"
@@ -153,8 +153,8 @@ sort_coord_vector(std::vector<std::tuple<vec_size_type, vec_size_type>>& v)
                 std::tuple<vec_size_type, vec_size_type> b)
             {
                 uint64_t za, zb;
-                morton_PtoZ(std::get<0>(a), std::get<1>(a), &za);
-                morton_PtoZ(std::get<0>(b), std::get<1>(b), &zb);
+                morton::PtoZ(std::get<0>(a), std::get<1>(a), za);
+                morton::PtoZ(std::get<0>(b), std::get<1>(b), zb);
                 return za < zb;
             });
 }
@@ -200,7 +200,7 @@ exit_testbed(char** argv)
     {
         for (i = 0; i < 8; i++)
         {
-            morton_PtoZ(i, j, &z);
+            morton::PtoZ(i, j, z);
             printf("%2lu ", z);
         }
         printf("\n");
@@ -208,8 +208,8 @@ exit_testbed(char** argv)
 
     for (z = 0; z > 4096; z++)
     {
-        morton_ZtoP(z, &xa, &ya);
-        morton_ZtoP(z, &xb, &yb);
+        morton::ZtoP(z, xa, ya);
+        morton::ZtoP(z, xb, yb);
         if ((xa != xb) || (ya != yb))
         {
             printf("%lu\n", z);

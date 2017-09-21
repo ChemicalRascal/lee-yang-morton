@@ -16,7 +16,7 @@
 
 #include "qsi.hpp"
 #include "read_csv.h"
-#include "morton.h"
+#include "morton.hpp"
 
 #include "offset_qtree.hpp"
 #include "k2_range.hpp"

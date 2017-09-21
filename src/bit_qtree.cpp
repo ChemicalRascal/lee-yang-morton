@@ -9,7 +9,7 @@
 
 #include "bit_qtree.hpp"
 
-#include "morton.h"
+#include "morton.hpp"
 
 #include <algorithm>
 
@@ -87,7 +87,7 @@ BitQTree::remake_tree(n_qnode* n, long unsigned int* pos, long unsigned int m)
     }
     if (a == 0)
     {
-        morton_ZtoP(m, &x, &y);
+        morton::ZtoP(m, x, y);
         n->data = new_link_node(NULL, x, y);
     }
     return (*std::max_element(d, d+4) + d[4]);

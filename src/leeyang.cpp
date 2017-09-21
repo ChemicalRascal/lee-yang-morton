@@ -17,7 +17,7 @@
 
 #include "bitseq.hpp"
 #include "qsi.hpp"
-#include "morton.h"
+#include "morton.hpp"
 
 #define get_child_from_mcode(m, d, cd) ((m>>((cd-d-1)*2))&3)
 
@@ -372,7 +372,7 @@ link_node*
 get_dp(n_qtree* tree, long unsigned int x, long unsigned int y)
 {
     long unsigned int m;
-    morton_PtoZ(x, y, &m);
+    morton::PtoZ(x, y, m);
     return get_dp_mcode(tree, m);
 }
 
@@ -392,7 +392,7 @@ get_dp_mcode(n_qtree* tree, long unsigned int m)
         return NULL;
     }
 
-    morton_PtoZ(n->x, n->y, &n_mcode);
+    morton::PtoZ(n->x, n->y, n_mcode);
     if (n_mcode < m)
     {
         /* No dp at that mcode */
@@ -493,11 +493,11 @@ get_e_from_dp(unsigned int* outx, unsigned int* outy,
     unsigned int closex, closey, farx, fary;
     long unsigned int close_edge, far_edge;
 
-    morton_PtoZ(lox, loy, &sw_mcode);
-    morton_PtoZ(hix, loy, &se_mcode);
-    morton_PtoZ(lox, hiy, &nw_mcode);
-    morton_PtoZ(hix, hiy, &ne_mcode);
-    morton_PtoZ(dpx, dpy, &dp_mcode);
+    morton::PtoZ(lox, loy, sw_mcode);
+    morton::PtoZ(hix, loy, se_mcode);
+    morton::PtoZ(lox, hiy, nw_mcode);
+    morton::PtoZ(hix, hiy, ne_mcode);
+    morton::PtoZ(dpx, dpy, dp_mcode);
 
     if ((dp_mcode < sw_mcode) || (dp_mcode > ne_mcode))
     {
@@ -738,7 +738,7 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
             *outx = lox;
             *outy = loy;
         }
-        morton_PtoZ(lox, loy, &mid_mcode);
+        morton::PtoZ(lox, loy, mid_mcode);
         return mid_mcode;
     }
 
@@ -759,8 +759,8 @@ get_e_from_dp_rec(long unsigned int dp_mcode,
     }
 
     mid = (lo+hi)/2;
-    if (horiz) { morton_PtoZ(mid, unmv, &mid_mcode); }
-    else { morton_PtoZ(unmv, mid, &mid_mcode); }
+    if (horiz) { morton::PtoZ(mid, unmv, mid_mcode); }
+    else { morton::PtoZ(unmv, mid, mid_mcode); }
 
     if (dp_mcode < mid_mcode)
     {
@@ -791,8 +791,8 @@ get_fp_from_dp_e(
     long unsigned int fp_mcode = 0;
     long unsigned int dp_digit, e_digit, i, e_x, e_y, dpx, dpy;
 
-    morton_ZtoP(e_mcode, &e_x, &e_y);
-    morton_ZtoP(dp_mcode, &dpx, &dpy);
+    morton::ZtoP(e_mcode, e_x, e_y);
+    morton::ZtoP(dp_mcode, dpx, dpy);
 
     for (i = 0; i < tree_depth; i++)
     {
@@ -841,7 +841,7 @@ get_fp_from_dp(long unsigned int dpx, long unsigned int dpy,
 {
     long unsigned int mcode, dp_mcode;
 
-    morton_PtoZ(dpx, dpy, &dp_mcode);
+    morton::PtoZ(dpx, dpy, dp_mcode);
     mcode = get_e_from_dp(NULL, NULL, dpx, dpy, lox, loy, hix, hiy);
     mcode = get_fp_from_dp_e(NULL, NULL, dp_mcode, mcode, lox, loy, hix, hiy,
             tree_depth);
@@ -872,11 +872,11 @@ lee_yang(n_qtree* tree, unsigned int lox, unsigned int loy, unsigned int hix,
         return 0L;
     }
 
-    morton_PtoZ(lox, loy, &le_mcode);
-    morton_PtoZ(hix, hiy, &ge_mcode);
+    morton::PtoZ(lox, loy, le_mcode);
+    morton::PtoZ(hix, hiy, ge_mcode);
 
     n = get_dp_mcode(tree, le_mcode);
-    morton_PtoZ(n->x, n->y, &n_mcode);
+    morton::PtoZ(n->x, n->y, n_mcode);
 
     while ((n != NULL) && (n_mcode <= ge_mcode))
     {
@@ -917,7 +917,7 @@ qsiseq_from_n_qtree(n_qtree* tree, unsigned int q)
     n = (link_node*)get_morton_lowest(tree);
     while (n != NULL)
     {
-        morton_PtoZ(n->x, n->y, &n_mcode);
+        morton::PtoZ(n->x, n->y, n_mcode);
         qsi_append(seq, n_mcode);
         n = n->n;
     }
@@ -954,7 +954,7 @@ qsiseq_from_c_vec(std::vector<std::tuple<uint64_t, uint64_t>>& v,
      *                (00)^(64-n)/2 xx (..)^(n-2)/2
      * where xx = 01, 10, or 11, => d = n/2.
      */
-    morton_PtoZ(std::get<0>(v.back()), std::get<1>(v.back()), &max);
+    morton::PtoZ(std::get<0>(v.back()), std::get<1>(v.back()), max);
     i = 0;
     while (max != 0)
     {
@@ -972,7 +972,7 @@ qsiseq_from_c_vec(std::vector<std::tuple<uint64_t, uint64_t>>& v,
 
     for (vi = v.begin(); vi != v.end(); vi++)
     {
-        morton_PtoZ(std::get<0>(*vi), std::get<1>(*vi), &m);
+        morton::PtoZ(std::get<0>(*vi), std::get<1>(*vi), m);
         qsi_append(seq, m);
     }
     qsi_update_psums(seq);
@@ -1003,14 +1003,14 @@ lee_yang_qsi(qsiseq* seq, long unsigned int lox, long unsigned int loy,
         return 0L;
     }
 
-    morton_PtoZ(lox, loy, &le_mcode);
-    morton_PtoZ(hix, hiy, &ge_mcode);
+    morton::PtoZ(lox, loy, le_mcode);
+    morton::PtoZ(hix, hiy, ge_mcode);
 
     n = qsi_get(seq, &seq_state, le_mcode);
 
     while ((n != ULONG_MAX) && (n <= ge_mcode))
     {
-        morton_ZtoP(n, &w_x, &w_y);
+        morton::ZtoP(n, w_x, w_y);
         if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
         {
             /* We're in an internal run. */
@@ -1070,7 +1070,7 @@ fast_get_e_from_dp_rec(long unsigned int dp_mcode,
             *outx = lox;
             *outy = loy;
         }
-        morton_PtoZ(lox, loy, &r);
+        morton::PtoZ(lox, loy, r);
         return r;
     }
 
@@ -1103,11 +1103,11 @@ fast_get_e_from_dp_rec(long unsigned int dp_mcode,
     mid = (lo+hi)/2;
     if (horiz)
     {
-        morton_PtoZ(mid, unmv, &mid_mcode);
+        morton::PtoZ(mid, unmv, mid_mcode);
     }
     else
     {
-        morton_PtoZ(unmv, mid, &mid_mcode);
+        morton::PtoZ(unmv, mid, mid_mcode);
     }
 
     if (dp_mcode < mid_mcode)
@@ -1141,7 +1141,7 @@ fast_get_fp_from_dp_e(
     unsigned int dp_digit, e_digit, i;
     uint64_t e_x, e_y;
 
-    morton_ZtoP(e_mcode, &e_y, &e_x);
+    morton::ZtoP(e_mcode, e_y, e_x);
     for (i = 0; i < tree_depth; i++)
     {
         dp_digit = (dp_mcode >> ((tree_depth-i-1)*2) & 3);
@@ -1464,16 +1464,16 @@ fast_lee_yang_qsi(qsiseq* seq, unsigned int lox, unsigned int loy,
         return 0L;
     }
 
-    morton_PtoZ(lox, loy, &sw_mcode);
-    morton_PtoZ(hix, loy, &se_mcode);
-    morton_PtoZ(lox, hiy, &nw_mcode);
-    morton_PtoZ(hix, hiy, &ne_mcode);
+    morton::PtoZ(lox, loy, sw_mcode);
+    morton::PtoZ(hix, loy, se_mcode);
+    morton::PtoZ(lox, hiy, nw_mcode);
+    morton::PtoZ(hix, hiy, ne_mcode);
 
     n = qsi_get(seq, &seq_state, sw_mcode);
 
     while ((n != ULONG_MAX) && (n <= ne_mcode))
     {
-        morton_ZtoP(n, &w_x, &w_y);
+        morton::ZtoP(n, w_x, w_y);
         if ((lox <= w_x) && (w_x <= hix) && (loy <= w_y) && (w_y <= hiy))
         {
             /* We're in an internal run. */
