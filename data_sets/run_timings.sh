@@ -13,11 +13,12 @@ for i in `ls -1 $PREFIX.queries_*`; do
     n=`wc -l $i | cut -f1 -d' '`
     echo "Running $i: $n queries"
     SUFFIX=${i#$PREFIX.queries_}
-    echo "$SUFFIX, |Q|: $n" >> $PREFIX.res_$DATESTRING
+    #echo "$SUFFIX, |Q|: $n" >> $PREFIX.res_$DATESTRING
     for j in ${@#$1}; do
         echo "On $j"
+        echo -n "$SUFFIX $n " >> $PREFIX.res_$DATESTRING
         ./../qtree_testbench -qtx "$PREFIX" $j < $i >> $PREFIX.res_$DATESTRING
     done
-    echo "----" >> $PREFIX.res_$DATESTRING
+    #echo "----" >> $PREFIX.res_$DATESTRING
     true
 done
