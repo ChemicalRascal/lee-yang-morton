@@ -30,3 +30,4 @@ BEGIN { sum = 0 }
 	prev = curr
 	prev_prefix = curr_prefix
 }
+END { printf "\n" }
