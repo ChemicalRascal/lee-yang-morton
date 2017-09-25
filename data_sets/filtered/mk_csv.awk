@@ -18,12 +18,11 @@ BEGIN { sum = 0 }
 	}
 	if (prev != curr)
 	{
-		printf "%09.6f", (sum/8)
+		printf "%09.6f,", (sum/8)
 		if (prev_prefix != curr_prefix)
 		{
-			printf "\n%s,%s", curr_prefix, $3
+			printf "\n%s,%s,", curr_prefix, $3
 		}
-		printf ","
 		sum = 0
 	}
 	sum += $4
