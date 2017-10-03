@@ -24,19 +24,20 @@ k2_range : public sdsl::k2_tree<k, t_bv, t_rank>
     public:
         using sdsl::k2_tree<k, t_bv, t_rank>::k2_tree;
         size_type range_count(size_type p1, size_type p2, size_type q1,
-                size_type q2);
+                size_type q2) const;
     //private:
-        void range_count(size_type n, size_type p1, size_type p2,
-                size_type q1, size_type q2,// size_type dp, size_type dq,
-                sign_type z, size_type* count);
+        void range_count(const size_type n, const size_type p1,
+                const size_type p2, const size_type q1, const size_type q2,
+                // size_type dp, size_type dq,
+                const sign_type z, size_type* count) const;
 };
 
 /* size_type size: As was passed to the edges-based constructor.
  */
 template<uint8_t k, typename t_bv, typename t_rank>
 size_type
-k2_range<k, t_bv, t_rank>::range_count(size_type p1, size_type p2,
-        size_type q1, size_type q2)
+k2_range<k, t_bv, t_rank>::range_count(const size_type p1, const size_type p2,
+        const size_type q1, const size_type q2) const
 {
     size_type c;
     size_type n, p1a, p2a, q1a, q2a;
@@ -79,9 +80,10 @@ k2_range<k, t_bv, t_rank>::range_count(size_type p1, size_type p2,
  */
 template<uint8_t k, typename t_bv, typename t_rank>
 void
-k2_range<k, t_bv, t_rank>::range_count(size_type n, size_type p1,
-        size_type p2, size_type q1, size_type q2,// size_type dp, size_type dq,
-        sign_type z, size_type* count)
+k2_range<k, t_bv, t_rank>::range_count(const size_type n, const size_type p1,
+        const size_type p2, const size_type q1, const size_type q2,
+        // size_type dp, size_type dq,
+        const sign_type z, size_type* count) const
 {
     size_type y, i, j, p1a, p2a, q1a, q2a;
     if (z >= (sign_type)this->k_t.size())

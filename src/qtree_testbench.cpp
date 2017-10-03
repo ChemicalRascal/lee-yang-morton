@@ -550,27 +550,15 @@ main(int argc, char** argv, char** envp)
             exit_fprintf_usage(argv);
         }
 
-        // Code duplication is fun
-        if (validation_mode != 1)
+        readcsv_get_uint(fopen((prefix + ".maxatt").c_str(), "r"), &maxatt);
+        auto mode_i = mode_l.cbegin();
+        for (; mode_i != mode_l.cend(); mode_i++)
         {
-            // Work out which mode we should be in -- Multiple can be specified,
-            // but only the final one matters.
-            if (mode_l.empty())
-            {
-                exit_fprintf_usage(argv);
-            }
-            mode_flag = mode_l.back();
-            if (std::get<0>(mode_flag) == null_mode)
-            {
-                exit_fprintf_usage(argv);
-            }
-
-            readcsv_get_uint(fopen((prefix + ".maxatt").c_str(), "r"), &maxatt);
-            switch (std::get<0>(mode_flag))
+            switch (std::get<0>(*mode_i))
             {
                 case qsi_mode:
                     tree_file = std::fstream((prefix + ".qsi_" +
-                                std::to_string(std::get<1>(mode_l.front()))
+                                std::to_string(std::get<1>(*mode_i))
                                 ).c_str(),
                             std::fstream::binary | std::fstream::in);
                     qsiseq = read_qsiseq(tree_file);
@@ -598,6 +586,22 @@ main(int argc, char** argv, char** envp)
                 default:
                     exit_fprintf_usage(argv);
                     break;
+            }
+        }
+
+        // Code duplication is fun
+        if (validation_mode != 1)
+        {
+            // Work out which mode we should be in -- Multiple can be specified,
+            // but only the final one matters.
+            if (mode_l.empty())
+            {
+                exit_fprintf_usage(argv);
+            }
+            mode_flag = mode_l.back();
+            if (std::get<0>(mode_flag) == null_mode)
+            {
+                exit_fprintf_usage(argv);
             }
 
             if (print_mode == 1)
@@ -745,22 +749,68 @@ main(int argc, char** argv, char** envp)
                         );
             }
 
-            auto r_i = r.cbegin();
-            for (; r_i != r.cend(); r_i++)
-            {
-                auto rr_i = (*r_i).cbegin();
-                for (; rr_i != (*r_i).cend(); rr_i++)
-                {
-                    printf("%lu, ", *rr_i);
-                }
-                printf("\n");
-            }
-
             // Validation mode can handle multiple modes
             // TODO: Make validation mode actually handle modes at all
             auto mode_i = mode_l.cbegin();
             for (; mode_i != mode_l.cend(); mode_i++)
             {
+                auto r_i = r.begin();
+                for (; r_i != r.end(); r_i++)
+                {
+                    switch (std::get<0>(*mode_i))
+                    {
+                        case qsi_mode:
+                            (*r_i).push_back(
+                                    fast_lee_yang_qsi(qsiseq,
+                                        (*r_i)[0], (*r_i)[1],
+                                        (*r_i)[2], (*r_i)[3]));
+                            break;
+                        case ofb_mode:
+                            (*r_i).push_back(
+                                    ofb.range_count(
+                                        (*r_i)[0], (*r_i)[2],
+                                        (*r_i)[1], (*r_i)[3]));
+                            break;
+                        case sdsl_k2_mode:
+                            (*r_i).push_back(
+                                    k2.range_count(
+                                        (*r_i)[0], (*r_i)[2],
+                                        (*r_i)[1], (*r_i)[3]));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            vec_size_type ls_res, ineq_flag, master_ineq_flag = 0;
+            auto r_i = r.cbegin();
+            for (; r_i != r.cend(); r_i++)
+            {
+                ineq_flag = 0;
+                ls_res = (*r_i)[4];
+                // First five elements are lox, hix, loy, hiy, ls_res
+                auto rr_i = r_i->cbegin() + 5;
+                for (; rr_i != r_i->cend(); rr_i++)
+                {
+                    if (*rr_i != ls_res) { ineq_flag=1; master_ineq_flag=1; }
+                }
+                if (ineq_flag == 1)
+                {
+                    rr_i = r_i->cbegin();
+                    for (; rr_i != r_i->cend(); rr_i++)
+                    {
+                        printf("%lu", *rr_i);
+                        if (rr_i != r_i->cend() - 1) { printf(", "); }
+                    }
+                    printf("\n");
+                }
+            }
+
+            if (master_ineq_flag == 1)
+            {
+                printf("Errors found.\n");
+                exit(EXIT_FAILURE);
             }
         }
     }
