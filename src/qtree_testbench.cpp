@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <list>
 #include <tuple>
+#include <errno.h>
 
 #include "bitseq.hpp"
 #include "qsi.hpp"
@@ -144,6 +145,29 @@ read_range_queries_to_vector(FILE* fp)
     return v;
 }
 
+vec_size_type
+range_search_linear_scan(
+        const std::vector<std::tuple<vec_size_type, vec_size_type>>& coords,
+        const std::tuple<vec_size_type, vec_size_type, vec_size_type,
+        vec_size_type, vec_size_type>& q
+        )
+{
+    vec_size_type count = 0;
+    auto c_i = coords.cbegin();
+    for (; c_i != coords.cend(); c_i++)
+    {
+        if (
+                std::get<0>(*c_i) >= std::get<0>(q) &&
+                std::get<0>(*c_i) <= std::get<2>(q) &&
+                std::get<1>(*c_i) >= std::get<1>(q) &&
+                std::get<1>(*c_i) <= std::get<3>(q)
+           )
+        {
+            count += 1;
+        }
+    }
+    return count;
+}
 
 //std::vector<std::tuple<vec_size_type, vec_size_type>>
 void
@@ -300,7 +324,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tc:defg")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tvc:defg")) != -1)
     {
         switch (opt)
         {
@@ -357,6 +381,11 @@ main(int argc, char** argv, char** envp)
         prefix = std::string(global_prefix_arg);
         //FIXME: Get rid of this when moving csv/qsi I/O stuff to iostreams
         input_fp = fopen((prefix + ".csv").c_str(), "r");
+        if (input_fp == NULL)
+        {
+            printf("Error: %s\n", strerror(errno));
+            exit_fprintf_usage(argv);
+        }
     }
 
     if (build_mode == 1)
@@ -690,7 +719,49 @@ main(int argc, char** argv, char** envp)
         } // if (validation_mode != 1)
         else if (validation_mode == 1)
         {
-            // TODO: Validation mode
+            // Results vector
+            std::vector<std::vector<vec_size_type>> r =
+                std::vector<std::vector<vec_size_type>>();
+            // Datapoints vector
+            std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
+            std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
+                read_csv_to_vector(input_fp, bounds);
+            rewind(input_fp);
+            // Query vector
+            std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
+                vec_size_type, vec_size_type>> query_vec =
+                    read_range_queries_to_vector(stdin);
+
+            auto q_i = query_vec.cbegin();
+            for (; q_i != query_vec.cend(); q_i++)
+            {
+                r.push_back(std::vector<vec_size_type>());
+                (*(r.end()-1)).push_back(std::get<0>(*q_i));
+                (*(r.end()-1)).push_back(std::get<1>(*q_i));
+                (*(r.end()-1)).push_back(std::get<2>(*q_i));
+                (*(r.end()-1)).push_back(std::get<3>(*q_i));
+                (*(r.end()-1)).push_back(
+                        range_search_linear_scan(coord_vec, *q_i)
+                        );
+            }
+
+            auto r_i = r.cbegin();
+            for (; r_i != r.cend(); r_i++)
+            {
+                auto rr_i = (*r_i).cbegin();
+                for (; rr_i != (*r_i).cend(); rr_i++)
+                {
+                    printf("%lu, ", *rr_i);
+                }
+                printf("\n");
+            }
+
+            // Validation mode can handle multiple modes
+            // TODO: Make validation mode actually handle modes at all
+            auto mode_i = mode_l.cbegin();
+            for (; mode_i != mode_l.cend(); mode_i++)
+            {
+            }
         }
     }
 
