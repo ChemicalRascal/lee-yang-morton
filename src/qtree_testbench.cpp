@@ -573,7 +573,20 @@ main(int argc, char** argv, char** envp)
             exit_fprintf_usage(argv);
         }
 
+        // Bounds tuple
+        // TODO: Move bounds from unit to luint
+        std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
+        readcsv_get_uint(fopen((prefix + ".min_x").c_str(), "r"), &maxatt);
+        std::get<0>(bounds) = maxatt;
+        readcsv_get_uint(fopen((prefix + ".max_x").c_str(), "r"), &maxatt);
+        std::get<1>(bounds) = maxatt;
+        readcsv_get_uint(fopen((prefix + ".min_y").c_str(), "r"), &maxatt);
+        std::get<2>(bounds) = maxatt;
+        readcsv_get_uint(fopen((prefix + ".max_y").c_str(), "r"), &maxatt);
+        std::get<3>(bounds) = maxatt;
+
         readcsv_get_uint(fopen((prefix + ".maxatt").c_str(), "r"), &maxatt);
+
         auto mode_i = mode_l.cbegin();
         for (; mode_i != mode_l.cend(); mode_i++)
         {
@@ -611,8 +624,6 @@ main(int argc, char** argv, char** envp)
                     break;
             }
         }
-
-        printf("read done\n");
 
         // Code duplication is fun
         if (validation_mode != 1)
@@ -654,6 +665,8 @@ main(int argc, char** argv, char** envp)
                 }
             }
 
+            //Read min/max attrs, build bounds tuple
+            std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
             std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
                 vec_size_type, vec_size_type>> query_vec =
                     read_range_queries_to_vector(stdin);
@@ -756,7 +769,6 @@ main(int argc, char** argv, char** envp)
             // Datapoints vector
             printf("reading csv to vector\n");
             rewind(input_fp);
-            std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
             std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
                 read_csv_to_vector(input_fp, bounds);
             rewind(input_fp);
@@ -765,6 +777,7 @@ main(int argc, char** argv, char** envp)
             std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
                 vec_size_type, vec_size_type>> query_vec =
                     read_range_queries_to_vector(stdin);
+            clamp_query_vector(query_vec, bounds);
 
             //TODO: With bounds tuple, clamp queries
             clamp_query_vector(query_vec, bounds);
