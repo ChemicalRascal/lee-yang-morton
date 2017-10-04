@@ -147,7 +147,7 @@ read_range_queries_to_vector(FILE* fp)
 
 void
 clamp_query_vector(std::vector<std::tuple<vec_size_type, vec_size_type,
-        vec_size_type, vec_size_type, vec_size_type>> qv,
+        vec_size_type, vec_size_type, vec_size_type>>& qv,
         std::tuple<unsigned, unsigned, unsigned, unsigned> bounds)
 {
     auto q_i = qv.begin();
