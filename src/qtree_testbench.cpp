@@ -589,6 +589,8 @@ main(int argc, char** argv, char** envp)
             }
         }
 
+        printf("read done\n");
+
         // Code duplication is fun
         if (validation_mode != 1)
         {
@@ -723,19 +725,24 @@ main(int argc, char** argv, char** envp)
         } // if (validation_mode != 1)
         else if (validation_mode == 1)
         {
+            printf("In val_mode\n");
             // Results vector
             std::vector<std::vector<vec_size_type>> r =
                 std::vector<std::vector<vec_size_type>>();
             // Datapoints vector
+            printf("reading csv to vector\n");
+            rewind(input_fp);
             std::tuple<unsigned, unsigned, unsigned, unsigned> bounds;
             std::vector<std::tuple<vec_size_type, vec_size_type>> coord_vec =
                 read_csv_to_vector(input_fp, bounds);
             rewind(input_fp);
             // Query vector
+            printf("reading range queries to vector\n");
             std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
                 vec_size_type, vec_size_type>> query_vec =
                     read_range_queries_to_vector(stdin);
 
+            printf("linear scan start...\n");
             auto q_i = query_vec.cbegin();
             for (; q_i != query_vec.cend(); q_i++)
             {
@@ -748,6 +755,7 @@ main(int argc, char** argv, char** envp)
                         range_search_linear_scan(coord_vec, *q_i)
                         );
             }
+            printf(" done!\n");
 
             // Validation mode can handle multiple modes
             // TODO: Make validation mode actually handle modes at all
@@ -793,7 +801,7 @@ main(int argc, char** argv, char** envp)
                 auto rr_i = r_i->cbegin() + 5;
                 for (; rr_i != r_i->cend(); rr_i++)
                 {
-                    if (*rr_i != ls_res) { ineq_flag=1; master_ineq_flag=1; }
+                    if (*rr_i != ls_res) { ineq_flag=1; master_ineq_flag++; }
                 }
                 if (ineq_flag == 1)
                 {
@@ -807,11 +815,12 @@ main(int argc, char** argv, char** envp)
                 }
             }
 
-            if (master_ineq_flag == 1)
+            if (master_ineq_flag != 0)
             {
-                printf("Errors found.\n");
+                printf("Errors found. n: %lu\n", master_ineq_flag);
                 exit(EXIT_FAILURE);
             }
+            printf("Looks like everything was fine?\n");
         }
     }
 
