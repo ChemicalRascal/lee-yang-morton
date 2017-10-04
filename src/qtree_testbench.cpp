@@ -145,6 +145,29 @@ read_range_queries_to_vector(FILE* fp)
     return v;
 }
 
+void
+clamp_query_vector(std::vector<std::tuple<vec_size_type, vec_size_type,
+        vec_size_type, vec_size_type, vec_size_type>> qv,
+        std::tuple<unsigned, unsigned, unsigned, unsigned> bounds)
+{
+    auto q_i = qv.begin();
+    for (; q_i != qv.end(); q_i++)
+    {
+        //lox
+        if (std::get<0>(*q_i) < std::get<0>(bounds))
+        { std::get<0>(*q_i) = std::get<1>(bounds); }
+        //loy
+        if (std::get<1>(*q_i) < std::get<3>(bounds))
+        { std::get<1>(*q_i) = std::get<3>(bounds); }
+        //hix
+        if (std::get<2>(*q_i) > std::get<1>(bounds) - 1)
+        { std::get<2>(*q_i) = std::get<1>(bounds) - 1; }
+        //hiy
+        if (std::get<3>(*q_i) > std::get<3>(bounds) - 1)
+        { std::get<3>(*q_i) = std::get<3>(bounds) - 1; }
+    }
+}
+
 vec_size_type
 range_search_linear_scan(
         const std::vector<std::tuple<vec_size_type, vec_size_type>>& coords,
@@ -717,8 +740,9 @@ main(int argc, char** argv, char** envp)
             {
                 for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
                 {
-                    printf("%lu,%lu %lu,%lu: %lu\n", std::get<0>(*qvi),
-                            std::get<1>(*qvi), std::get<2>(*qvi), std::get<3>(*qvi),
+                    printf("%lu,%lu %lu,%lu: %lu\n",
+                            std::get<0>(*qvi), std::get<1>(*qvi),
+                            std::get<2>(*qvi), std::get<3>(*qvi),
                             std::get<4>(*qvi));
                 }
             }
@@ -742,6 +766,9 @@ main(int argc, char** argv, char** envp)
                 vec_size_type, vec_size_type>> query_vec =
                     read_range_queries_to_vector(stdin);
 
+            //TODO: With bounds tuple, clamp queries
+            clamp_query_vector(query_vec, bounds);
+
             printf("linear scan start...\n");
             auto q_i = query_vec.cbegin();
             for (; q_i != query_vec.cend(); q_i++)
@@ -758,7 +785,6 @@ main(int argc, char** argv, char** envp)
             printf(" done!\n");
 
             // Validation mode can handle multiple modes
-            // TODO: Make validation mode actually handle modes at all
             auto mode_i = mode_l.cbegin();
             for (; mode_i != mode_l.cend(); mode_i++)
             {
