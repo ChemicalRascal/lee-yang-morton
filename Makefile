@@ -6,7 +6,7 @@ RMFLAGS	= -f
 MKDIR	= mkdir
 MDFLAGS	= -p
 
-AVX2FLAG= -mavx2
+AVX2FLAG= -mavx2 -mbmi2
 
 PROG	= qtree_testbench
 PROGOBJ = bin/qtree_testbench.obj
