@@ -157,8 +157,8 @@ clamp_query_vector(std::vector<std::tuple<vec_size_type, vec_size_type,
         if (std::get<0>(*q_i) < std::get<0>(bounds))
         { std::get<0>(*q_i) = std::get<1>(bounds); }
         //loy
-        if (std::get<1>(*q_i) < std::get<3>(bounds))
-        { std::get<1>(*q_i) = std::get<3>(bounds); }
+        if (std::get<1>(*q_i) < std::get<2>(bounds))
+        { std::get<1>(*q_i) = std::get<2>(bounds); }
         //hix
         if (std::get<2>(*q_i) > std::get<1>(bounds) - 1)
         { std::get<2>(*q_i) = std::get<1>(bounds) - 1; }
@@ -801,6 +801,7 @@ main(int argc, char** argv, char** envp)
             auto mode_i = mode_l.cbegin();
             for (; mode_i != mode_l.cend(); mode_i++)
             {
+                gettimeofday(&t_00, NULL);
                 auto r_i = r.begin();
                 for (; r_i != r.end(); r_i++)
                 {
@@ -828,6 +829,15 @@ main(int argc, char** argv, char** envp)
                             break;
                     }
                 }
+                gettimeofday(&t_01, NULL);
+                batch_sec = t_01.tv_sec - t_00.tv_sec;
+                batch_usec = t_01.tv_usec - t_00.tv_usec;
+                if (batch_usec < 0)
+                {
+                    batch_usec += 1000000;
+                    batch_sec -= 1;
+                }
+                printf("%04ld.%06ld sec.usec\n", batch_sec, batch_usec);
             }
 
             vec_size_type ls_res, ineq_flag, master_ineq_flag = 0;
@@ -845,6 +855,7 @@ main(int argc, char** argv, char** envp)
                 if (ineq_flag == 1)
                 {
                     rr_i = r_i->cbegin();
+                    printf("%lu: ", r_i->size());
                     for (; rr_i != r_i->cend(); rr_i++)
                     {
                         printf("%lu", *rr_i);

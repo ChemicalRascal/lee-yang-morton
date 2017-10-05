@@ -9,6 +9,7 @@
 PREFIX=$1
 DATESTRING=`date +%Y.%m.%d.%T`
 
+S_T=`date -u +"%s"`
 for i in `ls -1 $PREFIX.queries_*`; do
     n=`wc -l $i | cut -f1 -d' '`
     echo "Running $i: $n queries"
@@ -21,3 +22,6 @@ for i in `ls -1 $PREFIX.queries_*`; do
     echo "----" >> $PREFIX.res_$DATESTRING
     true
 done
+E_T=`date -u +"%s"`
+D_T=$((E_T-S_T))
+echo "$((D_T/60))m, $((D_T%60))s" >> $PREFIX.res_$DATESTRING
