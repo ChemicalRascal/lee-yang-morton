@@ -47,10 +47,11 @@ main(int argc, char** argv, char** envp)
     FILE* output_fp;
     char* output_path;
     char* prefix_arg;
-    unsigned int i, num, lox, loy, hix, hiy, x_dis_max, y_dis_max, x, y;
+    unsigned int i, num, x_dis_max, y_dis_max, x, y;
     double actskew, minskew, maxskew, ptarg;
     long unsigned size, targsize;
 
+    long unsigned lox, loy, hix, hiy;
     long unsigned actwidth, actheight, actsize;
 
     std::string prefix;
@@ -126,10 +127,10 @@ main(int argc, char** argv, char** envp)
         output_fp = fopen(output_path, "w");
     }
 
-    readcsv_get_uint(fopen((prefix + ".min_x").c_str(), "r"), &lox);
-    readcsv_get_uint(fopen((prefix + ".max_x").c_str(), "r"), &hix);
-    readcsv_get_uint(fopen((prefix + ".min_y").c_str(), "r"), &loy);
-    readcsv_get_uint(fopen((prefix + ".max_y").c_str(), "r"), &hiy);
+    readcsv_get_luint(fopen((prefix + ".min_x").c_str(), "r"), &lox);
+    readcsv_get_luint(fopen((prefix + ".max_x").c_str(), "r"), &hix);
+    readcsv_get_luint(fopen((prefix + ".min_y").c_str(), "r"), &loy);
+    readcsv_get_luint(fopen((prefix + ".max_y").c_str(), "r"), &hiy);
     hix -= 1;
     hiy -= 1;
     size = (hix - lox) * (hiy - loy);
@@ -164,17 +165,11 @@ main(int argc, char** argv, char** envp)
         x = x_dis(rgen);
         y = y_dis(rgen);
 
-        /*
-        fprintf(output_fp, "x: %u-%u, y: %u-%u, skew: %lf-%lf, ptarg: %lf\n",
-                lox, hix, loy, hiy, minskew, maxskew, ptarg);
-        fprintf(output_fp, "size: %lu, targsize: %lu\n", size, targsize);
-        fprintf(output_fp, "w: %6lu, h: %6lu, actsize: %6lu, actskew: %lf\n",
-                actwidth, actheight, actsize, actskew);
-        fprintf(output_fp, "x: %u, y: %u\n", x, y);
-        */
-        fprintf(output_fp, "%u %u %lu %lu", x, y, x+actwidth,
-                y+actheight);
+        fprintf(output_fp, "%u %u %lu %lu", x, y,
+                (x + actwidth  < hix)?(x + actwidth):(hix),
+                (y + actheight < hiy)?(y + actheight):(hiy));
         //fprintf(output_fp, " %lf", actsize / (double)size);
+        //fprintf(output_fp, " %lu, %lu", actwidth, actheight);
         fprintf(output_fp, "\n");
     }
 

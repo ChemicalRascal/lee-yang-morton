@@ -16,3 +16,4 @@ rm $PREFIX.min_y
 rm $PREFIX.ofb
 rm $PREFIX.qsi_*
 rm $PREFIX.res_*
+rm $PREFIX.queries_*
