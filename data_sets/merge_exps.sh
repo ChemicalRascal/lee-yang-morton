@@ -21,6 +21,6 @@ for file in $1/*res_*; do
         for a in $@; do
             awk "/$l/{f=1;next} /$e/{f=0} f" $a/${file_base}_* >> $out
         done
-        echo "\n" >> $out
+        echo $e >> $out
     done
 done
