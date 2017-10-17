@@ -25,7 +25,7 @@ for file in $1/*res; do
         #for l in `grep -h "$prefix" $file`; do
         #    echo $l | awk '{ printf ",%s", $2 }' >> $file.csv
         #done
-        awk "BEGIN {s=0} /$prefix/{s+=\$2;next} /0.01_1/{next} /_1, /{printf \",%f\",s;s=0}" $file >> $file.csv
+        awk "BEGIN {s=0} /$prefix/{s+=\$2;next} /0.01_1/{next} /_1, /{printf \",%f\",s;s=0} END {printf \",%f\",s}" $file >> $file.csv
         echo "," >> $file.csv
     done
 done
