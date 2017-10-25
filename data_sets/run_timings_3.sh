@@ -7,7 +7,7 @@
 #                 $2+: List of "modes" ("-c n" as "-cn")
 
 PREFIX=$1
-DATESTRING=`date +%Y.%m.%d.%T`
+DATESTRING=`date +%Y.%m.%d.%H_%M_%S`
 
 S_T=`date -u +"%s"`
 for i in `ls -1 $PREFIX.queries_*_1`; do
