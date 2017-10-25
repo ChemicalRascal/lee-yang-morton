@@ -10,7 +10,7 @@ AVX2FLAG= -mavx2 -mbmi2
 
 PROG	= qtree_testbench
 PROG1_3	= qtree_k_is_3
-1_3FLAG	= -DK2_K=4
+1_3FLAG	= -DK2_K=3
 PROG1_4	= qtree_k_is_4
 1_4FLAG	= -DK2_K=4
 PROGOBJ = bin/qtree_testbench.obj
