@@ -46,6 +46,10 @@
 //       really nessecary though, consider removing entirely)
 #define HARDCODED_N_QTREE_DEPTH 6
 
+#ifndef K2_K
+#define K2_K 2
+#endif /* K2_K */
+
 int     global_quiet_mode;
 char*   global_prefix_arg;
 
@@ -284,7 +288,7 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "  -c Q         QSI w/ psum quantum of Q:   .qsi_$Q\n");
     fprintf(stdout, "  -d           Binary Quad Tree:           .bqt\n");
     fprintf(stdout, "  -e           Offset Quad Tree:           .oqt\n");
-    fprintf(stdout, "  -f           SDSL k2 Tree:               .k2\n");
+    fprintf(stdout, "  -f           SDSL k2 Tree:               .k2_$K\n");
     fprintf(stdout, "  -g           Offset Finkel-Bentley       .ofb\n");
     exit(EXIT_SUCCESS);
 }
@@ -319,7 +323,7 @@ main(int argc, char** argv, char** envp)
     OffsetQTree<unsigned int> oqt;
     OffsetFBTree<> ofb;
 
-    const unsigned int k = 2;
+    const unsigned int k = K2_K;
     k2_range<k> k2;
 
     if (argc == 1)
@@ -528,7 +532,8 @@ main(int argc, char** argv, char** envp)
                     // once
                     //k = std::get<1>(mode_l.front());
                     k2 = k2_range<k>(coord_vec, maxatt);
-                    tree_file = std::fstream((prefix + ".k2").c_str(),
+                    tree_file = std::fstream((prefix + ".k2_"
+                                + std::to_string(k)).c_str(),
                             std::fstream::binary | std::fstream::out |
                             std::fstream::trunc);
                     k2.serialize(tree_file);
@@ -610,7 +615,8 @@ main(int argc, char** argv, char** envp)
                     oqt.load(tree_file);
                     break;
                 case sdsl_k2_mode:
-                    tree_file = std::fstream((prefix + ".k2").c_str(),
+                    tree_file = std::fstream((prefix + ".k2_"
+                                + std::to_string(k)).c_str(),
                             std::fstream::binary | std::fstream::in);
                     k2.load(tree_file);
                     break;
@@ -747,7 +753,7 @@ main(int argc, char** argv, char** envp)
                         printf("qsi_%04d ", std::get<1>(mode_flag));
                         break;
                     case sdsl_k2_mode:
-                        printf("sdsl_k2  ");
+                        printf("k2_%04d  ", k);
                         break;
                     case ofb_mode:
                         printf("ofb      ");

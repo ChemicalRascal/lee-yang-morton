@@ -15,6 +15,8 @@
 
 # Executables
 qtree_testbench
+qtree_k_is_3
+qtree_k_is_4
 gen_queries
 gen_queries_percent
 chazelle_reduce
