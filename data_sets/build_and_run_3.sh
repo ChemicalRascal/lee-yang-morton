@@ -7,4 +7,5 @@
 #                 $2+: List of "modes" ("-c n" as "-cn")
 
 ./prep_Binaries_3.sh $@ &&
-./run_timings_3.sh $@
+./prep_Binaries_4.sh $@ &&
+./run_timings_3_4.sh $@
