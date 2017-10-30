@@ -10,7 +10,7 @@ PREFIX=$1
 DATESTRING=`date +%Y.%m.%d.%H_%M_%S`
 
 S_T=`date -u +"%s"`
-for i in `ls -1 $PREFIX.queries_*`; do
+for i in `ls -1 $PREFIX.queries_*_[12]`; do
     n=`wc -l $i | cut -f1 -d' '`
     echo "Running $i: $n queries"
     SUFFIX=${i#$PREFIX.queries_}

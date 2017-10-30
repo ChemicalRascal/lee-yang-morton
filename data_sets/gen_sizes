@@ -1,0 +1,1 @@
+ls -la | grep -E '(k2)|(qsi)|(ofb)' | awk '{print , }' | sed -e 's/ /, /' -e 's/qsi_\([0-9]\{2\}\)$/qsi_0\1/' -e 's/qsi_\([0-9]\{3\}\)$/qsi_0\1/' > sizes
