@@ -57,6 +57,7 @@ enum opmode_t
     oqt_mode,       // -e
     sdsl_k2_mode,   // -f
     ofb_mode,       // -g
+    iter_k2_mode,   // -h
 };
 
 /* Returns EOF if things went badly.
@@ -286,6 +287,7 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "  -e           Offset Quad Tree:           .oqt\n");
     fprintf(stdout, "  -f K, 1<K<7  SDSL k2 Tree w/ k=K:        .k2_$K\n");
     fprintf(stdout, "  -g           Offset Finkel-Bentley       .ofb\n");
+    fprintf(stdout, "  -h K, 1<K<7  SDSL k2 Tree w/ k=K:        .k2_$K\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -354,7 +356,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tvc:def:g")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tvc:def:gh:")) != -1)
     {
         switch (opt)
         {
@@ -395,6 +397,10 @@ main(int argc, char** argv, char** envp)
             case 'g':
                 mode_l.push_back(std::tuple<opmode_t, unsigned int>
                         (ofb_mode, 0));
+                break;
+            case 'h':
+                mode_l.push_back(std::tuple<opmode_t, unsigned int>
+                        (iter_k2_mode, atoi(optarg)));
                 break;
             default:
                 exit_fprintf_usage(argv);
@@ -565,6 +571,9 @@ main(int argc, char** argv, char** envp)
                     tree_file.flush();
                     tree_file.close();
                     break;
+                case iter_k2_mode:
+                    fprintf(stderr, "Building iter_k2 is not supported\n");
+                    break;
                 case ofb_mode:
                     ofb = OffsetFBTree<>(coord_vec);
                     tree_file = std::fstream((prefix + ".ofb").c_str(),
@@ -593,7 +602,7 @@ main(int argc, char** argv, char** envp)
     if (build_mode == 0)
     {
         long int batch_sec, batch_usec;
-        struct timeval t_00, t_01;
+        struct timeval t_00, t_01, tsub, ts_00, ts_01;
 
         // null_mode used here to indicate some sort of error.
         std::tuple<opmode_t, unsigned int> mode_flag =
@@ -641,6 +650,7 @@ main(int argc, char** argv, char** envp)
                     oqt.load(tree_file);
                     break;
                 case sdsl_k2_mode:
+                case iter_k2_mode:
                     k = std::get<1>(*mode_i);
                     tree_file = std::fstream((prefix + ".k2_"
                                 + std::to_string(k)).c_str(),
@@ -708,6 +718,7 @@ main(int argc, char** argv, char** envp)
                         oqt.pprint();
                         break;
                     case sdsl_k2_mode:
+                    case iter_k2_mode:
                         printf("k2 pprint() not implemented.\n");
                         break;
                     case ofb_mode:
@@ -726,6 +737,8 @@ main(int argc, char** argv, char** envp)
                     read_range_queries_to_vector(stdin);
             std::vector<std::tuple<vec_size_type, vec_size_type, vec_size_type,
                 vec_size_type, vec_size_type>>::iterator qvi;
+
+            std::vector<std::pair<long unsigned int, long unsigned int>> tempv;
 
             sum = 0;
             xorfold = 0;
@@ -828,6 +841,105 @@ main(int argc, char** argv, char** envp)
                             break;
                     }
                     break;
+                case iter_k2_mode:
+                    k = std::get<1>(mode_flag);
+                    tsub.tv_sec = 0;
+                    tsub.tv_usec = 0;
+                    switch (k)
+                    {
+                        case 2:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                gettimeofday(&ts_00, NULL);
+                                tempv = k2_2.range(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                gettimeofday(&ts_01, NULL);
+                                std::get<4>(*qvi) = tempv.size();
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+
+                                // Handrolled timing nonsense to avoid having to
+                                // time the .size() call
+                                batch_sec = ts_01.tv_sec - ts_00.tv_sec;
+                                batch_usec = ts_01.tv_usec - ts_00.tv_usec;
+                                if (batch_usec < 0)
+                                { batch_usec += 1000000; batch_sec -= 1; }
+                                tsub.tv_sec += batch_sec;
+                                tsub.tv_usec += batch_usec;
+                                if (tsub.tv_usec >= 1000000)
+                                { tsub.tv_usec -= 1000000; tsub.tv_sec += 1; }
+                            }
+                            // This is just the easiest way to incorporate the
+                            // special snowflake timing code into the existing
+                            // system. Hacks upon hacks, it's hacks all the way
+                            // down, ecetera.
+                            t_01.tv_sec = t_00.tv_sec + tsub.tv_sec;
+                            t_01.tv_usec = t_00.tv_usec + tsub.tv_usec;
+                            break;
+                        case 3:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_3.range(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi))
+                                    .size();
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 4:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_4.range(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi))
+                                    .size();
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 5:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_5.range(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi))
+                                    .size();
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 6:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_6.range(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi))
+                                    .size();
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        default:
+                            fprintf(stderr, "k: %u not supported\n", k);
+                            break;
+                    }
+                    break;
                 case ofb_mode:
                     gettimeofday(&t_00, NULL);
                     for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
@@ -864,6 +976,10 @@ main(int argc, char** argv, char** envp)
                     case sdsl_k2_mode:
                         k = std::get<1>(mode_flag);
                         printf("k2_%04d  ", k);
+                        break;
+                    case iter_k2_mode:
+                        k = std::get<1>(mode_flag);
+                        printf("i2_%04d  ", k);
                         break;
                     case ofb_mode:
                         printf("ofb      ");
