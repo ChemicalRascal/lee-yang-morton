@@ -46,10 +46,6 @@
 //       really nessecary though, consider removing entirely)
 #define HARDCODED_N_QTREE_DEPTH 6
 
-#ifndef K2_K
-#define K2_K 2
-#endif /* K2_K */
-
 int     global_quiet_mode;
 char*   global_prefix_arg;
 
@@ -288,7 +284,7 @@ exit_fprintf_help(char** argv)
     fprintf(stdout, "  -c Q         QSI w/ psum quantum of Q:   .qsi_$Q\n");
     fprintf(stdout, "  -d           Binary Quad Tree:           .bqt\n");
     fprintf(stdout, "  -e           Offset Quad Tree:           .oqt\n");
-    fprintf(stdout, "  -f           SDSL k2 Tree:               .k2_$K\n");
+    fprintf(stdout, "  -f K, 1<K<7  SDSL k2 Tree w/ k=K:        .k2_$K\n");
     fprintf(stdout, "  -g           Offset Finkel-Bentley       .ofb\n");
     exit(EXIT_SUCCESS);
 }
@@ -323,8 +319,15 @@ main(int argc, char** argv, char** envp)
     OffsetQTree<unsigned int> oqt;
     OffsetFBTree<> ofb;
 
-    const unsigned int k = K2_K;
-    k2_range<k> k2;
+    /* because k2 tree structure is a template class, this needs to exist,
+     * sadly
+     */
+    unsigned int k;
+    k2_range<2> k2_2;
+    k2_range<3> k2_3;
+    k2_range<4> k2_4;
+    k2_range<5> k2_5;
+    k2_range<6> k2_6;
 
     if (argc == 1)
     {
@@ -351,7 +354,7 @@ main(int argc, char** argv, char** envp)
     global_prefix_arg = NULL;
     input_fp = NULL;
 
-    while ((opt = getopt(argc, argv, "bqpx:tvc:defg")) != -1)
+    while ((opt = getopt(argc, argv, "bqpx:tvc:def:g")) != -1)
     {
         switch (opt)
         {
@@ -387,7 +390,7 @@ main(int argc, char** argv, char** envp)
                 break;
             case 'f':
                 mode_l.push_back(std::tuple<opmode_t, unsigned int>
-                        (sdsl_k2_mode, 0));
+                        (sdsl_k2_mode, atoi(optarg)));
                 break;
             case 'g':
                 mode_l.push_back(std::tuple<opmode_t, unsigned int>
@@ -528,15 +531,37 @@ main(int argc, char** argv, char** envp)
                     */
                     break;
                 case sdsl_k2_mode:
-                    // TODO: Work out how to handle multiple different ks at
-                    // once
-                    //k = std::get<1>(mode_l.front());
-                    k2 = k2_range<k>(coord_vec, maxatt);
+                    k = std::get<1>(mode_l.front());
                     tree_file = std::fstream((prefix + ".k2_"
                                 + std::to_string(k)).c_str(),
                             std::fstream::binary | std::fstream::out |
                             std::fstream::trunc);
-                    k2.serialize(tree_file);
+                    switch (k)
+                    {
+                        case 2:
+                            k2_2 = k2_range<2>(coord_vec, maxatt);
+                            k2_2.serialize(tree_file);
+                            break;
+                        case 3:
+                            k2_3 = k2_range<3>(coord_vec, maxatt);
+                            k2_3.serialize(tree_file);
+                            break;
+                        case 4:
+                            k2_4 = k2_range<4>(coord_vec, maxatt);
+                            k2_4.serialize(tree_file);
+                            break;
+                        case 5:
+                            k2_5 = k2_range<5>(coord_vec, maxatt);
+                            k2_5.serialize(tree_file);
+                            break;
+                        case 6:
+                            k2_6 = k2_range<6>(coord_vec, maxatt);
+                            k2_6.serialize(tree_file);
+                            break;
+                        default:
+                            fprintf(stderr, "k: %u not supported\n", k);
+                            break;
+                    }
                     tree_file.flush();
                     tree_file.close();
                     break;
@@ -555,6 +580,7 @@ main(int argc, char** argv, char** envp)
                     tree_file.close();
                     break;
                 default:
+                    fprintf(stderr, "Mode not supported");
                     break;
             }
             mode_l.pop_front();
@@ -615,10 +641,31 @@ main(int argc, char** argv, char** envp)
                     oqt.load(tree_file);
                     break;
                 case sdsl_k2_mode:
+                    k = std::get<1>(*mode_i);
                     tree_file = std::fstream((prefix + ".k2_"
                                 + std::to_string(k)).c_str(),
                             std::fstream::binary | std::fstream::in);
-                    k2.load(tree_file);
+                    switch (k)
+                    {
+                        case 2:
+                            k2_2.load(tree_file);
+                            break;
+                        case 3:
+                            k2_3.load(tree_file);
+                            break;
+                        case 4:
+                            k2_4.load(tree_file);
+                            break;
+                        case 5:
+                            k2_5.load(tree_file);
+                            break;
+                        case 6:
+                            k2_6.load(tree_file);
+                            break;
+                        default:
+                            fprintf(stderr, "k: %u not supported\n", k);
+                            break;
+                    }
                     break;
                 case ofb_mode:
                     tree_file = std::fstream((prefix + ".ofb").c_str(),
@@ -708,16 +755,78 @@ main(int argc, char** argv, char** envp)
                     gettimeofday(&t_01, NULL);
                     break;
                 case sdsl_k2_mode:
-                    gettimeofday(&t_00, NULL);
-                    for (qvi = query_vec.begin(); qvi != query_vec.end(); qvi++)
+                    k = std::get<1>(mode_flag);
+                    switch (k)
                     {
-                        std::get<4>(*qvi) = k2.range_count(
-                                std::get<0>(*qvi), std::get<2>(*qvi),
-                                std::get<1>(*qvi), std::get<3>(*qvi));
-                        sum += std::get<4>(*qvi);
-                        xorfold ^= std::get<4>(*qvi);
+                        case 2:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_2.range_count(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 3:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_3.range_count(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 4:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_4.range_count(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 5:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_5.range_count(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        case 6:
+                            gettimeofday(&t_00, NULL);
+                            for (qvi = query_vec.begin();
+                                    qvi != query_vec.end(); qvi++)
+                            {
+                                std::get<4>(*qvi) = k2_6.range_count(
+                                        std::get<0>(*qvi), std::get<2>(*qvi),
+                                        std::get<1>(*qvi), std::get<3>(*qvi));
+                                sum += std::get<4>(*qvi);
+                                xorfold ^= std::get<4>(*qvi);
+                            }
+                            gettimeofday(&t_01, NULL);
+                            break;
+                        default:
+                            fprintf(stderr, "k: %u not supported\n", k);
+                            break;
                     }
-                    gettimeofday(&t_01, NULL);
                     break;
                 case ofb_mode:
                     gettimeofday(&t_00, NULL);
@@ -753,6 +862,7 @@ main(int argc, char** argv, char** envp)
                         printf("qsi_%04d ", std::get<1>(mode_flag));
                         break;
                     case sdsl_k2_mode:
+                        k = std::get<1>(mode_flag);
                         printf("k2_%04d  ", k);
                         break;
                     case ofb_mode:
@@ -836,10 +946,39 @@ main(int argc, char** argv, char** envp)
                                         (*r_i)[1], (*r_i)[3]));
                             break;
                         case sdsl_k2_mode:
-                            (*r_i).push_back(
-                                    k2.range_count(
-                                        (*r_i)[0], (*r_i)[2],
-                                        (*r_i)[1], (*r_i)[3]));
+                            k = std::get<1>(*mode_i);
+                            switch (k)
+                            {
+                                case 2:
+                                    (*r_i).push_back(k2_2.range_count(
+                                                (*r_i)[0], (*r_i)[2],
+                                                (*r_i)[1], (*r_i)[3]));
+                                    break;
+                                case 3:
+                                    (*r_i).push_back(k2_3.range_count(
+                                                (*r_i)[0], (*r_i)[2],
+                                                (*r_i)[1], (*r_i)[3]));
+                                    break;
+                                case 4:
+                                    (*r_i).push_back(k2_4.range_count(
+                                                (*r_i)[0], (*r_i)[2],
+                                                (*r_i)[1], (*r_i)[3]));
+                                    break;
+                                case 5:
+                                    (*r_i).push_back(k2_5.range_count(
+                                                (*r_i)[0], (*r_i)[2],
+                                                (*r_i)[1], (*r_i)[3]));
+                                    break;
+                                case 6:
+                                    (*r_i).push_back(k2_6.range_count(
+                                                (*r_i)[0], (*r_i)[2],
+                                                (*r_i)[1], (*r_i)[3]));
+                                    break;
+                                default:
+                                    fprintf(stderr, "k: %u not supported\n", 
+                                            k);
+                                    break;
+                            }
                             break;
                         default:
                             break;

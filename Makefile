@@ -9,10 +9,6 @@ MDFLAGS	= -p
 AVX2FLAG= -mavx2 -mbmi2
 
 PROG	= qtree_testbench
-PROG1_3	= qtree_k_is_3
-1_3FLAG	= -DK2_K=3
-PROG1_4	= qtree_k_is_4
-1_4FLAG	= -DK2_K=4
 PROGOBJ = bin/qtree_testbench.obj
 DEPS	= src/bitseq.hpp src/qsi.hpp src/leeyang.hpp src/read_csv.h \
 	  src/bit_qtree.hpp src/offset_qtree.hpp
@@ -51,12 +47,6 @@ all: $(PROG) $(PROG2) $(PROG3) $(PROG4)
 .PHONY: avx2
 avx2: clean avx2_set all
 
-.PHONY: prog1_3_build
-prog1_3_build: clean_progobj prog1_3_set $(PROGOBJ) $(PROG1_3)
-
-.PHONY: prog1_4_build
-prog1_4_build: clean_progobj prog1_4_set $(PROGOBJ) $(PROG1_4)
-
 $(BINDIR):
 	$(MKDIR) $(MDFLAGS) $(BINDIR)
 
@@ -77,14 +67,6 @@ val_set:
 avx2_set:
 	$(eval CFLAGS += $(AVX2FLAG))
 
-.PHONY: prog1_3_set
-prog1_3_set:
-	$(eval CFLAGS += $(1_3FLAG))
-
-.PHONY: prog1_4_set
-prog1_4_set:
-	$(eval CFLAGS += $(1_4FLAG))
-
 .PHONY: val_build
 val_build: clean val_set $(PROG)
 
@@ -97,13 +79,6 @@ gdb:	val_build
 	$(DBG) $(DBGFLAG) ./$(PROG)
 
 $(PROG): $(OBJ) $(PROGOBJ) $(HDEPS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
-
-$(PROG1_3): $(OBJ) $(PROGOBJ) $(HDEPS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
-
-
-$(PROG1_4): $(OBJ) $(PROGOBJ) $(HDEPS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 $(PROG2): $(CFILES2) $(OBJ)

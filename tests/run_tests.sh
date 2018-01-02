@@ -20,17 +20,17 @@ mkdir -p data
 touch $PREFIX.csv
 ./gen_tree_input.py $1 $2 $3 $4 $5 > $PREFIX.csv &&
 echo "csv made" &&
-./../qtree_testbench -x $PREFIX -b -f -g -q &&
+./../qtree_testbench -x $PREFIX -b -f2 -g -q &&
 echo "bin made" &&
 ./../qtree_testbench -x $PREFIX -b -c $Q -q &&
 echo "qsi made" &&
 touch $PREFIX.queries &&
 #./../gen_queries -x $PREFIX -f $PREFIX.queries &&
-./../gen_queries_percent -x $PREFIX -f $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
+./../gen_queries_percent -x $PREFIX -f2 $PREFIX.queries -g -3 -h 3 -i $6 -n $7 &&
 echo "queries made" &&
 ./../qtree_testbench -x $PREFIX -g < $PREFIX.queries > $PREFIX.ofb_out &&
 echo "ofb_out made" &&
-./../qtree_testbench -x $PREFIX -f < $PREFIX.queries > $PREFIX.k2_out &&
+./../qtree_testbench -x $PREFIX -f2 < $PREFIX.queries > $PREFIX.k2_out &&
 echo "k2_out made" &&
 ./../qtree_testbench -x $PREFIX -qc $Q \
                 < $PREFIX.queries > $PREFIX.qt_${Q}_out &&
